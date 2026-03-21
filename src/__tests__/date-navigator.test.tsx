@@ -1,12 +1,9 @@
 import { cleanup, render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { Provider, createStore } from "jotai";
+import { createStore, Provider } from "jotai";
 import { afterEach, describe, expect, it } from "vitest";
 import { DateNavigator } from "@/components/features/meals/components/date-navigator";
-import {
-  getToday,
-  selectedDateAtom,
-} from "@/components/features/meals/stores/date-atom";
+import { selectedDateAtom } from "@/components/features/meals/stores/date-atom";
 
 afterEach(() => {
   cleanup();

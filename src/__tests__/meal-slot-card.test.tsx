@@ -1,6 +1,6 @@
 import { cleanup, render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { Provider, createStore } from "jotai";
+import { createStore, Provider } from "jotai";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { MealSlotCard } from "@/components/features/meals/components/meal-slot-card";
 import type { MealItem } from "@/components/features/meals/types/meal";

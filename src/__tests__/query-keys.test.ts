@@ -26,11 +26,7 @@ describe("queryKeys", () => {
 
   describe("recipes", () => {
     it("generates list keys with optional search", () => {
-      expect(queryKeys.recipes.list()).toEqual([
-        "recipes",
-        "list",
-        undefined,
-      ]);
+      expect(queryKeys.recipes.list()).toEqual(["recipes", "list", undefined]);
       expect(queryKeys.recipes.list("カレー")).toEqual([
         "recipes",
         "list",
