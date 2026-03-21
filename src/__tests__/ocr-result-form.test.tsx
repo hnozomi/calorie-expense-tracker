@@ -122,9 +122,7 @@ describe("OcrResultForm", () => {
       />,
     );
 
-    await user.click(
-      screen.getByRole("button", { name: "食品マスタに保存" }),
-    );
+    await user.click(screen.getByRole("button", { name: "食品マスタに保存" }));
     expect(onSaveToMaster).toHaveBeenCalledOnce();
   });
 

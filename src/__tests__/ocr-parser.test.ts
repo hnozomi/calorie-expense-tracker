@@ -72,7 +72,9 @@ describe("parseNutritionText", () => {
 
   describe("name extraction", () => {
     it("extracts name with 名称 label", () => {
-      const result = parseNutritionText("名称: サラダチキン, エネルギー: 100kcal");
+      const result = parseNutritionText(
+        "名称: サラダチキン, エネルギー: 100kcal",
+      );
       expect(result.name).toBe("サラダチキン");
     });
 

@@ -49,9 +49,7 @@ const sampleFoodMasters = [
 describe("FoodMasterSelector", () => {
   it("displays loading skeletons while fetching", () => {
     mockFoodMasters.mockReturnValue({ data: undefined, isLoading: true });
-    const { container } = render(
-      <FoodMasterSelector onSelect={vi.fn()} />,
-    );
+    const { container } = render(<FoodMasterSelector onSelect={vi.fn()} />);
     // 3 skeleton elements
     const skeletons = container.querySelectorAll(".animate-pulse");
     expect(skeletons.length).toBe(3);
@@ -143,8 +141,6 @@ describe("FoodMasterSelector", () => {
   it("has a search input", () => {
     mockFoodMasters.mockReturnValue({ data: [], isLoading: false });
     render(<FoodMasterSelector onSelect={vi.fn()} />);
-    expect(
-      screen.getByPlaceholderText("食品名で検索..."),
-    ).toBeInTheDocument();
+    expect(screen.getByPlaceholderText("食品名で検索...")).toBeInTheDocument();
   });
 });

@@ -29,6 +29,7 @@ import type { MealItemFormValues } from "../types/meal";
 import { FoodMasterSelector } from "./food-master-selector";
 import { ManualInputForm } from "./manual-input-form";
 import { MealRegisterCard } from "./meal-register-card";
+import { RecipeSelector } from "./recipe-selector";
 
 /** Bottom sheet drawer for adding meal items and batch registering */
 const MealRegisterDrawer = () => {
@@ -58,6 +59,11 @@ const MealRegisterDrawer = () => {
 
   const handleManualAdd = useCallback(
     (values: MealItemFormValues) => addDraftItem(values, "manual"),
+    [addDraftItem],
+  );
+
+  const handleRecipeAdd = useCallback(
+    (values: MealItemFormValues) => addDraftItem(values, "recipe"),
     [addDraftItem],
   );
 
@@ -126,6 +132,9 @@ const MealRegisterDrawer = () => {
                 <TabsTrigger value="manual" className="flex-1">
                   手動
                 </TabsTrigger>
+                <TabsTrigger value="recipe" className="flex-1">
+                  レシピ
+                </TabsTrigger>
                 <TabsTrigger value="food_master" className="flex-1">
                   マスタ
                 </TabsTrigger>
@@ -136,6 +145,10 @@ const MealRegisterDrawer = () => {
 
               <TabsContent value="manual" className="mt-3">
                 <ManualInputForm onAdd={handleManualAdd} />
+              </TabsContent>
+
+              <TabsContent value="recipe" className="mt-3">
+                <RecipeSelector onSelect={handleRecipeAdd} />
               </TabsContent>
 
               <TabsContent value="food_master" className="mt-3">

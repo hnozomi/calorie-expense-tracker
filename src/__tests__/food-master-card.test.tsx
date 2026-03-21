@@ -9,9 +9,7 @@ afterEach(() => {
 });
 
 /** Create a mock FoodMaster */
-const createFoodMaster = (
-  overrides: Partial<FoodMaster> = {},
-): FoodMaster => ({
+const createFoodMaster = (overrides: Partial<FoodMaster> = {}): FoodMaster => ({
   id: "fm-1",
   userId: "user-1",
   name: "サラダチキン",
