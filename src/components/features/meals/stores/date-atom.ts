@@ -11,7 +11,13 @@ const formatDate = (date: Date): string => {
 /** Get today's date in local timezone as YYYY-MM-DD */
 const getToday = (): string => formatDate(new Date());
 
+/** Internal atom storing the raw selected date (empty string = today) */
+const rawDateAtom = atom("");
+
 /** Currently selected date for the daily view (defaults to today in local TZ) */
-export const selectedDateAtom = atom(getToday());
+export const selectedDateAtom = atom(
+  (get) => get(rawDateAtom) || getToday(),
+  (_get, set, newDate: string) => set(rawDateAtom, newDate),
+);
 
 export { formatDate, getToday };
