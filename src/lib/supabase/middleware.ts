@@ -1,7 +1,7 @@
 import { createServerClient } from "@supabase/ssr";
 import { type NextRequest, NextResponse } from "next/server";
 
-/** Refresh Supabase auth session and sync cookies with the response */
+/** Refresh Supabase auth session, sync cookies, and return user + response */
 export const updateSession = async (request: NextRequest) => {
   let supabaseResponse = NextResponse.next({
     request,
@@ -31,7 +31,9 @@ export const updateSession = async (request: NextRequest) => {
   );
 
   // Use getUser() instead of getSession() for security
-  await supabase.auth.getUser();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
 
-  return supabaseResponse;
+  return { response: supabaseResponse, user };
 };

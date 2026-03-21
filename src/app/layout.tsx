@@ -15,12 +15,12 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "My App",
-  description: "My PWA Application",
+  title: "めしログ",
+  description: "毎日の食事をサクッと記録。カロリー・PFC・食費をまるごと管理。",
   appleWebApp: {
     capable: true,
     statusBarStyle: "default",
-    title: "My App",
+    title: "めしログ",
   },
   formatDetection: {
     telephone: false,
@@ -30,7 +30,7 @@ export const metadata: Metadata = {
 export const viewport: Viewport = {
   width: "device-width",
   initialScale: 1,
-  themeColor: "#000000",
+  themeColor: "#FFFFFF",
 };
 
 export default function RootLayout({

@@ -1,8 +1,14 @@
-import { render, screen } from "@testing-library/react";
-import { expect, test } from "vitest";
-import Home from "@/app/page";
+import { expect, test, vi } from "vitest";
 
-test("renders home page", () => {
-  render(<Home />);
-  expect(screen.getByText("Hello, World!")).toBeInTheDocument();
+vi.mock("next/navigation", () => ({
+  redirect: vi.fn(),
+}));
+
+test("root page redirects to /home", async () => {
+  const { redirect } = await import("next/navigation");
+  const { default: RootPage } = await import("@/app/page");
+
+  RootPage();
+
+  expect(redirect).toHaveBeenCalledWith("/home");
 });
