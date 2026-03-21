@@ -17,28 +17,32 @@
    - `src/app/` 配下のページ・レイアウト構成
    - 各ルートの役割（静的/動的、認証要否）
 
-2. **コンポーネント設計**
+2. **ディレクトリ構成**
+   - Feature ディレクトリ構成（`src/components/features/{feature}/` に api, components, types, stores, ページコンポーネントを集約）
+   - 共通ディレクトリ構成（`src/hooks/` は共通 hooks のみ、`src/types/` は共通型のみ）
+   - `src/components/ui/` の追加コンポーネント
+
+3. **コンポーネント設計**
    - コンポーネント階層図
    - Server Component / Client Component の分類
-   - 再利用可能なコンポーネントの特定
-   - `src/components/features/` と `src/components/ui/` の配置
+   - page.tsx（Server）と Page コンポーネント（Client）の関係
 
-3. **状態管理設計**
-   - Jotai atoms の一覧と用途
-   - TanStack Query のクエリキー設計（データフェッチがある場合）
-   - カスタム hooks の一覧
+4. **状態管理設計**
+   - Jotai atoms → 各 feature の `stores/` に配置
+   - TanStack Query のクエリキー設計 → `src/hooks/query-keys.ts` に共通配置
+   - ドメイン hooks → 各 feature の `api/` に配置
 
-4. **バックエンド設計**（該当する場合のみ）
+5. **バックエンド設計**（該当する場合のみ）
    - テーブルスキーマ（カラム、型、制約）
    - アクセス制御ポリシー
    - 認証フロー（サインアップ、ログイン、セッション管理）
 
-5. **PWA 設計**（該当する場合のみ）
+6. **PWA 設計**（該当する場合のみ）
    - Service Worker のキャッシュ戦略
    - オフライン対応範囲
    - プッシュ通知の実装方針
 
-6. **実装順序**
+7. **実装順序**
    - フェーズ分けと各フェーズで実装するファイル一覧
    - 依存関係を考慮した順序
 
