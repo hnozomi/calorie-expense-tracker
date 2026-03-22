@@ -1,0 +1,96 @@
+import { cleanup, render, screen } from "@testing-library/react";
+import { afterEach, describe, expect, it } from "vitest";
+import { WeeklyCostChart } from "@/components/features/report/components/weekly-cost-chart";
+import type { DailyReportEntry } from "@/components/features/report/types/weekly-report";
+
+afterEach(() => {
+  cleanup();
+});
+
+/** Create 7 daily entries for testing */
+const createEntries = (
+  costsPerDay: number[] = [0, 0, 0, 0, 0, 0, 0],
+): DailyReportEntry[] =>
+  costsPerDay.map((cost, i) => ({
+    date: `2026-03-${String(16 + i).padStart(2, "0")}`,
+    calories: 0,
+    protein: 0,
+    fat: 0,
+    carbs: 0,
+    totalCost: cost,
+  }));
+
+describe("WeeklyCostChart", () => {
+  it("renders the title '食費'", () => {
+    render(
+      <WeeklyCostChart
+        entries={createEntries()}
+        averageCost={0}
+        totalCost={0}
+      />,
+    );
+    expect(screen.getByText("食費")).toBeInTheDocument();
+  });
+
+  it("displays total and average cost", () => {
+    render(
+      <WeeklyCostChart
+        entries={createEntries()}
+        averageCost={500}
+        totalCost={3500}
+      />,
+    );
+    expect(screen.getByText(/合計 ¥3500/)).toBeInTheDocument();
+    expect(screen.getByText(/平均 ¥500\/日/)).toBeInTheDocument();
+  });
+
+  it("rounds cost values to integers", () => {
+    render(
+      <WeeklyCostChart
+        entries={createEntries()}
+        averageCost={456.78}
+        totalCost={3197.46}
+      />,
+    );
+    expect(screen.getByText(/合計 ¥3197/)).toBeInTheDocument();
+    expect(screen.getByText(/平均 ¥457\/日/)).toBeInTheDocument();
+  });
+
+  it("renders 7 day labels (月〜日)", () => {
+    render(
+      <WeeklyCostChart
+        entries={createEntries()}
+        averageCost={0}
+        totalCost={0}
+      />,
+    );
+    for (const label of ["月", "火", "水", "木", "金", "土", "日"]) {
+      expect(screen.getByText(label)).toBeInTheDocument();
+    }
+  });
+
+  it("handles all-zero costs without error", () => {
+    render(
+      <WeeklyCostChart
+        entries={createEntries()}
+        averageCost={0}
+        totalCost={0}
+      />,
+    );
+    expect(screen.getByText(/合計 ¥0/)).toBeInTheDocument();
+  });
+
+  it("renders cost values per day in hover elements", () => {
+    const costs = [300, 500, 400, 600, 350, 800, 450];
+    render(
+      <WeeklyCostChart
+        entries={createEntries(costs)}
+        averageCost={486}
+        totalCost={3400}
+      />,
+    );
+    // Each day's cost is rendered (hidden by default, shown on hover)
+    expect(screen.getByText("¥300")).toBeInTheDocument();
+    expect(screen.getByText("¥800")).toBeInTheDocument();
+  });
+});
