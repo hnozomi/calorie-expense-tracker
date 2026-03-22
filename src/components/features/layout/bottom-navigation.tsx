@@ -29,7 +29,7 @@ const BottomNavigation = () => {
         "border-t border-brand-border",
       )}
     >
-      <div className="mx-auto flex h-16 max-w-lg items-center justify-around">
+      <div className="mx-auto flex h-16 max-w-lg items-center justify-around pb-[env(safe-area-inset-bottom)]">
         {NAV_ITEMS.map(({ href, label, icon: Icon }) => {
           const isActive = pathname === href || pathname.startsWith(`${href}/`);
           return (
