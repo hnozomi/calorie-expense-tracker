@@ -8,6 +8,7 @@ export default function manifest(): MetadataRoute.Manifest {
       "毎日の食事をサクッと記録。カロリー・PFC・食費をまるごと管理。",
     start_url: "/",
     display: "standalone",
+    orientation: "any",
     background_color: "#FFFFFF",
     theme_color: "#FFFFFF",
     icons: [

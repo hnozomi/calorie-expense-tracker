@@ -31,6 +31,10 @@ export const metadata: Metadata = {
     capable: true,
     statusBarStyle: "default",
     title: "めしログ",
+    startupImage: "/icons/splash-1200x630.png",
+  },
+  other: {
+    "apple-mobile-web-app-capable": "yes",
   },
   formatDetection: {
     telephone: false,
@@ -49,7 +53,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="ja">
+    <html lang="ja" style={{ backgroundColor: "#FFFFFF" }}>
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
