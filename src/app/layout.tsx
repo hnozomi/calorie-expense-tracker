@@ -17,6 +17,16 @@ const geistMono = Geist_Mono({
 export const metadata: Metadata = {
   title: "めしログ",
   description: "毎日の食事をサクッと記録。カロリー・PFC・食費をまるごと管理。",
+  icons: {
+    icon: "/favicon.png",
+    apple: "/apple-touch-icon.png",
+  },
+  openGraph: {
+    title: "めしログ",
+    description:
+      "毎日の食事をサクッと記録。カロリー・PFC・食費をまるごと管理。",
+    images: [{ url: "/icons/splash-1200x630.png", width: 1200, height: 630 }],
+  },
   appleWebApp: {
     capable: true,
     statusBarStyle: "default",
