@@ -1,8 +1,10 @@
 "use client";
 
+import { Info, Trash2 } from "lucide-react";
 import { useCallback } from "react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
+import { SectionHeader } from "@/components/ui/section-header";
 
 /** Section displaying app version and cache management */
 const AppInfoSection = () => {
@@ -18,16 +20,30 @@ const AppInfoSection = () => {
   }, []);
 
   return (
-    <div className="space-y-3">
-      <h3 className="text-sm font-medium">アプリ情報</h3>
-      <div className="space-y-1 text-sm text-muted-foreground">
-        <p>めしログ v1.0.0</p>
-        <p>毎日の食事をサクッと記録</p>
+    <section className="space-y-3">
+      <SectionHeader icon={Info} label="アプリ情報" />
+      <div className="space-y-3 rounded-xl border border-border/60 bg-muted/30 p-3.5">
+        <div className="flex items-center justify-between">
+          <div className="space-y-0.5">
+            <p className="text-sm font-medium">めしログ</p>
+            <p className="text-xs text-muted-foreground">
+              毎日の食事をサクッと記録
+            </p>
+          </div>
+          <span className="rounded-full bg-primary/10 px-2.5 py-0.5 text-xs font-medium text-primary">
+            v1.0.0
+          </span>
+        </div>
+        <Button
+          variant="outline"
+          className="w-full gap-2"
+          onClick={handleClearCache}
+        >
+          <Trash2 className="h-4 w-4" />
+          キャッシュをクリア
+        </Button>
       </div>
-      <Button variant="outline" className="w-full" onClick={handleClearCache}>
-        キャッシュをクリア
-      </Button>
-    </div>
+    </section>
   );
 };
 

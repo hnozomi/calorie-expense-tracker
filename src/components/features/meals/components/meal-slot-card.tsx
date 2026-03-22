@@ -6,6 +6,7 @@ import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { MEAL_TYPE_LABELS, type MealType } from "@/types";
+import { cn, MEAL_TYPE_META } from "@/utils";
 import { selectedDateAtom } from "../stores/date-atom";
 import {
   drawerMealTypeAtom,
@@ -32,17 +33,29 @@ const MealSlotCard = ({ mealType, items }: MealSlotCardProps) => {
   };
 
   const totalCalories = items.reduce((sum, item) => sum + item.calories, 0);
+  const meta = MEAL_TYPE_META[mealType];
+  const Icon = meta.icon;
 
   return (
     <>
-      <Card>
+      <Card className="overflow-hidden transition-shadow hover:shadow-md">
         <CardHeader className="pb-2">
           <div className="flex items-center justify-between">
-            <CardTitle className="text-base">
-              {MEAL_TYPE_LABELS[mealType]}
-            </CardTitle>
+            <div className="flex items-center gap-2.5">
+              <div
+                className={cn(
+                  "flex h-8 w-8 items-center justify-center rounded-lg",
+                  meta.iconBg,
+                )}
+              >
+                <Icon className={cn("h-4 w-4", meta.accent)} />
+              </div>
+              <CardTitle className="text-base font-semibold">
+                {MEAL_TYPE_LABELS[mealType]}
+              </CardTitle>
+            </div>
             {items.length > 0 && (
-              <span className="text-sm text-muted-foreground">
+              <span className="rounded-full bg-muted px-2.5 py-0.5 text-xs font-semibold tabular-nums">
                 {Math.round(totalCalories)} kcal
               </span>
             )}
@@ -50,11 +63,12 @@ const MealSlotCard = ({ mealType, items }: MealSlotCardProps) => {
         </CardHeader>
         <CardContent className="space-y-1">
           {items.length === 0 ? (
-            <div className="py-4 text-center">
+            <div className="rounded-lg border border-dashed border-muted-foreground/25 py-5 text-center">
               <p className="mb-2 text-sm text-muted-foreground">
                 まだ登録されていません
               </p>
               <Button variant="outline" size="sm" onClick={openDrawer}>
+                <Plus className="mr-1 h-3.5 w-3.5" />
                 登録する
               </Button>
             </div>
@@ -64,11 +78,13 @@ const MealSlotCard = ({ mealType, items }: MealSlotCardProps) => {
                 <button
                   key={item.id}
                   type="button"
-                  className="flex w-full items-center justify-between rounded-md px-2 py-1.5 text-left text-sm hover:bg-muted"
+                  className="flex w-full items-center justify-between rounded-lg px-2.5 py-2 text-left text-sm transition-colors hover:bg-muted active:bg-muted/80"
                   onClick={() => setEditingItem(item)}
                 >
-                  <span className="flex-1 truncate">{item.name}</span>
-                  <span className="ml-2 text-muted-foreground">
+                  <span className="flex-1 truncate font-medium">
+                    {item.name}
+                  </span>
+                  <span className="ml-2 tabular-nums text-muted-foreground">
                     {Math.round(item.calories)} kcal
                   </span>
                 </button>
@@ -76,7 +92,7 @@ const MealSlotCard = ({ mealType, items }: MealSlotCardProps) => {
               <Button
                 variant="ghost"
                 size="sm"
-                className="w-full"
+                className="w-full text-muted-foreground hover:text-foreground"
                 onClick={openDrawer}
               >
                 <Plus className="mr-1 h-4 w-4" />

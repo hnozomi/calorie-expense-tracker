@@ -5,6 +5,7 @@ import { useState } from "react";
 import { useRecipes } from "@/components/features/recipes/hooks/use-recipes";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
+import { PfcDisplay } from "@/components/ui/pfc-display";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useDebounce } from "@/hooks";
 import type { MealItemFormValues } from "../types/meal";
@@ -51,31 +52,40 @@ const RecipeSelector = ({ onSelect }: RecipeSelectorProps) => {
       <div className="max-h-48 space-y-1 overflow-y-auto">
         {isLoading ? (
           ["rs1", "rs2", "rs3"].map((key) => (
-            <Skeleton key={key} className="h-12 rounded-md" />
+            <Skeleton key={key} className="h-14 rounded-lg" />
           ))
         ) : recipes && recipes.length > 0 ? (
           recipes.map((recipe) => (
             <button
               key={recipe.id}
               type="button"
-              className="flex w-full items-center justify-between rounded-md px-3 py-2 text-left text-sm hover:bg-muted"
+              className="flex w-full flex-col gap-1 rounded-lg border border-transparent px-3 py-2.5 text-left text-sm transition-colors hover:border-border hover:bg-muted active:bg-muted/80"
               onClick={() => handleSelect(recipe)}
             >
-              <div className="min-w-0 flex-1">
-                <p className="truncate font-medium">{recipe.name}</p>
-                <Badge variant="outline" className="mt-0.5 text-xs">
-                  {recipe.servings}人分
-                </Badge>
+              <div className="flex w-full items-center justify-between">
+                <div className="flex min-w-0 flex-1 items-center gap-2">
+                  <p className="truncate font-medium">{recipe.name}</p>
+                  <Badge variant="outline" className="shrink-0 text-xs">
+                    {recipe.servings}人分
+                  </Badge>
+                </div>
+                <span className="ml-2 whitespace-nowrap rounded-full bg-muted px-2 py-0.5 text-xs font-semibold tabular-nums">
+                  {Math.round(recipe.calories / recipe.servings)} kcal/人
+                </span>
               </div>
-              <span className="ml-2 whitespace-nowrap text-muted-foreground">
-                {Math.round(recipe.calories / recipe.servings)} kcal/人
-              </span>
+              <PfcDisplay
+                protein={recipe.protein / recipe.servings}
+                fat={recipe.fat / recipe.servings}
+                carbs={recipe.carbs / recipe.servings}
+              />
             </button>
           ))
         ) : (
-          <p className="py-4 text-center text-sm text-muted-foreground">
-            {search ? "該当するレシピがありません" : "レシピが未登録です"}
-          </p>
+          <div className="rounded-lg border border-dashed border-muted-foreground/25 py-6 text-center">
+            <p className="text-sm text-muted-foreground">
+              {search ? "該当するレシピがありません" : "レシピが未登録です"}
+            </p>
+          </div>
         )}
       </div>
     </div>

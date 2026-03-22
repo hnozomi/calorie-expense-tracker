@@ -79,7 +79,8 @@ describe("RecipeCard", () => {
   it("displays per-person cost when ingredients have cost", () => {
     render(<RecipeCard recipe={createRecipe()} onClick={vi.fn()} />);
     // (200*1.5 + 1*150) / 2 = 225
-    expect(screen.getByText("¥225/人")).toBeInTheDocument();
+    expect(screen.getByText("225/人")).toBeInTheDocument();
+    expect(screen.getByText("¥")).toBeInTheDocument();
   });
 
   it("does not display cost when ingredient cost is zero", () => {
@@ -106,9 +107,9 @@ describe("RecipeCard", () => {
   it("displays per-person PFC values", () => {
     render(<RecipeCard recipe={createRecipe()} onClick={vi.fn()} />);
     // P:50/2=25.0 F:10/2=5.0 C:20/2=10.0
-    expect(screen.getByText(/P:25\.0/)).toBeInTheDocument();
-    expect(screen.getByText(/F:5\.0/)).toBeInTheDocument();
-    expect(screen.getByText(/C:10\.0/)).toBeInTheDocument();
+    expect(screen.getByText(/P 25\.0/)).toBeInTheDocument();
+    expect(screen.getByText(/F 5\.0/)).toBeInTheDocument();
+    expect(screen.getByText(/C 10\.0/)).toBeInTheDocument();
   });
 
   it("calls onClick when card is clicked", async () => {

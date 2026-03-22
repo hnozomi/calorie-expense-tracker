@@ -1,6 +1,7 @@
 "use client";
 
 import { zodResolver } from "@hookform/resolvers/zod";
+import { Pencil } from "lucide-react";
 import { useState } from "react";
 import type { Resolver } from "react-hook-form";
 import { useForm } from "react-hook-form";
@@ -95,11 +96,14 @@ const MealItemEditModal = ({
 
   return (
     <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
-      <DialogContent>
+      <DialogContent className="sm:max-w-md">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
+            <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-primary/10">
+              <Pencil className="h-3.5 w-3.5 text-primary" />
+            </div>
             アイテム編集
-            <Badge variant="secondary">
+            <Badge variant="secondary" className="ml-auto text-xs">
               {SOURCE_TYPE_LABELS[item.sourceType]}
             </Badge>
           </DialogTitle>
@@ -108,7 +112,7 @@ const MealItemEditModal = ({
           </DialogDescription>
         </DialogHeader>
 
-        <form onSubmit={handleSubmit(handleSave)} className="space-y-3">
+        <form onSubmit={handleSubmit(handleSave)} className="space-y-4">
           <NutritionFormFields
             register={register}
             errors={errors}
@@ -127,7 +131,7 @@ const MealItemEditModal = ({
 
           <button
             type="button"
-            className="w-full text-center text-sm text-destructive hover:underline"
+            className="w-full text-center text-sm text-destructive transition-colors hover:text-destructive/80 hover:underline"
             onClick={() => setIsDeleteConfirmOpen(true)}
           >
             このアイテムを削除する
@@ -135,7 +139,7 @@ const MealItemEditModal = ({
         </form>
 
         {isDeleteConfirmOpen && (
-          <div className="space-y-3 rounded-lg border border-destructive/50 bg-destructive/5 p-4">
+          <div className="space-y-3 rounded-xl border border-destructive/30 bg-destructive/5 p-4">
             <p className="text-sm font-medium">
               「{item.name}」を削除しますか？
             </p>

@@ -74,7 +74,8 @@ describe("SetMenuCard", () => {
 
   it("displays total cost when greater than zero", () => {
     render(<SetMenuCard setMenu={createSetMenu()} onClick={vi.fn()} />);
-    expect(screen.getByText("¥450")).toBeInTheDocument();
+    expect(screen.getByText("450")).toBeInTheDocument();
+    expect(screen.getByText("¥")).toBeInTheDocument();
   });
 
   it("does not display cost when total cost is zero", () => {
@@ -89,9 +90,9 @@ describe("SetMenuCard", () => {
 
   it("displays PFC totals", () => {
     render(<SetMenuCard setMenu={createSetMenu()} onClick={vi.fn()} />);
-    expect(screen.getByText(/P:35\.5/)).toBeInTheDocument();
-    expect(screen.getByText(/F:15\.2/)).toBeInTheDocument();
-    expect(screen.getByText(/C:80\.3/)).toBeInTheDocument();
+    expect(screen.getByText(/P 35\.5/)).toBeInTheDocument();
+    expect(screen.getByText(/F 15\.2/)).toBeInTheDocument();
+    expect(screen.getByText(/C 80\.3/)).toBeInTheDocument();
   });
 
   it("calls onClick when card is clicked", async () => {

@@ -57,9 +57,9 @@ describe("FoodMasterCard", () => {
         onClick={vi.fn()}
       />,
     );
-    expect(screen.getByText(/P:20\.5/)).toBeInTheDocument();
-    expect(screen.getByText(/F:8\.3/)).toBeInTheDocument();
-    expect(screen.getByText(/C:15\.0/)).toBeInTheDocument();
+    expect(screen.getByText(/P 20\.5/)).toBeInTheDocument();
+    expect(screen.getByText(/F 8\.3/)).toBeInTheDocument();
+    expect(screen.getByText(/C 15\.0/)).toBeInTheDocument();
   });
 
   it("displays brand when provided", () => {
@@ -110,7 +110,8 @@ describe("FoodMasterCard", () => {
         onClick={vi.fn()}
       />,
     );
-    expect(screen.getByText("¥298")).toBeInTheDocument();
+    expect(screen.getByText("298")).toBeInTheDocument();
+    expect(screen.getByText("¥")).toBeInTheDocument();
   });
 
   it("does not display price when null", () => {

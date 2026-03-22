@@ -3,6 +3,7 @@
 import { Plus } from "lucide-react";
 import { useState } from "react";
 import type { MealType } from "@/types";
+import { cn } from "@/utils";
 import type { MealPlan } from "../types/meal-plan";
 import { PlanMenuSelectModal } from "./plan-menu-select-modal";
 
@@ -29,29 +30,28 @@ const PlanCell = ({ date, mealType, plans }: PlanCellProps) => {
 
   return (
     <>
-      <div className="flex h-full min-h-[60px] flex-col gap-0.5 p-1">
+      <div className="flex h-full min-h-[68px] flex-col gap-1 p-1.5">
         {plans.map((plan) => (
           <button
             key={plan.id}
             type="button"
-            className="truncate rounded px-1 py-0.5 text-left text-xs hover:bg-muted"
+            className={cn(
+              "truncate rounded-md px-1.5 py-1 text-left text-[11px] leading-tight transition-colors",
+              plan.isTransferred
+                ? "bg-muted/40 text-muted-foreground line-through hover:bg-muted/60"
+                : "bg-primary/8 font-medium text-foreground hover:bg-primary/15",
+            )}
             onClick={() => handleOpenEdit(plan)}
           >
-            <span
-              className={
-                plan.isTransferred ? "text-muted-foreground line-through" : ""
-              }
-            >
-              {plan.plannedName}
-            </span>
+            {plan.plannedName}
           </button>
         ))}
         <button
           type="button"
-          className="flex items-center justify-center rounded py-0.5 text-muted-foreground hover:bg-muted"
+          className="mt-auto flex items-center justify-center rounded-md border border-dashed border-border/50 py-1 text-muted-foreground/60 transition-all hover:border-primary/30 hover:bg-primary/5 hover:text-primary"
           onClick={handleOpenNew}
         >
-          <Plus className="h-3 w-3" />
+          <Plus className="h-3.5 w-3.5" />
         </button>
       </div>
 

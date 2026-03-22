@@ -4,6 +4,7 @@ import { Search } from "lucide-react";
 import { useState } from "react";
 import { useFoodMasters } from "@/components/features/food-masters/hooks/use-food-masters";
 import { Input } from "@/components/ui/input";
+import { PfcDisplay } from "@/components/ui/pfc-display";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useDebounce } from "@/hooks";
 import type { MealItemFormValues } from "../types/meal";
@@ -44,33 +45,38 @@ const FoodMasterSelector = ({ onSelect }: FoodMasterSelectorProps) => {
       <div className="max-h-48 space-y-1 overflow-y-auto">
         {isLoading ? (
           ["fms1", "fms2", "fms3"].map((key) => (
-            <Skeleton key={key} className="h-12 rounded-md" />
+            <Skeleton key={key} className="h-14 rounded-lg" />
           ))
         ) : foodMasters && foodMasters.length > 0 ? (
           foodMasters.map((fm) => (
             <button
               key={fm.id}
               type="button"
-              className="flex w-full items-center justify-between rounded-md px-3 py-2 text-left text-sm hover:bg-muted"
+              className="flex w-full flex-col gap-1 rounded-lg border border-transparent px-3 py-2.5 text-left text-sm transition-colors hover:border-border hover:bg-muted active:bg-muted/80"
               onClick={() => handleSelect(fm)}
             >
-              <div className="min-w-0 flex-1">
-                <p className="truncate font-medium">{fm.name}</p>
-                {fm.brand && (
-                  <p className="truncate text-xs text-muted-foreground">
-                    {fm.brand}
-                  </p>
-                )}
+              <div className="flex w-full items-center justify-between">
+                <div className="min-w-0 flex-1">
+                  <p className="truncate font-medium">{fm.name}</p>
+                  {fm.brand && (
+                    <p className="truncate text-xs text-muted-foreground">
+                      {fm.brand}
+                    </p>
+                  )}
+                </div>
+                <span className="ml-2 whitespace-nowrap rounded-full bg-muted px-2 py-0.5 text-xs font-semibold tabular-nums">
+                  {Math.round(fm.calories)} kcal
+                </span>
               </div>
-              <span className="ml-2 whitespace-nowrap text-muted-foreground">
-                {Math.round(fm.calories)} kcal
-              </span>
+              <PfcDisplay protein={fm.protein} fat={fm.fat} carbs={fm.carbs} />
             </button>
           ))
         ) : (
-          <p className="py-4 text-center text-sm text-muted-foreground">
-            {search ? "該当する食品がありません" : "食品マスタが未登録です"}
-          </p>
+          <div className="rounded-lg border border-dashed border-muted-foreground/25 py-6 text-center">
+            <p className="text-sm text-muted-foreground">
+              {search ? "該当する食品がありません" : "食品マスタが未登録です"}
+            </p>
+          </div>
         )}
       </div>
     </div>

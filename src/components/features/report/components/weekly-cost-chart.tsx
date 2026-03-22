@@ -1,5 +1,6 @@
 "use client";
 
+import { cn } from "@/utils";
 import type { DailyReportEntry } from "../types/weekly-report";
 
 type WeeklyCostChartProps = {
@@ -21,14 +22,39 @@ const WeeklyCostChart = ({
   const maxCost = Math.max(...entries.map((e) => e.totalCost), 1);
 
   return (
-    <div className="space-y-2">
-      <div className="flex items-baseline justify-between">
-        <p className="text-sm font-medium">食費</p>
-        <p className="text-xs text-muted-foreground">
-          合計 ¥{Math.round(totalCost)} (平均 ¥{Math.round(averageCost)}/日)
-        </p>
+    <div className="space-y-3">
+      {/* Summary stats */}
+      <div className="flex items-center justify-between">
+        <span className="text-xs text-muted-foreground">
+          合計{" "}
+          <span className="font-semibold tabular-nums text-foreground">
+            ¥{Math.round(totalCost).toLocaleString()}
+          </span>
+        </span>
+        <span className="text-xs text-muted-foreground">
+          平均{" "}
+          <span className="font-semibold tabular-nums text-foreground">
+            ¥{Math.round(averageCost).toLocaleString()}
+          </span>
+          /日
+        </span>
       </div>
-      <div className="flex items-end gap-1" style={{ height: 120 }}>
+
+      <div className="relative flex h-[140px] items-end gap-1.5">
+        {/* Average dashed line */}
+        {averageCost > 0 && (
+          <div
+            className="pointer-events-none absolute right-0 left-0 border-t border-dashed border-brand-border"
+            style={{
+              bottom: `${(averageCost / maxCost) * 100}%`,
+            }}
+          >
+            <span className="absolute -top-4 right-0 text-[10px] font-medium text-brand/50">
+              平均
+            </span>
+          </div>
+        )}
+
         {entries.map((entry, i) => {
           const heightPct = (entry.totalCost / maxCost) * 100;
           return (
@@ -36,16 +62,24 @@ const WeeklyCostChart = ({
               key={entry.date}
               className="group flex flex-1 flex-col items-center gap-1"
             >
-              <span className="text-xs text-muted-foreground opacity-0 group-hover:opacity-100">
-                ¥{Math.round(entry.totalCost)}
+              {/* Hover value tooltip */}
+              <span className="min-h-[16px] text-[11px] font-semibold text-brand/80 opacity-0 transition-opacity group-hover:opacity-100">
+                {entry.totalCost > 0
+                  ? `¥${Math.round(entry.totalCost).toLocaleString()}`
+                  : ""}
               </span>
               <div className="flex w-full flex-1 items-end justify-center">
                 <div
-                  className="w-full max-w-[28px] rounded-t bg-orange-400/70 transition-colors hover:bg-orange-400"
+                  className={cn(
+                    "w-full max-w-[32px] rounded-t-md transition-all duration-200",
+                    "bg-gradient-to-t from-brand to-brand/70",
+                    "group-hover:from-brand group-hover:to-brand/70 group-hover:shadow-md",
+                  )}
                   style={{ height: `${Math.max(heightPct, 2)}%` }}
                 />
               </div>
-              <span className="text-xs text-muted-foreground">
+              {/* Day label */}
+              <span className="text-[11px] font-medium text-muted-foreground">
                 {DAY_LABELS[i]}
               </span>
             </div>

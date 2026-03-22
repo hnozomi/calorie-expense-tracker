@@ -26,7 +26,7 @@ const createEntries = (
   }));
 
 describe("WeeklyPfcChart", () => {
-  it("renders the title 'PFCバランス'", () => {
+  it("renders the PFC legend with Japanese labels", () => {
     render(
       <WeeklyPfcChart
         entries={createEntries()}
@@ -35,21 +35,9 @@ describe("WeeklyPfcChart", () => {
         averageCarbs={0}
       />,
     );
-    expect(screen.getByText("PFCバランス")).toBeInTheDocument();
-  });
-
-  it("renders the PFC legend (P, F, C)", () => {
-    render(
-      <WeeklyPfcChart
-        entries={createEntries()}
-        averageProtein={0}
-        averageFat={0}
-        averageCarbs={0}
-      />,
-    );
-    expect(screen.getByText("P")).toBeInTheDocument();
-    expect(screen.getByText("F")).toBeInTheDocument();
-    expect(screen.getByText("C")).toBeInTheDocument();
+    expect(screen.getByText("タンパク質")).toBeInTheDocument();
+    expect(screen.getByText("脂質")).toBeInTheDocument();
+    expect(screen.getByText("炭水化物")).toBeInTheDocument();
   });
 
   it("renders 7 day labels (月〜日)", () => {
@@ -66,7 +54,7 @@ describe("WeeklyPfcChart", () => {
     }
   });
 
-  it("shows '詳細' button initially", () => {
+  it("shows '平均値を表示' button initially", () => {
     render(
       <WeeklyPfcChart
         entries={createEntries()}
@@ -75,7 +63,7 @@ describe("WeeklyPfcChart", () => {
         averageCarbs={200}
       />,
     );
-    expect(screen.getByText("詳細")).toBeInTheDocument();
+    expect(screen.getByText(/平均値を表示/)).toBeInTheDocument();
   });
 
   it("does not show averages initially", () => {
@@ -87,10 +75,10 @@ describe("WeeklyPfcChart", () => {
         averageCarbs={200}
       />,
     );
-    expect(screen.queryByText("50.0g/日")).not.toBeInTheDocument();
+    expect(screen.queryByText("50.0")).not.toBeInTheDocument();
   });
 
-  it("shows expanded PFC averages when '詳細' is clicked", async () => {
+  it("shows expanded PFC averages when '平均値を表示' is clicked", async () => {
     const user = userEvent.setup();
     render(
       <WeeklyPfcChart
@@ -100,13 +88,13 @@ describe("WeeklyPfcChart", () => {
         averageCarbs={200}
       />,
     );
-    await user.click(screen.getByText("詳細"));
-    expect(screen.getByText("50.0g/日")).toBeInTheDocument();
-    expect(screen.getByText("30.0g/日")).toBeInTheDocument();
-    expect(screen.getByText("200.0g/日")).toBeInTheDocument();
+    await user.click(screen.getByText(/平均値を表示/));
+    expect(screen.getByText("50.0")).toBeInTheDocument();
+    expect(screen.getByText("30.0")).toBeInTheDocument();
+    expect(screen.getByText("200.0")).toBeInTheDocument();
   });
 
-  it("toggles between '詳細' and '閉じる'", async () => {
+  it("toggles between '平均値を表示' and '閉じる'", async () => {
     const user = userEvent.setup();
     render(
       <WeeklyPfcChart
@@ -116,11 +104,10 @@ describe("WeeklyPfcChart", () => {
         averageCarbs={200}
       />,
     );
-    const button = screen.getByText("詳細");
-    await user.click(button);
-    expect(screen.getByText("閉じる")).toBeInTheDocument();
-    await user.click(screen.getByText("閉じる"));
-    expect(screen.getByText("詳細")).toBeInTheDocument();
+    await user.click(screen.getByText(/平均値を表示/));
+    expect(screen.getByText(/閉じる/)).toBeInTheDocument();
+    await user.click(screen.getByText(/閉じる/));
+    expect(screen.getByText(/平均値を表示/)).toBeInTheDocument();
   });
 
   it("hides averages when '閉じる' is clicked", async () => {
@@ -133,10 +120,10 @@ describe("WeeklyPfcChart", () => {
         averageCarbs={200}
       />,
     );
-    await user.click(screen.getByText("詳細"));
-    expect(screen.getByText("50.0g/日")).toBeInTheDocument();
-    await user.click(screen.getByText("閉じる"));
-    expect(screen.queryByText("50.0g/日")).not.toBeInTheDocument();
+    await user.click(screen.getByText(/平均値を表示/));
+    expect(screen.getByText("50.0")).toBeInTheDocument();
+    await user.click(screen.getByText(/閉じる/));
+    expect(screen.queryByText("50.0")).not.toBeInTheDocument();
   });
 
   it("handles all-zero PFC without error", () => {
@@ -148,7 +135,7 @@ describe("WeeklyPfcChart", () => {
         averageCarbs={0}
       />,
     );
-    expect(screen.getByText("PFCバランス")).toBeInTheDocument();
+    expect(screen.getByText("タンパク質")).toBeInTheDocument();
   });
 
   it("formats decimal averages correctly", async () => {
@@ -161,9 +148,9 @@ describe("WeeklyPfcChart", () => {
         averageCarbs={150.05}
       />,
     );
-    await user.click(screen.getByText("詳細"));
-    expect(screen.getByText("12.3g/日")).toBeInTheDocument();
-    expect(screen.getByText("8.9g/日")).toBeInTheDocument();
-    expect(screen.getByText("150.1g/日")).toBeInTheDocument();
+    await user.click(screen.getByText(/平均値を表示/));
+    expect(screen.getByText("12.3")).toBeInTheDocument();
+    expect(screen.getByText("8.9")).toBeInTheDocument();
+    expect(screen.getByText("150.1")).toBeInTheDocument();
   });
 });

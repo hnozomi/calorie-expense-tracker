@@ -1,6 +1,7 @@
 "use client";
 
 import { useAtom, useAtomValue } from "jotai";
+import { BookOpen, Camera, Database, PenLine } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useCallback, useState } from "react";
 import { toast } from "sonner";
@@ -122,40 +123,58 @@ const MealRegisterDrawer = () => {
     <>
       <Sheet open={isOpen} onOpenChange={setIsOpen}>
         <SheetContent side="bottom" className="max-h-[85dvh] overflow-y-auto">
-          <SheetHeader>
-            <SheetTitle>{MEAL_TYPE_LABELS[mealType]}を登録</SheetTitle>
+          <SheetHeader className="pb-2">
+            <SheetTitle className="text-lg">
+              {MEAL_TYPE_LABELS[mealType]}を登録
+            </SheetTitle>
           </SheetHeader>
 
-          <div className="space-y-4 py-4">
+          <div className="space-y-4 py-2">
             <Tabs defaultValue="manual">
-              <TabsList className="w-full">
-                <TabsTrigger value="manual" className="flex-1">
+              <TabsList className="h-auto w-full gap-1 bg-muted/60 p-1">
+                <TabsTrigger
+                  value="manual"
+                  className="flex flex-1 flex-col items-center gap-0.5 rounded-md px-2 py-1.5 text-xs data-[state=active]:bg-background data-[state=active]:shadow-sm"
+                >
+                  <PenLine className="h-4 w-4" />
                   手動
                 </TabsTrigger>
-                <TabsTrigger value="recipe" className="flex-1">
+                <TabsTrigger
+                  value="recipe"
+                  className="flex flex-1 flex-col items-center gap-0.5 rounded-md px-2 py-1.5 text-xs data-[state=active]:bg-background data-[state=active]:shadow-sm"
+                >
+                  <BookOpen className="h-4 w-4" />
                   レシピ
                 </TabsTrigger>
-                <TabsTrigger value="food_master" className="flex-1">
+                <TabsTrigger
+                  value="food_master"
+                  className="flex flex-1 flex-col items-center gap-0.5 rounded-md px-2 py-1.5 text-xs data-[state=active]:bg-background data-[state=active]:shadow-sm"
+                >
+                  <Database className="h-4 w-4" />
                   マスタ
                 </TabsTrigger>
-                <TabsTrigger value="ocr" className="flex-1">
+                <TabsTrigger
+                  value="ocr"
+                  className="flex flex-1 flex-col items-center gap-0.5 rounded-md px-2 py-1.5 text-xs data-[state=active]:bg-background data-[state=active]:shadow-sm"
+                >
+                  <Camera className="h-4 w-4" />
                   OCR
                 </TabsTrigger>
               </TabsList>
 
-              <TabsContent value="manual" className="mt-3">
+              <TabsContent value="manual" className="mt-4">
                 <ManualInputForm onAdd={handleManualAdd} />
               </TabsContent>
 
-              <TabsContent value="recipe" className="mt-3">
+              <TabsContent value="recipe" className="mt-4">
                 <RecipeSelector onSelect={handleRecipeAdd} />
               </TabsContent>
 
-              <TabsContent value="food_master" className="mt-3">
+              <TabsContent value="food_master" className="mt-4">
                 <FoodMasterSelector onSelect={handleFoodMasterAdd} />
               </TabsContent>
 
-              <TabsContent value="ocr" className="mt-3">
+              <TabsContent value="ocr" className="mt-4">
                 {ocrResult ? (
                   <OcrResultForm
                     ocrResult={ocrResult}
@@ -163,7 +182,8 @@ const MealRegisterDrawer = () => {
                     onSaveToMaster={handleSaveToMaster}
                   />
                 ) : (
-                  <div className="py-4 text-center">
+                  <div className="rounded-lg border border-dashed border-muted-foreground/25 py-6 text-center">
+                    <Camera className="mx-auto mb-2 h-8 w-8 text-muted-foreground/50" />
                     <p className="mb-3 text-sm text-muted-foreground">
                       栄養成分表示を撮影して自動入力
                     </p>

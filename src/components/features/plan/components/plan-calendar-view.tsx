@@ -27,40 +27,42 @@ const PlanCalendarView = () => {
       <Header title="献立カレンダー" />
       <PageContainer>
         {/* Week navigation */}
-        <div className="flex items-center justify-center gap-4 py-3">
+        <div className="flex items-center justify-center gap-2 py-4">
           <Button
             variant="ghost"
             size="icon-sm"
             aria-label="前の週"
+            className="h-8 w-8 rounded-full transition-colors hover:bg-muted"
             onClick={() => setWeekStart(shiftDate(weekStart, -7))}
           >
-            <ChevronLeft className="h-5 w-5" />
+            <ChevronLeft className="h-4 w-4" />
           </Button>
-          <span className="min-w-[120px] text-center font-medium">
+          <span className="min-w-[140px] rounded-full bg-muted/60 px-4 py-1.5 text-center text-sm font-semibold tracking-wide">
             {weekLabel}
           </span>
           <Button
             variant="ghost"
             size="icon-sm"
             aria-label="次の週"
+            className="h-8 w-8 rounded-full transition-colors hover:bg-muted"
             onClick={() => setWeekStart(shiftDate(weekStart, 7))}
           >
-            <ChevronRight className="h-5 w-5" />
+            <ChevronRight className="h-4 w-4" />
           </Button>
         </div>
 
         {/* Calendar grid */}
         {isLoading ? (
-          <div className="space-y-2 p-4">
-            <Skeleton className="h-8 w-full" />
-            <Skeleton className="h-24 w-full" />
-            <Skeleton className="h-24 w-full" />
-            <Skeleton className="h-24 w-full" />
+          <div className="space-y-3 px-4 py-2">
+            <Skeleton className="h-10 w-full rounded-lg" />
+            <Skeleton className="h-28 w-full rounded-lg" />
+            <Skeleton className="h-28 w-full rounded-lg" />
+            <Skeleton className="h-28 w-full rounded-lg" />
           </div>
         ) : (
           <>
             <PlanCalendarGrid weekStart={weekStart} plans={plans ?? []} />
-            <div className="p-4">
+            <div className="px-4 pb-4 pt-3">
               <PlanWeeklySummary plans={plans ?? []} weekStart={weekStart} />
             </div>
           </>

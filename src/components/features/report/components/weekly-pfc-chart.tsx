@@ -1,7 +1,10 @@
 "use client";
 
+import { ChevronDown, ChevronUp } from "lucide-react";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
+import { PfcDot } from "@/components/ui/pfc-display";
+import { cn } from "@/utils";
 import type { DailyReportEntry } from "../types/weekly-report";
 
 type WeeklyPfcChartProps = {
@@ -14,10 +17,10 @@ type WeeklyPfcChartProps = {
 /** Day of week labels */
 const DAY_LABELS = ["月", "火", "水", "木", "金", "土", "日"];
 
-/** PFC color codes */
+/** PFC color codes matching the design system */
 const PFC_COLORS = {
   protein: "bg-blue-500",
-  fat: "bg-yellow-500",
+  fat: "bg-amber-500",
   carbs: "bg-green-500",
 } as const;
 
@@ -37,35 +40,31 @@ const WeeklyPfcChart = ({
   );
 
   return (
-    <div className="space-y-2">
-      <div className="flex items-baseline justify-between">
-        <p className="text-sm font-medium">PFCバランス</p>
-        <Button
-          variant="ghost"
-          size="sm"
-          className="h-auto px-1 py-0 text-xs"
-          onClick={() => setIsExpanded(!isExpanded)}
-        >
-          {isExpanded ? "閉じる" : "詳細"}
-        </Button>
-      </div>
-
+    <div className="space-y-3">
       {/* Legend */}
-      <div className="flex gap-3 text-xs text-muted-foreground">
-        <span className="flex items-center gap-1">
-          <span className="inline-block h-2.5 w-2.5 rounded-sm bg-blue-500" />P
+      <div className="flex items-center gap-4 text-xs">
+        <span className="flex items-center gap-1.5">
+          <PfcDot color="bg-blue-500" />
+          <span className="font-medium text-blue-600 dark:text-blue-400">
+            タンパク質
+          </span>
         </span>
-        <span className="flex items-center gap-1">
-          <span className="inline-block h-2.5 w-2.5 rounded-sm bg-yellow-500" />
-          F
+        <span className="flex items-center gap-1.5">
+          <PfcDot color="bg-amber-500" />
+          <span className="font-medium text-amber-600 dark:text-amber-400">
+            脂質
+          </span>
         </span>
-        <span className="flex items-center gap-1">
-          <span className="inline-block h-2.5 w-2.5 rounded-sm bg-green-500" />C
+        <span className="flex items-center gap-1.5">
+          <PfcDot color="bg-green-500" />
+          <span className="font-medium text-green-600 dark:text-green-400">
+            炭水化物
+          </span>
         </span>
       </div>
 
       {/* Stacked bars */}
-      <div className="flex items-end gap-1" style={{ height: 120 }}>
+      <div className="flex h-[140px] items-end gap-1.5">
         {entries.map((entry, i) => {
           const total = entry.protein + entry.fat + entry.carbs;
           const heightPct = (total / maxTotal) * 100;
@@ -76,28 +75,32 @@ const WeeklyPfcChart = ({
           return (
             <div
               key={entry.date}
-              className="flex flex-1 flex-col items-center gap-1"
+              className="group flex flex-1 flex-col items-center gap-1"
             >
+              {/* Hover total */}
+              <span className="min-h-[16px] text-[11px] font-semibold text-muted-foreground opacity-0 transition-opacity group-hover:opacity-100">
+                {total > 0 ? `${Math.round(total)}g` : ""}
+              </span>
               <div className="flex w-full flex-1 items-end justify-center">
                 <div
-                  className="flex w-full max-w-[28px] flex-col overflow-hidden rounded-t"
+                  className="flex w-full max-w-[32px] flex-col overflow-hidden rounded-t-md transition-all duration-200 group-hover:shadow-md"
                   style={{ height: `${Math.max(heightPct, 2)}%` }}
                 >
                   <div
-                    className={PFC_COLORS.carbs}
+                    className={cn(PFC_COLORS.carbs, "transition-all")}
                     style={{ height: `${cPct}%` }}
                   />
                   <div
-                    className={PFC_COLORS.fat}
+                    className={cn(PFC_COLORS.fat, "transition-all")}
                     style={{ height: `${fPct}%` }}
                   />
                   <div
-                    className={PFC_COLORS.protein}
+                    className={cn(PFC_COLORS.protein, "transition-all")}
                     style={{ height: `${pPct}%` }}
                   />
                 </div>
               </div>
-              <span className="text-xs text-muted-foreground">
+              <span className="text-[11px] font-medium text-muted-foreground">
                 {DAY_LABELS[i]}
               </span>
             </div>
@@ -105,20 +108,68 @@ const WeeklyPfcChart = ({
         })}
       </div>
 
+      {/* Expand/Collapse toggle */}
+      <Button
+        variant="ghost"
+        size="sm"
+        className="h-8 w-full gap-1 rounded-lg text-xs text-muted-foreground hover:text-foreground"
+        onClick={() => setIsExpanded(!isExpanded)}
+      >
+        {isExpanded ? (
+          <>
+            閉じる <ChevronUp className="h-3.5 w-3.5" />
+          </>
+        ) : (
+          <>
+            平均値を表示 <ChevronDown className="h-3.5 w-3.5" />
+          </>
+        )}
+      </Button>
+
       {/* Expanded averages */}
       {isExpanded && (
-        <div className="grid grid-cols-3 gap-2 rounded-lg bg-muted/30 p-2 text-xs">
-          <div className="text-center">
-            <p className="font-medium text-blue-600">P</p>
-            <p>{averageProtein.toFixed(1)}g/日</p>
+        <div className="grid grid-cols-3 gap-2 rounded-lg border border-border/40 bg-muted/20 p-3 text-xs">
+          <div className="flex flex-col items-center gap-1">
+            <div className="flex items-center gap-1.5">
+              <PfcDot color="bg-blue-500" />
+              <span className="font-semibold text-blue-600 dark:text-blue-400">
+                P
+              </span>
+            </div>
+            <p className="text-sm font-bold tabular-nums">
+              {averageProtein.toFixed(1)}
+              <span className="text-[10px] font-normal text-muted-foreground">
+                g/日
+              </span>
+            </p>
           </div>
-          <div className="text-center">
-            <p className="font-medium text-yellow-600">F</p>
-            <p>{averageFat.toFixed(1)}g/日</p>
+          <div className="flex flex-col items-center gap-1">
+            <div className="flex items-center gap-1.5">
+              <PfcDot color="bg-amber-500" />
+              <span className="font-semibold text-amber-600 dark:text-amber-400">
+                F
+              </span>
+            </div>
+            <p className="text-sm font-bold tabular-nums">
+              {averageFat.toFixed(1)}
+              <span className="text-[10px] font-normal text-muted-foreground">
+                g/日
+              </span>
+            </p>
           </div>
-          <div className="text-center">
-            <p className="font-medium text-green-600">C</p>
-            <p>{averageCarbs.toFixed(1)}g/日</p>
+          <div className="flex flex-col items-center gap-1">
+            <div className="flex items-center gap-1.5">
+              <PfcDot color="bg-green-500" />
+              <span className="font-semibold text-green-600 dark:text-green-400">
+                C
+              </span>
+            </div>
+            <p className="text-sm font-bold tabular-nums">
+              {averageCarbs.toFixed(1)}
+              <span className="text-[10px] font-normal text-muted-foreground">
+                g/日
+              </span>
+            </p>
           </div>
         </div>
       )}

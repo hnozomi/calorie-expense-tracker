@@ -1,10 +1,16 @@
 "use client";
 
 import { useAtom } from "jotai";
-import { ChevronLeft, ChevronRight } from "lucide-react";
+import {
+  ChevronLeft,
+  ChevronRight,
+  Dumbbell,
+  Flame,
+  Wallet,
+} from "lucide-react";
 import { Header, PageContainer } from "@/components/features/layout";
 import { Button } from "@/components/ui/button";
-import { Separator } from "@/components/ui/separator";
+import { SectionHeader } from "@/components/ui/section-header";
 import { Skeleton } from "@/components/ui/skeleton";
 import { shiftDate } from "@/utils";
 import { useWeeklyReport } from "../hooks/use-weekly-report";
@@ -29,22 +35,24 @@ const WeeklyReportView = () => {
       <Header title="ウィークリーレポート" />
       <PageContainer>
         {/* Week navigation */}
-        <div className="flex items-center justify-center gap-4 py-3">
+        <div className="flex items-center justify-center gap-2 py-4">
           <Button
             variant="ghost"
             size="icon-sm"
             aria-label="前の週"
+            className="rounded-full"
             onClick={() => setWeekStart(shiftDate(weekStart, -7))}
           >
             <ChevronLeft className="h-5 w-5" />
           </Button>
-          <span className="min-w-[120px] text-center font-medium">
+          <span className="inline-flex min-w-[140px] items-center justify-center rounded-full bg-muted/60 px-4 py-1.5 text-sm font-semibold tracking-wide">
             {weekLabel}
           </span>
           <Button
             variant="ghost"
             size="icon-sm"
             aria-label="次の週"
+            className="rounded-full"
             onClick={() => setWeekStart(shiftDate(weekStart, 7))}
           >
             <ChevronRight className="h-5 w-5" />
@@ -52,30 +60,56 @@ const WeeklyReportView = () => {
         </div>
 
         {isLoading || !report ? (
-          <div className="space-y-4 p-4">
-            <Skeleton className="h-40 w-full" />
-            <Skeleton className="h-40 w-full" />
-            <Skeleton className="h-40 w-full" />
+          <div className="space-y-4 px-4 pb-6">
+            <Skeleton className="h-52 w-full rounded-xl" />
+            <Skeleton className="h-52 w-full rounded-xl" />
+            <Skeleton className="h-52 w-full rounded-xl" />
           </div>
         ) : (
-          <div className="space-y-4 p-4">
-            <WeeklyCalorieChart
-              entries={report.entries}
-              averageCalories={report.averageCalories}
-            />
-            <Separator />
-            <WeeklyPfcChart
-              entries={report.entries}
-              averageProtein={report.averageProtein}
-              averageFat={report.averageFat}
-              averageCarbs={report.averageCarbs}
-            />
-            <Separator />
-            <WeeklyCostChart
-              entries={report.entries}
-              averageCost={report.averageCost}
-              totalCost={report.totalCost}
-            />
+          <div className="space-y-4 px-4 pb-6">
+            {/* Calorie section */}
+            <section className="rounded-xl border border-border/50 bg-card p-4 shadow-sm">
+              <SectionHeader icon={Flame} label="カロリー">
+                <span className="text-xs font-medium text-muted-foreground">
+                  平均 {Math.round(report.averageCalories)} kcal/日
+                </span>
+              </SectionHeader>
+              <div className="mt-3">
+                <WeeklyCalorieChart
+                  entries={report.entries}
+                  averageCalories={report.averageCalories}
+                />
+              </div>
+            </section>
+
+            {/* PFC section */}
+            <section className="rounded-xl border border-border/50 bg-card p-4 shadow-sm">
+              <SectionHeader icon={Dumbbell} label="PFCバランス" />
+              <div className="mt-3">
+                <WeeklyPfcChart
+                  entries={report.entries}
+                  averageProtein={report.averageProtein}
+                  averageFat={report.averageFat}
+                  averageCarbs={report.averageCarbs}
+                />
+              </div>
+            </section>
+
+            {/* Cost section */}
+            <section className="rounded-xl border border-border/50 bg-card p-4 shadow-sm">
+              <SectionHeader icon={Wallet} label="食費">
+                <span className="text-xs font-medium text-muted-foreground">
+                  合計 ¥{Math.round(report.totalCost).toLocaleString()}
+                </span>
+              </SectionHeader>
+              <div className="mt-3">
+                <WeeklyCostChart
+                  entries={report.entries}
+                  averageCost={report.averageCost}
+                  totalCost={report.totalCost}
+                />
+              </div>
+            </section>
           </div>
         )}
       </PageContainer>

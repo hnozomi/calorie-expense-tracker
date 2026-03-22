@@ -45,7 +45,8 @@ describe("PlanWeeklySummary", () => {
 
   it("displays zero totals when no plans", () => {
     render(<PlanWeeklySummary plans={[]} weekStart="2026-03-16" />);
-    expect(screen.getByText("0 kcal")).toBeInTheDocument();
+    expect(screen.getByText("0")).toBeInTheDocument();
+    expect(screen.getByText("kcal")).toBeInTheDocument();
     expect(screen.getByText("¥0")).toBeInTheDocument();
   });
 
@@ -56,7 +57,8 @@ describe("PlanWeeklySummary", () => {
       createPlan({ id: "p3", calories: 300 }),
     ];
     render(<PlanWeeklySummary plans={plans} weekStart="2026-03-16" />);
-    expect(screen.getByText("1500 kcal")).toBeInTheDocument();
+    expect(screen.getByText("1500")).toBeInTheDocument();
+    expect(screen.getByText("kcal")).toBeInTheDocument();
   });
 
   it("calculates total cost from plans", () => {
@@ -74,9 +76,9 @@ describe("PlanWeeklySummary", () => {
       createPlan({ id: "p2", protein: 30, fat: 10, carbs: 40 }),
     ];
     render(<PlanWeeklySummary plans={plans} weekStart="2026-03-16" />);
-    expect(screen.getByText(/P:50\.0/)).toBeInTheDocument();
-    expect(screen.getByText(/F:25\.0/)).toBeInTheDocument();
-    expect(screen.getByText(/C:100\.0/)).toBeInTheDocument();
+    expect(screen.getByText(/P 50\.0/)).toBeInTheDocument();
+    expect(screen.getByText(/F 25\.0/)).toBeInTheDocument();
+    expect(screen.getByText(/C 100\.0/)).toBeInTheDocument();
   });
 
   it("shows transfer button when untransferred plans exist", () => {
@@ -114,6 +116,6 @@ describe("PlanWeeklySummary", () => {
       createPlan({ id: "p3", calories: 333.34 }),
     ];
     render(<PlanWeeklySummary plans={plans} weekStart="2026-03-16" />);
-    expect(screen.getByText("1000 kcal")).toBeInTheDocument();
+    expect(screen.getByText("1000")).toBeInTheDocument();
   });
 });

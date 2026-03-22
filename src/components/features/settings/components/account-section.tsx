@@ -1,9 +1,11 @@
 "use client";
 
+import { LogOut, User } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useState } from "react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
+import { SectionHeader } from "@/components/ui/section-header";
 import { useSupabase } from "@/hooks";
 
 /** Section displaying account info and logout button */
@@ -30,13 +32,30 @@ const AccountSection = () => {
   }, [supabase, router]);
 
   return (
-    <div className="space-y-3">
-      <h3 className="text-sm font-medium">アカウント</h3>
-      {email && <p className="text-sm text-muted-foreground">{email}</p>}
-      <Button variant="outline" className="w-full" onClick={handleSignOut}>
-        ログアウト
-      </Button>
-    </div>
+    <section className="space-y-3">
+      <SectionHeader icon={User} label="アカウント" />
+      <div className="space-y-3 rounded-xl border border-border/60 bg-muted/30 p-3.5">
+        {email && (
+          <div className="flex items-center gap-3">
+            <div className="flex h-9 w-9 items-center justify-center rounded-full bg-primary/10">
+              <User className="h-4 w-4 text-primary" />
+            </div>
+            <div className="min-w-0 flex-1">
+              <p className="text-xs text-muted-foreground">ログイン中</p>
+              <p className="truncate text-sm font-medium">{email}</p>
+            </div>
+          </div>
+        )}
+        <Button
+          variant="outline"
+          className="w-full gap-2"
+          onClick={handleSignOut}
+        >
+          <LogOut className="h-4 w-4" />
+          ログアウト
+        </Button>
+      </div>
+    </section>
   );
 };
 

@@ -29,28 +29,18 @@ const createEntries = (
   }));
 
 describe("WeeklyCalorieChart", () => {
-  it("renders the title 'カロリー'", () => {
-    render(
-      <WeeklyCalorieChart entries={createEntries()} averageCalories={0} />,
-    );
-    expect(screen.getByText("カロリー")).toBeInTheDocument();
-  });
-
-  it("displays average calories", () => {
+  it("renders the average dashed line label when average > 0", () => {
     render(
       <WeeklyCalorieChart entries={createEntries()} averageCalories={1500} />,
     );
-    expect(screen.getByText("平均 1500 kcal/日")).toBeInTheDocument();
+    expect(screen.getByText("平均")).toBeInTheDocument();
   });
 
-  it("rounds average calories to integer", () => {
+  it("does not render average label when averageCalories is 0", () => {
     render(
-      <WeeklyCalorieChart
-        entries={createEntries()}
-        averageCalories={1234.56}
-      />,
+      <WeeklyCalorieChart entries={createEntries()} averageCalories={0} />,
     );
-    expect(screen.getByText("平均 1235 kcal/日")).toBeInTheDocument();
+    expect(screen.queryByText("平均")).not.toBeInTheDocument();
   });
 
   it("renders 7 day labels (月〜日)", () => {
@@ -100,6 +90,8 @@ describe("WeeklyCalorieChart", () => {
     render(
       <WeeklyCalorieChart entries={createEntries()} averageCalories={0} />,
     );
-    expect(screen.getByText("平均 0 kcal/日")).toBeInTheDocument();
+    // Should render 7 day labels without crashing
+    expect(screen.getByText("月")).toBeInTheDocument();
+    expect(screen.getByText("日")).toBeInTheDocument();
   });
 });

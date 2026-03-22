@@ -106,7 +106,7 @@ describe("BottomNavigation", () => {
     const homeLink = screen.getByText("ホーム").closest("a");
     const planLink = screen.getByText("献立").closest("a");
     // /home is active (mocked pathname)
-    expect(homeLink?.className).toContain("text-foreground");
+    expect(homeLink?.className).toContain("text-brand");
     expect(planLink?.className).toContain("text-muted-foreground");
   });
 });

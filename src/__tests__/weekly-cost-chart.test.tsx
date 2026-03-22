@@ -21,18 +21,7 @@ const createEntries = (
   }));
 
 describe("WeeklyCostChart", () => {
-  it("renders the title '食費'", () => {
-    render(
-      <WeeklyCostChart
-        entries={createEntries()}
-        averageCost={0}
-        totalCost={0}
-      />,
-    );
-    expect(screen.getByText("食費")).toBeInTheDocument();
-  });
-
-  it("displays total and average cost", () => {
+  it("displays total cost", () => {
     render(
       <WeeklyCostChart
         entries={createEntries()}
@@ -40,8 +29,19 @@ describe("WeeklyCostChart", () => {
         totalCost={3500}
       />,
     );
-    expect(screen.getByText(/合計 ¥3500/)).toBeInTheDocument();
-    expect(screen.getByText(/平均 ¥500\/日/)).toBeInTheDocument();
+    expect(screen.getByText(/¥3,500/)).toBeInTheDocument();
+  });
+
+  it("displays average cost per day", () => {
+    render(
+      <WeeklyCostChart
+        entries={createEntries()}
+        averageCost={500}
+        totalCost={3500}
+      />,
+    );
+    expect(screen.getByText(/¥500/)).toBeInTheDocument();
+    expect(screen.getByText(/\/日/)).toBeInTheDocument();
   });
 
   it("rounds cost values to integers", () => {
@@ -52,8 +52,8 @@ describe("WeeklyCostChart", () => {
         totalCost={3197.46}
       />,
     );
-    expect(screen.getByText(/合計 ¥3197/)).toBeInTheDocument();
-    expect(screen.getByText(/平均 ¥457\/日/)).toBeInTheDocument();
+    expect(screen.getByText(/¥3,197/)).toBeInTheDocument();
+    expect(screen.getByText(/¥457/)).toBeInTheDocument();
   });
 
   it("renders 7 day labels (月〜日)", () => {
@@ -77,20 +77,17 @@ describe("WeeklyCostChart", () => {
         totalCost={0}
       />,
     );
-    expect(screen.getByText(/合計 ¥0/)).toBeInTheDocument();
+    expect(screen.getAllByText(/¥0/).length).toBeGreaterThanOrEqual(1);
   });
 
-  it("renders cost values per day in hover elements", () => {
-    const costs = [300, 500, 400, 600, 350, 800, 450];
+  it("renders average dashed line when averageCost > 0", () => {
     render(
       <WeeklyCostChart
-        entries={createEntries(costs)}
+        entries={createEntries([300, 500, 400, 600, 350, 800, 450])}
         averageCost={486}
         totalCost={3400}
       />,
     );
-    // Each day's cost is rendered (hidden by default, shown on hover)
-    expect(screen.getByText("¥300")).toBeInTheDocument();
-    expect(screen.getByText("¥800")).toBeInTheDocument();
+    expect(screen.getByText("平均")).toBeInTheDocument();
   });
 });

@@ -1,6 +1,6 @@
 "use client";
 
-import { Plus } from "lucide-react";
+import { ClipboardList, Plus } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { Header, PageContainer } from "@/components/features/layout";
 import { Button } from "@/components/ui/button";
@@ -25,10 +25,10 @@ const SetMenuListView = () => {
         </Button>
       </Header>
       <PageContainer>
-        <div className="space-y-2 p-4">
+        <div className="space-y-2.5 px-4 pb-4 pt-4">
           {isLoading ? (
             ["s1", "s2", "s3"].map((key) => (
-              <Skeleton key={key} className="h-24 rounded-xl" />
+              <Skeleton key={key} className="h-[96px] rounded-xl" />
             ))
           ) : setMenus && setMenus.length > 0 ? (
             setMenus.map((sm) => (
@@ -39,15 +39,19 @@ const SetMenuListView = () => {
               />
             ))
           ) : (
-            <div className="py-12 text-center">
-              <p className="text-sm text-muted-foreground">
+            <div className="flex flex-col items-center py-16">
+              <div className="mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-muted">
+                <ClipboardList className="h-7 w-7 text-muted-foreground" />
+              </div>
+              <p className="text-sm font-medium text-muted-foreground">
                 セットメニューがまだ登録されていません
               </p>
               <Button
                 variant="outline"
-                className="mt-3"
+                className="mt-4 rounded-full"
                 onClick={() => router.push("/other/set-menus/new")}
               >
+                <Plus className="mr-1.5 h-4 w-4" />
                 最初のセットメニューを登録する
               </Button>
             </div>

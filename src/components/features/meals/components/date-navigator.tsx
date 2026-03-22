@@ -3,6 +3,7 @@
 import { useAtom } from "jotai";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { cn } from "@/utils";
 import { formatDate, getToday, selectedDateAtom } from "../stores/date-atom";
 
 /** Navigate between dates with left/right arrows */
@@ -15,22 +16,40 @@ const DateNavigator = () => {
     setSelectedDate(formatDate(current));
   };
 
+  const isToday = selectedDate === getToday();
+
   const displayDate = (() => {
-    const today = getToday();
-    if (selectedDate === today) return "今日";
+    if (isToday) return "今日";
     const d = new Date(`${selectedDate}T00:00:00`);
     return `${d.getMonth() + 1}/${d.getDate()}（${"日月火水木金土"[d.getDay()]}）`;
   })();
 
   return (
-    <div className="flex items-center justify-center gap-4 py-3">
-      <Button variant="ghost" size="icon-sm" onClick={() => shift(-1)}>
+    <div className="flex items-center justify-center gap-3 py-3">
+      <Button
+        variant="ghost"
+        size="icon-sm"
+        className="rounded-full transition-colors hover:bg-muted"
+        onClick={() => shift(-1)}
+      >
         <ChevronLeft className="h-5 w-5" />
       </Button>
-      <span className="min-w-[80px] text-center font-medium">
+      <div
+        className={cn(
+          "flex min-w-[100px] items-center justify-center rounded-full px-4 py-1.5 text-sm font-semibold transition-colors",
+          isToday
+            ? "bg-primary text-primary-foreground shadow-sm"
+            : "bg-muted text-foreground",
+        )}
+      >
         {displayDate}
-      </span>
-      <Button variant="ghost" size="icon-sm" onClick={() => shift(1)}>
+      </div>
+      <Button
+        variant="ghost"
+        size="icon-sm"
+        className="rounded-full transition-colors hover:bg-muted"
+        onClick={() => shift(1)}
+      >
         <ChevronRight className="h-5 w-5" />
       </Button>
     </div>
