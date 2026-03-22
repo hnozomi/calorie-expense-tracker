@@ -17,3 +17,5 @@ export type {
   DbMealItem,
   DbMealItemCost,
 } from "./database";
+export type { NutritionTarget } from "./settings";
+export { DEFAULT_NUTRITION_TARGET } from "./settings";

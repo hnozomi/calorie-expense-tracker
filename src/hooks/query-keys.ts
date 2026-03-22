@@ -28,4 +28,7 @@ export const queryKeys = {
   report: {
     weekly: (weekStart: string) => ["report", "weekly", weekStart] as const,
   },
+  settings: {
+    nutritionTarget: () => ["settings", "nutrition-target"] as const,
+  },
 } as const;

@@ -15,6 +15,7 @@ meals ──┬─ meal_items ───── meal_item_costs
                ├── → recipes
                ├── → food_masters
                └── → set_menus
+user_settings (standalone, per user)
 ```
 
 ---
@@ -185,6 +186,23 @@ meals ──┬─ meal_items ───── meal_item_costs
 | estimated_cost | NUMERIC | 予定食費 |
 | is_transferred | BOOLEAN | 食事記録に転記済みか（デフォルト: false） |
 | created_at | TIMESTAMPTZ | 作成日時 |
+
+---
+
+## user_settings（ユーザー設定）
+
+1日の栄養目標値をユーザーごとに保存する。
+
+| カラム名 | 型 | 説明 |
+| --- | --- | --- |
+| id | UUID (PK) | 主キー |
+| user_id | UUID (FK, UNIQUE) | auth.users.id への参照（RLS用） |
+| target_calories | NUMERIC | 1日の目標カロリー（kcal、デフォルト: 2000） |
+| target_protein | NUMERIC | 1日の目標タンパク質（g、デフォルト: 60） |
+| target_fat | NUMERIC | 1日の目標脂質（g、デフォルト: 55） |
+| target_carbs | NUMERIC | 1日の目標炭水化物（g、デフォルト: 300） |
+| created_at | TIMESTAMPTZ | 作成日時 |
+| updated_at | TIMESTAMPTZ | 更新日時 |
 
 ---
 
