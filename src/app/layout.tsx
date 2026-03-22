@@ -43,9 +43,19 @@ export const metadata: Metadata = {
           "(device-width: 375px) and (device-height: 667px) and (-webkit-device-pixel-ratio: 2)",
       },
       {
+        url: "/icons/splash-1080x1920.png",
+        media:
+          "(device-width: 414px) and (device-height: 736px) and (-webkit-device-pixel-ratio: 3)",
+      },
+      {
         url: "/icons/splash-828x1792.png",
         media:
           "(device-width: 414px) and (device-height: 896px) and (-webkit-device-pixel-ratio: 2)",
+      },
+      {
+        url: "/icons/splash-1242x2688.png",
+        media:
+          "(device-width: 414px) and (device-height: 896px) and (-webkit-device-pixel-ratio: 3)",
       },
       {
         url: "/icons/splash-1125x2436.png",
@@ -71,6 +81,11 @@ export const metadata: Metadata = {
         url: "/icons/splash-1290x2796.png",
         media:
           "(device-width: 430px) and (device-height: 932px) and (-webkit-device-pixel-ratio: 3)",
+      },
+      {
+        url: "/icons/splash-1206x2622.png",
+        media:
+          "(device-width: 402px) and (device-height: 874px) and (-webkit-device-pixel-ratio: 3)",
       },
       {
         url: "/icons/splash-1320x2868.png",
