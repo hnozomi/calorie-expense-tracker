@@ -5,15 +5,12 @@ import type { MealPlan } from "@/components/features/plan/types/meal-plan";
 
 /** Mock useTransferPlan */
 const mockMutateAsync = vi.fn();
-vi.mock(
-  "@/components/features/plan/hooks/use-transfer-plan",
-  () => ({
-    useTransferPlan: () => ({
-      mutateAsync: mockMutateAsync,
-      isPending: false,
-    }),
+vi.mock("@/components/features/plan/hooks/use-transfer-plan", () => ({
+  useTransferPlan: () => ({
+    mutateAsync: mockMutateAsync,
+    isPending: false,
   }),
-);
+}));
 
 afterEach(() => {
   cleanup();

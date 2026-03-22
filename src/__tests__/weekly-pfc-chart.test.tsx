@@ -10,9 +10,11 @@ afterEach(() => {
 
 /** Create 7 daily entries with PFC values */
 const createEntries = (
-  pfcPerDay: { protein: number; fat: number; carbs: number }[] = Array(7).fill(
-    { protein: 0, fat: 0, carbs: 0 },
-  ),
+  pfcPerDay: { protein: number; fat: number; carbs: number }[] = Array(7).fill({
+    protein: 0,
+    fat: 0,
+    carbs: 0,
+  }),
 ): DailyReportEntry[] =>
   pfcPerDay.map((pfc, i) => ({
     date: `2026-03-${String(16 + i).padStart(2, "0")}`,

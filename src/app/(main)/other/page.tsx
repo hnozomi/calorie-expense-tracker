@@ -4,6 +4,7 @@ import {
   BarChart3,
   ChefHat,
   ChevronRight,
+  Settings,
   ShoppingBasket,
   UtensilsCrossed,
 } from "lucide-react";
@@ -28,6 +29,12 @@ const MENU_ITEMS = [
     label: "ウィークリーレポート",
     description: "週間の記録を振り返る",
     icon: BarChart3,
+  },
+  {
+    href: "/other/settings",
+    label: "設定",
+    description: "アカウント・データ管理",
+    icon: Settings,
   },
 ] as const;
 
