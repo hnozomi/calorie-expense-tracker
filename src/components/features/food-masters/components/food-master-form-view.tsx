@@ -1,13 +1,17 @@
 "use client";
 
 import { zodResolver } from "@hookform/resolvers/zod";
-import { ArrowLeft } from "lucide-react";
+import { ArrowLeft, Camera } from "lucide-react";
 import { useRouter } from "next/navigation";
-import { useState } from "react";
+import { useCallback, useState } from "react";
 import type { Resolver } from "react-hook-form";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 import { Header, PageContainer } from "@/components/features/layout";
+import {
+  OcrCameraOverlay,
+  type OcrNutritionResult,
+} from "@/components/features/ocr";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -43,6 +47,7 @@ const FoodMasterFormView = ({ id }: FoodMasterFormViewProps) => {
   const saveMutation = useSaveFoodMaster();
   const deleteMutation = useDeleteFoodMaster();
   const [isDeleteConfirmOpen, setIsDeleteConfirmOpen] = useState(false);
+  const [isOcrOpen, setIsOcrOpen] = useState(false);
 
   const {
     register,
@@ -70,6 +75,23 @@ const FoodMasterFormView = ({ id }: FoodMasterFormViewProps) => {
   });
 
   const categoryValue = watch("category");
+
+  /** Fill form fields with OCR recognition results */
+  const handleOcrResult = useCallback(
+    (result: OcrNutritionResult) => {
+      if (result.name) setValue("name", result.name, { shouldValidate: true });
+      if (result.calories != null)
+        setValue("calories", result.calories, { shouldValidate: true });
+      if (result.protein != null)
+        setValue("protein", result.protein, { shouldValidate: true });
+      if (result.fat != null)
+        setValue("fat", result.fat, { shouldValidate: true });
+      if (result.carbs != null)
+        setValue("carbs", result.carbs, { shouldValidate: true });
+      toast.success("OCR結果を反映しました");
+    },
+    [setValue],
+  );
 
   const handleSave = async (values: FoodMasterFormValues) => {
     try {
@@ -168,6 +190,16 @@ const FoodMasterFormView = ({ id }: FoodMasterFormViewProps) => {
           </div>
 
           <Separator />
+
+          <Button
+            type="button"
+            variant="outline"
+            className="w-full"
+            onClick={() => setIsOcrOpen(true)}
+          >
+            <Camera className="mr-2 h-4 w-4" />
+            栄養成分表示をOCRで読み取り
+          </Button>
 
           <div className="grid grid-cols-2 gap-3">
             <div className="space-y-1">
@@ -292,6 +324,12 @@ const FoodMasterFormView = ({ id }: FoodMasterFormViewProps) => {
           )}
         </form>
       </PageContainer>
+
+      <OcrCameraOverlay
+        isOpen={isOcrOpen}
+        onClose={() => setIsOcrOpen(false)}
+        onResult={handleOcrResult}
+      />
     </>
   );
 };
