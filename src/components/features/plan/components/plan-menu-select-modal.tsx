@@ -236,7 +236,7 @@ const PlanMenuSelectModal = ({
                   id="plan-manual-calories"
                   type="number"
                   inputMode="decimal"
-                  step="0.1"
+                  step="any"
                   value={manualCalories}
                   onChange={(e) => setManualCalories(e.target.value)}
                 />
