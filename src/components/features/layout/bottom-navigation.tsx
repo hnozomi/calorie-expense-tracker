@@ -28,8 +28,9 @@ const BottomNavigation = () => {
         "bg-background/80 backdrop-blur-lg",
         "border-t border-brand-border",
       )}
+      style={{ paddingBottom: "env(safe-area-inset-bottom)" }}
     >
-      <div className="mx-auto flex h-16 max-w-lg items-center justify-around pb-[env(safe-area-inset-bottom)]">
+      <div className="mx-auto flex h-16 max-w-lg items-center justify-around">
         {NAV_ITEMS.map(({ href, label, icon: Icon }) => {
           const isActive = pathname === href || pathname.startsWith(`${href}/`);
           return (
