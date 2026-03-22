@@ -271,6 +271,7 @@ const FoodMasterFormView = ({ id }: FoodMasterFormViewProps) => {
                   id="fm-calories"
                   type="number"
                   inputMode="decimal"
+                  step="0.1"
                   className="text-lg font-semibold tracking-wide"
                   placeholder="0"
                   {...register("calories")}
@@ -298,6 +299,7 @@ const FoodMasterFormView = ({ id }: FoodMasterFormViewProps) => {
                     id="fm-protein"
                     type="number"
                     inputMode="decimal"
+                    step="0.1"
                     className="border-blue-200/80 bg-white font-medium text-blue-700 dark:border-blue-800/40 dark:bg-blue-950/30 dark:text-blue-300"
                     placeholder="0"
                     {...register("protein")}
@@ -317,6 +319,7 @@ const FoodMasterFormView = ({ id }: FoodMasterFormViewProps) => {
                     id="fm-fat"
                     type="number"
                     inputMode="decimal"
+                    step="0.1"
                     className="border-amber-200/80 bg-white font-medium text-amber-700 dark:border-amber-800/40 dark:bg-amber-950/30 dark:text-amber-300"
                     placeholder="0"
                     {...register("fat")}
@@ -336,6 +339,7 @@ const FoodMasterFormView = ({ id }: FoodMasterFormViewProps) => {
                     id="fm-carbs"
                     type="number"
                     inputMode="decimal"
+                    step="0.1"
                     className="border-green-200/80 bg-white font-medium text-green-700 dark:border-green-800/40 dark:bg-green-950/30 dark:text-green-300"
                     placeholder="0"
                     {...register("carbs")}

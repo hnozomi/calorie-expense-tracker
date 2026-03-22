@@ -42,6 +42,7 @@ const NutritionFormFields = ({
             id={id("calories")}
             type="number"
             inputMode="decimal"
+            step="0.1"
             {...register("calories")}
           />
         </div>
@@ -69,6 +70,7 @@ const NutritionFormFields = ({
             id={id("protein")}
             type="number"
             inputMode="decimal"
+            step="0.1"
             className="border-blue-200 bg-blue-50/50 focus-visible:ring-blue-400 dark:border-blue-800 dark:bg-blue-950/30"
             {...register("protein")}
           />
@@ -84,6 +86,7 @@ const NutritionFormFields = ({
             id={id("fat")}
             type="number"
             inputMode="decimal"
+            step="0.1"
             className="border-amber-200 bg-amber-50/50 focus-visible:ring-amber-400 dark:border-amber-800 dark:bg-amber-950/30"
             {...register("fat")}
           />
@@ -99,6 +102,7 @@ const NutritionFormFields = ({
             id={id("carbs")}
             type="number"
             inputMode="decimal"
+            step="0.1"
             className="border-green-200 bg-green-50/50 focus-visible:ring-green-400 dark:border-green-800 dark:bg-green-950/30"
             {...register("carbs")}
           />

@@ -271,6 +271,7 @@ const RecipeFormView = ({ id }: RecipeFormViewProps) => {
                   id="recipe-calories"
                   type="number"
                   inputMode="decimal"
+                  step="0.1"
                   className="text-lg font-semibold tracking-wide"
                   placeholder="0"
                   {...register("calories")}
@@ -293,6 +294,7 @@ const RecipeFormView = ({ id }: RecipeFormViewProps) => {
                     id="recipe-protein"
                     type="number"
                     inputMode="decimal"
+                    step="0.1"
                     className="border-blue-200/80 bg-white font-medium text-blue-700 dark:border-blue-800/40 dark:bg-blue-950/30 dark:text-blue-300"
                     placeholder="0"
                     {...register("protein")}
@@ -312,6 +314,7 @@ const RecipeFormView = ({ id }: RecipeFormViewProps) => {
                     id="recipe-fat"
                     type="number"
                     inputMode="decimal"
+                    step="0.1"
                     className="border-amber-200/80 bg-white font-medium text-amber-700 dark:border-amber-800/40 dark:bg-amber-950/30 dark:text-amber-300"
                     placeholder="0"
                     {...register("fat")}
@@ -331,6 +334,7 @@ const RecipeFormView = ({ id }: RecipeFormViewProps) => {
                     id="recipe-carbs"
                     type="number"
                     inputMode="decimal"
+                    step="0.1"
                     className="border-green-200/80 bg-white font-medium text-green-700 dark:border-green-800/40 dark:bg-green-950/30 dark:text-green-300"
                     placeholder="0"
                     {...register("carbs")}
@@ -395,6 +399,7 @@ const RecipeFormView = ({ id }: RecipeFormViewProps) => {
                             <Input
                               type="number"
                               inputMode="decimal"
+                              step="0.1"
                               value={ing.quantity || ""}
                               onChange={(e) =>
                                 handleIngredientChange(
