@@ -9,6 +9,7 @@ import { Button } from "@/components/ui/button";
 import {
   Dialog,
   DialogContent,
+  DialogDescription,
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
@@ -186,6 +187,9 @@ const PlanMenuSelectModal = ({
           <DialogTitle>
             {dateLabel} {MEAL_TYPE_LABELS[mealType]}
           </DialogTitle>
+          <DialogDescription>
+            献立のメニューを選択または入力してください
+          </DialogDescription>
         </DialogHeader>
 
         <Tabs defaultValue="manual">
@@ -207,8 +211,9 @@ const PlanMenuSelectModal = ({
           {/* Manual input */}
           <TabsContent value="manual" className="mt-3 space-y-3">
             <div className="space-y-1">
-              <Label>メニュー名</Label>
+              <Label htmlFor="plan-manual-name">メニュー名</Label>
               <Input
+                id="plan-manual-name"
                 placeholder="例: ご飯と味噌汁"
                 value={manualName}
                 onChange={(e) => setManualName(e.target.value)}
@@ -216,8 +221,9 @@ const PlanMenuSelectModal = ({
             </div>
             <div className="grid grid-cols-2 gap-2">
               <div className="space-y-1">
-                <Label>カロリー (kcal)</Label>
+                <Label htmlFor="plan-manual-calories">カロリー (kcal)</Label>
                 <Input
+                  id="plan-manual-calories"
                   type="number"
                   inputMode="decimal"
                   value={manualCalories}
@@ -225,8 +231,9 @@ const PlanMenuSelectModal = ({
                 />
               </div>
               <div className="space-y-1">
-                <Label>食費 (円)</Label>
+                <Label htmlFor="plan-manual-cost">食費 (円)</Label>
                 <Input
+                  id="plan-manual-cost"
                   type="number"
                   inputMode="decimal"
                   value={manualCost}

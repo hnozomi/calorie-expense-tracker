@@ -6,14 +6,9 @@ import { SettingsView } from "@/components/features/settings/components/settings
 vi.mock("@/components/features/settings/components/account-section", () => ({
   AccountSection: () => <div data-testid="account-section">Account</div>,
 }));
-vi.mock(
-  "@/components/features/settings/components/csv-export-section",
-  () => ({
-    CsvExportSection: () => (
-      <div data-testid="csv-export-section">CsvExport</div>
-    ),
-  }),
-);
+vi.mock("@/components/features/settings/components/csv-export-section", () => ({
+  CsvExportSection: () => <div data-testid="csv-export-section">CsvExport</div>,
+}));
 vi.mock("@/components/features/settings/components/app-info-section", () => ({
   AppInfoSection: () => <div data-testid="app-info-section">AppInfo</div>,
 }));

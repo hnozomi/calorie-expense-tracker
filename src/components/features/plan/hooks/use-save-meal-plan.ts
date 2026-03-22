@@ -22,6 +22,11 @@ export const useSaveMealPlan = () => {
 
   return useMutation({
     mutationFn: async (input: SaveMealPlanInput) => {
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
+      if (!user) throw new Error("Not authenticated");
+
       const row = {
         date: input.date,
         meal_type: input.mealType,
@@ -43,7 +48,9 @@ export const useSaveMealPlan = () => {
           .eq("id", input.id);
         if (error) throw error;
       } else {
-        const { error } = await supabase.from("meal_plans").insert(row);
+        const { error } = await supabase
+          .from("meal_plans")
+          .insert({ ...row, user_id: user.id });
         if (error) throw error;
       }
     },

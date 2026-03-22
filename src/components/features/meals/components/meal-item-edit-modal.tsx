@@ -10,6 +10,7 @@ import { Button } from "@/components/ui/button";
 import {
   Dialog,
   DialogContent,
+  DialogDescription,
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
@@ -102,6 +103,9 @@ const MealItemEditModal = ({
               {SOURCE_TYPE_LABELS[item.sourceType]}
             </Badge>
           </DialogTitle>
+          <DialogDescription>
+            食事アイテムの内容を編集できます
+          </DialogDescription>
         </DialogHeader>
 
         <form onSubmit={handleSubmit(handleSave)} className="space-y-3">

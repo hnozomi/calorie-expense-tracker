@@ -33,38 +33,43 @@ describe("toCsv", () => {
   });
 
   it("wraps fields containing commas in quotes", () => {
-    const csv = toCsv([{ key: "name" as const, label: "名前" }], [
-      { name: "カレー,ライス" },
-    ]);
+    const csv = toCsv(
+      [{ key: "name" as const, label: "名前" }],
+      [{ name: "カレー,ライス" }],
+    );
     expect(csv).toContain('"カレー,ライス"');
   });
 
   it("escapes double quotes by doubling them", () => {
-    const csv = toCsv([{ key: "name" as const, label: "名前" }], [
-      { name: 'テスト"値"' },
-    ]);
+    const csv = toCsv(
+      [{ key: "name" as const, label: "名前" }],
+      [{ name: 'テスト"値"' }],
+    );
     expect(csv).toContain('"テスト""値"""');
   });
 
   it("wraps fields containing newlines in quotes", () => {
-    const csv = toCsv([{ key: "memo" as const, label: "メモ" }], [
-      { memo: "行1\n行2" },
-    ]);
+    const csv = toCsv(
+      [{ key: "memo" as const, label: "メモ" }],
+      [{ memo: "行1\n行2" }],
+    );
     expect(csv).toContain('"行1\n行2"');
   });
 
   it("handles null values as empty strings", () => {
-    const csv = toCsv([{ key: "name" as const, label: "名前" }], [
-      { name: null },
-    ]);
+    const csv = toCsv(
+      [{ key: "name" as const, label: "名前" }],
+      [{ name: null }],
+    );
     const lines = csv.split("\n");
     expect(lines[1]).toBe("");
   });
 
   it("handles undefined values as empty strings", () => {
-    const csv = toCsv([{ key: "name" as const, label: "名前" }], [
-      { name: undefined },
-    ]);
+    const csv = toCsv(
+      [{ key: "name" as const, label: "名前" }],
+      [{ name: undefined }],
+    );
     const lines = csv.split("\n");
     expect(lines[1]).toBe("");
   });

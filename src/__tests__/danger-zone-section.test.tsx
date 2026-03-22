@@ -32,9 +32,7 @@ describe("DangerZoneSection", () => {
     const user = userEvent.setup();
     render(<DangerZoneSection />);
     await user.click(screen.getByText("全データを削除"));
-    expect(
-      screen.getByText("全データを削除しますか？"),
-    ).toBeInTheDocument();
+    expect(screen.getByText("全データを削除しますか？")).toBeInTheDocument();
   });
 
   it("shows confirmation text input in dialog", async () => {
@@ -58,7 +56,10 @@ describe("DangerZoneSection", () => {
     const user = userEvent.setup();
     render(<DangerZoneSection />);
     await user.click(screen.getByText("全データを削除"));
-    await user.type(screen.getByPlaceholderText("全データ削除"), "間違いテキスト");
+    await user.type(
+      screen.getByPlaceholderText("全データ削除"),
+      "間違いテキスト",
+    );
     const deleteButton = screen.getByText("削除する");
     expect(deleteButton).toBeDisabled();
   });
@@ -67,7 +68,10 @@ describe("DangerZoneSection", () => {
     const user = userEvent.setup();
     render(<DangerZoneSection />);
     await user.click(screen.getByText("全データを削除"));
-    await user.type(screen.getByPlaceholderText("全データ削除"), "全データ削除");
+    await user.type(
+      screen.getByPlaceholderText("全データ削除"),
+      "全データ削除",
+    );
     const deleteButton = screen.getByText("削除する");
     expect(deleteButton).not.toBeDisabled();
   });
@@ -76,7 +80,10 @@ describe("DangerZoneSection", () => {
     const user = userEvent.setup();
     render(<DangerZoneSection />);
     await user.click(screen.getByText("全データを削除"));
-    await user.type(screen.getByPlaceholderText("全データ削除"), "全データ削除");
+    await user.type(
+      screen.getByPlaceholderText("全データ削除"),
+      "全データ削除",
+    );
     await user.click(screen.getByText("削除する"));
     expect(mockDeleteAllData).toHaveBeenCalledTimes(1);
   });
