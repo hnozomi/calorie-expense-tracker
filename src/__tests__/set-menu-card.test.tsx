@@ -105,10 +105,7 @@ describe("SetMenuCard", () => {
 
   it("renders with no items", () => {
     render(
-      <SetMenuCard
-        setMenu={createSetMenu({ items: [] })}
-        onClick={vi.fn()}
-      />,
+      <SetMenuCard setMenu={createSetMenu({ items: [] })} onClick={vi.fn()} />,
     );
     expect(screen.getByText("朝定食セット")).toBeInTheDocument();
     // No badges rendered

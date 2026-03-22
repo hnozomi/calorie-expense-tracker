@@ -1,6 +1,7 @@
 "use client";
 
 import {
+  BarChart3,
   ChefHat,
   ChevronRight,
   ShoppingBasket,
@@ -21,6 +22,12 @@ const MENU_ITEMS = [
     label: "セットメニュー",
     description: "よく食べる組み合わせを管理",
     icon: UtensilsCrossed,
+  },
+  {
+    href: "/other/report",
+    label: "ウィークリーレポート",
+    description: "週間の記録を振り返る",
+    icon: BarChart3,
   },
 ] as const;
 
