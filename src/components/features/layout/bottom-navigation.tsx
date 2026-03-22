@@ -17,6 +17,11 @@ const NAV_ITEMS = [
   { href: "/other", label: "その他", icon: MoreHorizontal },
 ] as const;
 
+/** Emit nav start event to trigger progress bar */
+const emitNavStart = () => {
+  window.dispatchEvent(new Event("nav:start"));
+};
+
 /** Bottom tab navigation with glass background and active indicator pill */
 const BottomNavigation = () => {
   const pathname = usePathname();
@@ -37,17 +42,21 @@ const BottomNavigation = () => {
             <Link
               key={href}
               href={href}
+              onClick={() => {
+                if (!isActive) emitNavStart();
+              }}
               className={cn(
                 "relative flex min-w-[64px] flex-col items-center gap-0.5 px-3 py-2 text-xs",
-                "transition-colors duration-200",
+                "transition-colors duration-150",
+                "active:scale-90 active:opacity-70 transition-transform duration-100",
                 isActive
                   ? "text-brand"
-                  : "text-muted-foreground active:text-brand hover:text-brand/70",
+                  : "text-muted-foreground hover:text-brand/70",
               )}
             >
               <Icon
                 className={cn(
-                  "h-5 w-5 transition-transform duration-200",
+                  "h-5 w-5 transition-transform duration-150",
                   isActive && "scale-110",
                 )}
               />
