@@ -9,6 +9,7 @@ export default async function RecipesPage() {
   const queryClient = getQueryClient();
   const supabase = await createClient();
 
+  /** Prefetch data so dehydrate() captures it in the cache */
   await prefetchRecipes(queryClient, supabase);
 
   return (

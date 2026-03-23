@@ -1,6 +1,6 @@
 "use client";
 
-import { useQuery } from "@tanstack/react-query";
+import { useSuspenseQuery } from "@tanstack/react-query";
 import { queryKeys, useSupabase } from "@/hooks";
 import type { MealType } from "@/types";
 import type { MealItem } from "../types/meal";
@@ -9,7 +9,7 @@ import type { MealItem } from "../types/meal";
 export const useDailyMeals = (date: string) => {
   const supabase = useSupabase();
 
-  return useQuery({
+  return useSuspenseQuery({
     queryKey: queryKeys.meals.daily(date),
     queryFn: async () => {
       const { data, error } = await supabase

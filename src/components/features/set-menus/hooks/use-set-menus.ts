@@ -1,6 +1,6 @@
 "use client";
 
-import { useQuery } from "@tanstack/react-query";
+import { useSuspenseQuery } from "@tanstack/react-query";
 import { queryKeys, useSupabase } from "@/hooks";
 import type { SetMenu, SetMenuItem } from "../types/set-menu";
 
@@ -8,7 +8,7 @@ import type { SetMenu, SetMenuItem } from "../types/set-menu";
 export const useSetMenus = () => {
   const supabase = useSupabase();
 
-  return useQuery({
+  return useSuspenseQuery({
     queryKey: queryKeys.setMenus.list(),
     queryFn: async () => {
       const { data, error } = await supabase

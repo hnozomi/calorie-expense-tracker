@@ -1,6 +1,6 @@
 "use client";
 
-import { useQuery } from "@tanstack/react-query";
+import { useSuspenseQuery } from "@tanstack/react-query";
 import { queryKeys, useSupabase } from "@/hooks";
 import type { DailyReportEntry, WeeklyReport } from "../types/weekly-report";
 
@@ -8,7 +8,7 @@ import type { DailyReportEntry, WeeklyReport } from "../types/weekly-report";
 export const useWeeklyReport = (weekStart: string) => {
   const supabase = useSupabase();
 
-  return useQuery({
+  return useSuspenseQuery({
     queryKey: queryKeys.report.weekly(weekStart),
     queryFn: async (): Promise<WeeklyReport> => {
       const { data, error } = await supabase.rpc("get_weekly_summary", {

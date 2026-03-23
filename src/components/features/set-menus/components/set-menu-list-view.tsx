@@ -4,14 +4,13 @@ import { ClipboardList, Plus } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { Header, PageContainer } from "@/components/features/layout";
 import { Button } from "@/components/ui/button";
-import { Skeleton } from "@/components/ui/skeleton";
 import { useSetMenus } from "../hooks/use-set-menus";
 import { SetMenuCard } from "./set-menu-card";
 
 /** Set menu list with add button */
 const SetMenuListView = () => {
   const router = useRouter();
-  const { data: setMenus, isLoading } = useSetMenus();
+  const { data: setMenus } = useSetMenus();
 
   return (
     <>
@@ -26,11 +25,7 @@ const SetMenuListView = () => {
       </Header>
       <PageContainer>
         <div className="space-y-2.5 px-4 pb-4 pt-4">
-          {isLoading ? (
-            ["s1", "s2", "s3"].map((key) => (
-              <Skeleton key={key} className="h-[96px] rounded-xl" />
-            ))
-          ) : setMenus && setMenus.length > 0 ? (
+          {setMenus.length > 0 ? (
             setMenus.map((sm) => (
               <SetMenuCard
                 key={sm.id}

@@ -1,6 +1,10 @@
 "use client";
 
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import {
+  useMutation,
+  useQueryClient,
+  useSuspenseQuery,
+} from "@tanstack/react-query";
 import { queryKeys, useSupabase } from "@/hooks";
 import type { NutritionTarget } from "@/types/settings";
 import { DEFAULT_NUTRITION_TARGET } from "@/types/settings";
@@ -9,7 +13,7 @@ import { DEFAULT_NUTRITION_TARGET } from "@/types/settings";
 export const useNutritionTarget = () => {
   const supabase = useSupabase();
 
-  return useQuery({
+  return useSuspenseQuery({
     queryKey: queryKeys.settings.nutritionTarget(),
     queryFn: async () => {
       const { data, error } = await supabase

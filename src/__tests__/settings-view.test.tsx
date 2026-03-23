@@ -3,6 +3,14 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 import { SettingsView } from "@/components/features/settings/components/settings-view";
 
 /** Mock child components to isolate SettingsView structure */
+vi.mock(
+  "@/components/features/settings/components/nutrition-target-section",
+  () => ({
+    NutritionTargetSection: () => (
+      <div data-testid="nutrition-target-section">NutritionTarget</div>
+    ),
+  }),
+);
 vi.mock("@/components/features/settings/components/account-section", () => ({
   AccountSection: () => <div data-testid="account-section">Account</div>,
 }));

@@ -4,7 +4,6 @@ import { useAtom } from "jotai";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { Header, PageContainer } from "@/components/features/layout";
 import { Button } from "@/components/ui/button";
-import { Skeleton } from "@/components/ui/skeleton";
 import { shiftDate } from "@/utils";
 import { useMealPlans } from "../hooks/use-meal-plans";
 import { planWeekStartAtom } from "../stores/plan-week-atom";
@@ -14,7 +13,7 @@ import { PlanWeeklySummary } from "./plan-weekly-summary";
 /** Main view for the meal planning calendar */
 const PlanCalendarView = () => {
   const [weekStart, setWeekStart] = useAtom(planWeekStartAtom);
-  const { data: plans, isLoading } = useMealPlans(weekStart);
+  const { data: plans } = useMealPlans(weekStart);
 
   /** Build week label */
   const startObj = new Date(`${weekStart}T00:00:00`);
@@ -52,21 +51,10 @@ const PlanCalendarView = () => {
         </div>
 
         {/* Calendar grid */}
-        {isLoading ? (
-          <div className="space-y-3 px-4 py-2">
-            <Skeleton className="h-10 w-full rounded-lg" />
-            <Skeleton className="h-28 w-full rounded-lg" />
-            <Skeleton className="h-28 w-full rounded-lg" />
-            <Skeleton className="h-28 w-full rounded-lg" />
-          </div>
-        ) : (
-          <>
-            <PlanCalendarGrid weekStart={weekStart} plans={plans ?? []} />
-            <div className="px-4 pb-4 pt-3">
-              <PlanWeeklySummary plans={plans ?? []} weekStart={weekStart} />
-            </div>
-          </>
-        )}
+        <PlanCalendarGrid weekStart={weekStart} plans={plans} />
+        <div className="px-4 pb-4 pt-3">
+          <PlanWeeklySummary plans={plans} weekStart={weekStart} />
+        </div>
       </PageContainer>
     </>
   );

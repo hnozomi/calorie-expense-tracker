@@ -9,6 +9,7 @@ export default async function FoodMastersPage() {
   const queryClient = getQueryClient();
   const supabase = await createClient();
 
+  /** Prefetch data so dehydrate() captures it in the cache */
   await prefetchFoodMasters(queryClient, supabase);
 
   return (

@@ -1,5 +1,7 @@
 import { dehydrate, HydrationBoundary } from "@tanstack/react-query";
+import { Suspense } from "react";
 import { PlanCalendarView } from "@/components/features/plan";
+import { Skeleton } from "@/components/ui/skeleton";
 import { getQueryClient } from "@/lib/get-query-client";
 import { prefetchMealPlans, prefetchNutritionTarget } from "@/lib/prefetch";
 import { createClient } from "@/lib/supabase/server";
@@ -12,6 +14,7 @@ export default async function PlanPage() {
   const weekStart = getThisMonday();
   const weekEnd = shiftDate(weekStart, 6);
 
+  /** Prefetch data so dehydrate() captures it in the cache */
   await Promise.all([
     prefetchMealPlans(queryClient, supabase, weekStart, weekEnd),
     prefetchNutritionTarget(queryClient, supabase),
@@ -19,7 +22,17 @@ export default async function PlanPage() {
 
   return (
     <HydrationBoundary state={dehydrate(queryClient)}>
-      <PlanCalendarView />
+      <Suspense
+        fallback={
+          <div className="space-y-4 p-4">
+            <Skeleton className="mx-auto h-8 w-40 rounded-full" />
+            <Skeleton className="h-64 w-full rounded-xl" />
+            <Skeleton className="h-32 w-full rounded-xl" />
+          </div>
+        }
+      >
+        <PlanCalendarView />
+      </Suspense>
     </HydrationBoundary>
   );
 }

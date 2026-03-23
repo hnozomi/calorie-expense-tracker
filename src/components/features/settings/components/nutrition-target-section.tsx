@@ -1,34 +1,23 @@
 "use client";
 
 import { Target } from "lucide-react";
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useState } from "react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { SectionHeader } from "@/components/ui/section-header";
-import { Skeleton } from "@/components/ui/skeleton";
 import { useNutritionTarget, useSaveNutritionTarget } from "@/hooks";
 
 /** Section for setting daily calorie and PFC targets */
 const NutritionTargetSection = () => {
-  const { data: target, isLoading } = useNutritionTarget();
+  const { data: target } = useNutritionTarget();
   const saveMutation = useSaveNutritionTarget();
 
-  const [calories, setCalories] = useState("");
-  const [protein, setProtein] = useState("");
-  const [fat, setFat] = useState("");
-  const [carbs, setCarbs] = useState("");
-
-  /** Sync form state when target is loaded */
-  useEffect(() => {
-    if (target) {
-      setCalories(String(target.targetCalories));
-      setProtein(String(target.targetProtein));
-      setFat(String(target.targetFat));
-      setCarbs(String(target.targetCarbs));
-    }
-  }, [target]);
+  const [calories, setCalories] = useState(String(target.targetCalories));
+  const [protein, setProtein] = useState(String(target.targetProtein));
+  const [fat, setFat] = useState(String(target.targetFat));
+  const [carbs, setCarbs] = useState(String(target.targetCarbs));
 
   /** Save the nutrition targets */
   const handleSave = useCallback(async () => {
@@ -44,15 +33,6 @@ const NutritionTargetSection = () => {
       toast.error("保存に失敗しました");
     }
   }, [calories, protein, fat, carbs, saveMutation]);
-
-  if (isLoading) {
-    return (
-      <section className="space-y-3">
-        <SectionHeader icon={Target} label="1日の目標" />
-        <Skeleton className="h-40 rounded-xl" />
-      </section>
-    );
-  }
 
   return (
     <section className="space-y-3">

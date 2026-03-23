@@ -1,6 +1,6 @@
 "use client";
 
-import { useQuery } from "@tanstack/react-query";
+import { useSuspenseQuery } from "@tanstack/react-query";
 import { queryKeys, useSupabase } from "@/hooks";
 import type { MealType } from "@/types";
 import { shiftDate } from "@/utils";
@@ -13,7 +13,7 @@ export const useMealPlans = (weekStart: string) => {
   /** Calculate end date (6 days after start) */
   const weekEnd = shiftDate(weekStart, 6);
 
-  return useQuery({
+  return useSuspenseQuery({
     queryKey: queryKeys.plans.weekly(weekStart),
     queryFn: async () => {
       const { data, error } = await supabase

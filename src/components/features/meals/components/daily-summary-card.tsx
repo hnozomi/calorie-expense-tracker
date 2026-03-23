@@ -2,7 +2,6 @@
 
 import { Flame, Wallet } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
-import { Skeleton } from "@/components/ui/skeleton";
 import { useNutritionTarget } from "@/hooks";
 import { cn } from "@/utils";
 import { useDailySummary } from "../hooks/use-daily-summary";
@@ -135,13 +134,8 @@ const PfcBar = ({
 
 /** Display total calories, PFC, cost, and remaining intake for the day */
 const DailySummaryCard = ({ date }: DailySummaryCardProps) => {
-  const { data: summaryRows, isLoading: isSummaryLoading } =
-    useDailySummary(date);
-  const { data: target, isLoading: isTargetLoading } = useNutritionTarget();
-
-  if (isSummaryLoading || isTargetLoading) {
-    return <Skeleton className="mx-4 h-40 rounded-xl" />;
-  }
+  const { data: summaryRows } = useDailySummary(date);
+  const { data: target } = useNutritionTarget();
 
   const rows: DailySummaryRow[] = summaryRows ?? [];
   const nutrition = sumNutrition(rows);
