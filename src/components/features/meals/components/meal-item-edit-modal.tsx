@@ -2,7 +2,6 @@
 
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useState } from "react";
-import type { Resolver } from "react-hook-form";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 import { Badge } from "@/components/ui/badge";
@@ -10,14 +9,16 @@ import { Button } from "@/components/ui/button";
 import {
   Drawer,
   DrawerContent,
+  DrawerDescription,
   DrawerHeader,
   DrawerTitle,
 } from "@/components/ui/drawer";
-import type { SourceType } from "@/types";
+import { SOURCE_TYPE_LABELS } from "@/types";
 import { useDeleteMealItem } from "../hooks/use-delete-meal-item";
 import { useUpdateMealItem } from "../hooks/use-update-meal-item";
 import {
   type MealItem,
+  type MealItemFormInput,
   type MealItemFormValues,
   mealItemFormSchema,
 } from "../types/meal";
@@ -28,14 +29,6 @@ type MealItemEditModalProps = {
   date: string;
   isOpen: boolean;
   onClose: () => void;
-};
-
-const SOURCE_TYPE_LABELS: Record<SourceType, string> = {
-  manual: "手動",
-  ocr: "OCR",
-  recipe: "レシピ",
-  food_master: "食品マスタ",
-  set_menu: "セット",
 };
 
 /** Bottom drawer for editing or deleting an existing meal item */
@@ -53,8 +46,8 @@ const MealItemEditModal = ({
     register,
     handleSubmit,
     formState: { errors },
-  } = useForm<MealItemFormValues>({
-    resolver: zodResolver(mealItemFormSchema) as Resolver<MealItemFormValues>,
+  } = useForm<MealItemFormInput, undefined, MealItemFormValues>({
+    resolver: zodResolver(mealItemFormSchema),
     values: item
       ? {
           name: item.name,
@@ -96,7 +89,12 @@ const MealItemEditModal = ({
     <Drawer open={isOpen} onOpenChange={(open) => !open && onClose()}>
       <DrawerContent className="max-h-[80dvh]">
         <DrawerHeader className="flex-row items-center justify-between pb-2">
-          <DrawerTitle className="text-base">アイテム編集</DrawerTitle>
+          <div>
+            <DrawerTitle className="text-base">アイテム編集</DrawerTitle>
+            <DrawerDescription className="sr-only">
+              既存の食事アイテムの栄養情報を編集または削除します
+            </DrawerDescription>
+          </div>
           <Badge variant="secondary" className="text-xs">
             {SOURCE_TYPE_LABELS[item.sourceType]}
           </Badge>

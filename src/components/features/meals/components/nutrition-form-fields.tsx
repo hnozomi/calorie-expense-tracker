@@ -1,13 +1,13 @@
 "use client";
 
-import type { UseFormRegister } from "react-hook-form";
+import type { FieldErrors, UseFormRegister } from "react-hook-form";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import type { MealItemFormValues } from "../types/meal";
+import type { MealItemFormInput } from "../types/meal";
 
 type NutritionFormFieldsProps = {
-  register: UseFormRegister<MealItemFormValues>;
-  errors: Partial<Record<keyof MealItemFormValues, { message?: string }>>;
+  register: UseFormRegister<MealItemFormInput>;
+  errors: FieldErrors<MealItemFormInput>;
   idPrefix?: string;
 };
 

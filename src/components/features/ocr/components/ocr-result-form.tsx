@@ -1,10 +1,10 @@
 "use client";
 
 import { zodResolver } from "@hookform/resolvers/zod";
-import type { Resolver } from "react-hook-form";
 import { useForm } from "react-hook-form";
 import { NutritionFormFields } from "@/components/features/meals/components/nutrition-form-fields";
 import {
+  type MealItemFormInput,
   type MealItemFormValues,
   mealItemFormSchema,
 } from "@/components/features/meals/types/meal";
@@ -28,8 +28,8 @@ const OcrResultForm = ({
     handleSubmit,
     getValues,
     formState: { errors },
-  } = useForm<MealItemFormValues>({
-    resolver: zodResolver(mealItemFormSchema) as Resolver<MealItemFormValues>,
+  } = useForm<MealItemFormInput, undefined, MealItemFormValues>({
+    resolver: zodResolver(mealItemFormSchema),
     defaultValues: {
       name: ocrResult.name ?? "",
       calories: ocrResult.calories ?? 0,
@@ -61,7 +61,7 @@ const OcrResultForm = ({
         variant="outline"
         className="w-full"
         onClick={() => {
-          const values = getValues();
+          const values = mealItemFormSchema.parse(getValues());
           onSaveToMaster(values);
         }}
       >

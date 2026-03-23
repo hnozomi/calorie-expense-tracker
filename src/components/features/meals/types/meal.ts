@@ -45,7 +45,8 @@ export const mealItemFormSchema = z.object({
   cost: z.coerce.number().min(0, "0以上で入力してください").optional(),
 });
 
-export type MealItemFormValues = z.infer<typeof mealItemFormSchema>;
+export type MealItemFormInput = z.input<typeof mealItemFormSchema>;
+export type MealItemFormValues = z.output<typeof mealItemFormSchema>;
 
 /** Draft item in the registration card (before saving to DB) */
 export type MealItemDraft = MealItemFormValues & {

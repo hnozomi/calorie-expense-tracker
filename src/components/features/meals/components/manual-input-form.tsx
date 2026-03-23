@@ -1,10 +1,13 @@
 "use client";
 
 import { zodResolver } from "@hookform/resolvers/zod";
-import type { Resolver } from "react-hook-form";
 import { useForm } from "react-hook-form";
 import { Button } from "@/components/ui/button";
-import { type MealItemFormValues, mealItemFormSchema } from "../types/meal";
+import {
+  type MealItemFormInput,
+  type MealItemFormValues,
+  mealItemFormSchema,
+} from "../types/meal";
 import { NutritionFormFields } from "./nutrition-form-fields";
 
 type ManualInputFormProps = {
@@ -18,8 +21,8 @@ const ManualInputForm = ({ onAdd }: ManualInputFormProps) => {
     handleSubmit,
     reset,
     formState: { errors },
-  } = useForm<MealItemFormValues>({
-    resolver: zodResolver(mealItemFormSchema) as Resolver<MealItemFormValues>,
+  } = useForm<MealItemFormInput, undefined, MealItemFormValues>({
+    resolver: zodResolver(mealItemFormSchema),
     defaultValues: { calories: 0, protein: 0, fat: 0, carbs: 0 },
   });
 
