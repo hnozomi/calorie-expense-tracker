@@ -1,22 +1,12 @@
 import { cleanup, render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { createStore, Provider } from "jotai";
-import { afterEach, describe, expect, it, vi } from "vitest";
+import { afterEach, describe, expect, it } from "vitest";
 import { DateNavigator } from "@/components/features/meals/components/date-navigator";
 import { selectedDateAtom } from "@/components/features/meals/stores/date-atom";
 
-const replaceMock = vi.fn();
-
-vi.mock("next/navigation", () => ({
-  usePathname: () => "/home",
-  useRouter: () => ({
-    replace: replaceMock,
-  }),
-}));
-
 afterEach(() => {
   cleanup();
-  replaceMock.mockClear();
 });
 
 /** Wrap component with Jotai store provider */

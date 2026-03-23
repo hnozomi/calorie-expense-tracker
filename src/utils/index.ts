@@ -2,8 +2,8 @@ export { cn } from "./cn";
 export { downloadCsv, toCsv } from "./csv-export";
 export {
   buildWeekDays,
-  formatDisplayDate,
   formatDateToString,
+  formatDisplayDate,
   formatWeekLabel,
   getThisMonday,
   getTodayString,

@@ -5,8 +5,8 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { SectionHeader } from "@/components/ui/section-header";
-import type { IngredientFormValues } from "../types/recipe";
 import type { EditableIngredient } from "../hooks/use-recipe-form-controller";
+import type { IngredientFormValues } from "../types/recipe";
 
 type RecipeIngredientsEditorProps = {
   ingredients: EditableIngredient[];

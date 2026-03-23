@@ -4,9 +4,8 @@ import { useAtom, useAtomValue } from "jotai";
 import { useRouter } from "next/navigation";
 import { useCallback, useRef, useState } from "react";
 import { toast } from "sonner";
-import { useOcr, type OcrNutritionResult } from "@/components/features/ocr";
+import { type OcrNutritionResult, useOcr } from "@/components/features/ocr";
 import type { SourceType } from "@/types";
-import { useRegisterMealItems } from "./use-register-meal-items";
 import { selectedDateAtom } from "../stores/date-atom";
 import {
   draftItemsAtom,
@@ -14,6 +13,7 @@ import {
   isDrawerOpenAtom,
 } from "../stores/meal-register-atom";
 import type { MealItemFormValues } from "../types/meal";
+import { useRegisterMealItems } from "./use-register-meal-items";
 
 export const useMealRegisterDrawerController = () => {
   const router = useRouter();

@@ -1,6 +1,8 @@
-import { dehydrate, HydrationBoundary } from "@tanstack/react-query";
-import { SetMenuFormView } from "@/components/features/set-menus";
-import { getQueryClient } from "@/lib/get-query-client";
+import { Suspense } from "react";
+import {
+  SetMenuFormSkeleton,
+  SetMenuFormView,
+} from "@/components/features/set-menus";
 
 type SetMenuDetailPageProps = {
   params: Promise<{ id: string }>;
@@ -11,11 +13,10 @@ export default async function SetMenuDetailPage({
   params,
 }: SetMenuDetailPageProps) {
   const { id } = await params;
-  const queryClient = getQueryClient();
 
   return (
-    <HydrationBoundary state={dehydrate(queryClient)}>
+    <Suspense fallback={<SetMenuFormSkeleton />}>
       <SetMenuFormView id={id} />
-    </HydrationBoundary>
+    </Suspense>
   );
 }

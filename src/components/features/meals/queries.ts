@@ -4,7 +4,10 @@ import { queryKeys } from "@/hooks/query-keys";
 import type { MealType } from "@/types";
 import type { DailySummaryRow, MealItem } from "./types/meal";
 
-type DailyMealGroup = Record<MealType, { mealId: string | null; items: MealItem[] }>;
+type DailyMealGroup = Record<
+  MealType,
+  { mealId: string | null; items: MealItem[] }
+>;
 
 const createEmptyDailyMeals = (): DailyMealGroup => ({
   breakfast: { mealId: null, items: [] },

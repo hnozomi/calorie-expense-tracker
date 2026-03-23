@@ -24,16 +24,16 @@ export const getWeeklyReportQueryOptions = (
       });
       if (error) throw error;
 
-      const entries: DailyReportEntry[] = ((data ?? []) as WeeklySummaryRow[]).map(
-        (row) => ({
-          date: row.date,
-          calories: Number(row.total_calories),
-          protein: Number(row.total_protein),
-          fat: Number(row.total_fat),
-          carbs: Number(row.total_carbs),
-          totalCost: Number(row.total_cost),
-        }),
-      );
+      const entries: DailyReportEntry[] = (
+        (data ?? []) as WeeklySummaryRow[]
+      ).map((row) => ({
+        date: row.date,
+        calories: Number(row.total_calories),
+        protein: Number(row.total_protein),
+        fat: Number(row.total_fat),
+        carbs: Number(row.total_carbs),
+        totalCost: Number(row.total_cost),
+      }));
 
       const daysWithData = entries.filter((entry) => entry.calories > 0).length;
       const divisor = Math.max(daysWithData, 1);

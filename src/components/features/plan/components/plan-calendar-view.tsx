@@ -1,10 +1,9 @@
 "use client";
 
-import { useHydrateAtoms } from "jotai/utils";
 import { ChevronLeft, ChevronRight } from "lucide-react";
-import { useWeekStartNavigation } from "@/hooks";
 import { Header, PageContainer } from "@/components/features/layout";
 import { Button } from "@/components/ui/button";
+import { useWeekStartNavigation } from "@/hooks";
 import { formatWeekLabel, getThisMonday } from "@/utils";
 import { useMealPlans } from "../hooks/use-meal-plans";
 import { planWeekStartAtom } from "../stores/plan-week-atom";
@@ -12,17 +11,12 @@ import { PlanCalendarGrid } from "./plan-calendar-grid";
 import { PlanWeeklySummary } from "./plan-weekly-summary";
 
 /** Main view for the meal planning calendar */
-const PlanCalendarView = ({
-  initialWeekStart,
-}: {
-  initialWeekStart: string;
-}) => {
-  useHydrateAtoms([[planWeekStartAtom, initialWeekStart]]);
-
-  const { value: weekStart, shiftBackward, shiftForward } = useWeekStartNavigation(
-    planWeekStartAtom,
-    getThisMonday(),
-  );
+const PlanCalendarView = () => {
+  const {
+    value: weekStart,
+    shiftBackward,
+    shiftForward,
+  } = useWeekStartNavigation(planWeekStartAtom, getThisMonday());
   const { data: plans } = useMealPlans(weekStart);
   const weekLabel = formatWeekLabel(weekStart);
   return (

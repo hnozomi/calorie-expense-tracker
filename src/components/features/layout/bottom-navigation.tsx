@@ -32,8 +32,7 @@ const BottomNavigation = () => {
     >
       <div className="mx-auto flex h-16 max-w-lg items-center justify-around">
         {NAV_ITEMS.map(({ href, label, icon: Icon }) => {
-          const isActive =
-            pathname === href || pathname.startsWith(`${href}/`);
+          const isActive = pathname === href || pathname.startsWith(`${href}/`);
           return (
             <Link
               key={href}

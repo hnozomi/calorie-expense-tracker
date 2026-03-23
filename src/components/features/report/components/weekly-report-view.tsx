@@ -1,6 +1,5 @@
 "use client";
 
-import { useHydrateAtoms } from "jotai/utils";
 import {
   ChevronLeft,
   ChevronRight,
@@ -8,10 +7,10 @@ import {
   Flame,
   Wallet,
 } from "lucide-react";
-import { useWeekStartNavigation } from "@/hooks";
 import { Header, PageContainer } from "@/components/features/layout";
 import { Button } from "@/components/ui/button";
 import { SectionHeader } from "@/components/ui/section-header";
+import { useWeekStartNavigation } from "@/hooks";
 import { formatWeekLabel, getThisMonday } from "@/utils";
 import { useWeeklyReport } from "../hooks/use-weekly-report";
 import { reportWeekStartAtom } from "../stores/report-week-atom";
@@ -20,17 +19,12 @@ import { WeeklyCostChart } from "./weekly-cost-chart";
 import { WeeklyPfcChart } from "./weekly-pfc-chart";
 
 /** Main view for the weekly report */
-const WeeklyReportView = ({
-  initialWeekStart,
-}: {
-  initialWeekStart: string;
-}) => {
-  useHydrateAtoms([[reportWeekStartAtom, initialWeekStart]]);
-
-  const { value: weekStart, shiftBackward, shiftForward } = useWeekStartNavigation(
-    reportWeekStartAtom,
-    getThisMonday(),
-  );
+const WeeklyReportView = () => {
+  const {
+    value: weekStart,
+    shiftBackward,
+    shiftForward,
+  } = useWeekStartNavigation(reportWeekStartAtom, getThisMonday());
   const { data: report } = useWeeklyReport(weekStart);
   const weekLabel = formatWeekLabel(weekStart);
 

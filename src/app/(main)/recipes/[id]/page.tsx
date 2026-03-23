@@ -1,28 +1,22 @@
-import { dehydrate, HydrationBoundary } from "@tanstack/react-query";
-import { RecipeFormView } from "@/components/features/recipes";
-import { getQueryClient } from "@/lib/get-query-client";
-import { prefetchRecipeDetail } from "@/lib/prefetch";
-import { createClient } from "@/lib/supabase/server";
+import { Suspense } from "react";
+import {
+  RecipeFormSkeleton,
+  RecipeFormView,
+} from "@/components/features/recipes";
 
 type RecipeDetailPageProps = {
   params: Promise<{ id: string }>;
 };
 
-/** Recipe create/edit page — prefetch detail for existing recipes */
+/** Recipe create/edit page */
 export default async function RecipeDetailPage({
   params,
 }: RecipeDetailPageProps) {
   const { id } = await params;
-  const queryClient = getQueryClient();
-
-  if (id !== "new") {
-    const supabase = await createClient();
-    await prefetchRecipeDetail(queryClient, supabase, id);
-  }
 
   return (
-    <HydrationBoundary state={dehydrate(queryClient)}>
+    <Suspense fallback={<RecipeFormSkeleton />}>
       <RecipeFormView id={id} />
-    </HydrationBoundary>
+    </Suspense>
   );
 }

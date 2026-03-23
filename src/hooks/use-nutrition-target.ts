@@ -5,8 +5,8 @@ import {
   useQueryClient,
   useSuspenseQuery,
 } from "@tanstack/react-query";
-import { queryKeys, useSupabase } from "@/hooks";
 import { getNutritionTargetQueryOptions } from "@/components/features/settings/queries";
+import { queryKeys, useSupabase } from "@/hooks";
 
 /** Fetch the current user's nutrition targets */
 export const useNutritionTarget = () => {

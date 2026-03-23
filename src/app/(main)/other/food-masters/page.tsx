@@ -1,20 +1,14 @@
-import { dehydrate, HydrationBoundary } from "@tanstack/react-query";
-import { FoodMasterListView } from "@/components/features/food-masters";
-import { getQueryClient } from "@/lib/get-query-client";
-import { prefetchFoodMasters } from "@/lib/prefetch";
-import { createClient } from "@/lib/supabase/server";
+import { Suspense } from "react";
+import {
+  FoodMasterListSkeleton,
+  FoodMasterListView,
+} from "@/components/features/food-masters";
 
-/** Food masters list page — prefetch list server-side */
-export default async function FoodMastersPage() {
-  const queryClient = getQueryClient();
-  const supabase = await createClient();
-
-  /** Prefetch data so dehydrate() captures it in the cache */
-  await prefetchFoodMasters(queryClient, supabase);
-
+/** Food masters list page */
+export default function FoodMastersPage() {
   return (
-    <HydrationBoundary state={dehydrate(queryClient)}>
+    <Suspense fallback={<FoodMasterListSkeleton />}>
       <FoodMasterListView />
-    </HydrationBoundary>
+    </Suspense>
   );
 }
