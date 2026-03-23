@@ -1,23 +1,15 @@
 "use client";
 
-import { zodResolver } from "@hookform/resolvers/zod";
 import {
   ArrowLeft,
   Flame,
   Notebook,
-  Plus,
-  ShoppingBasket,
   Sparkles,
   Tag,
   Trash2,
   Utensils,
-  X,
 } from "lucide-react";
 import { useRouter } from "next/navigation";
-import { useCallback, useState } from "react";
-import type { Resolver } from "react-hook-form";
-import { useForm } from "react-hook-form";
-import { toast } from "sonner";
 import { Header, PageContainer } from "@/components/features/layout";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -26,15 +18,8 @@ import { PfcDot } from "@/components/ui/pfc-display";
 import { SectionHeader } from "@/components/ui/section-header";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Textarea } from "@/components/ui/textarea";
-import { useDeleteRecipe } from "../hooks/use-delete-recipe";
-import { useRecipeDetail } from "../hooks/use-recipe-detail";
-import { useSaveRecipe } from "../hooks/use-save-recipe";
-import type {
-  IngredientFormValues,
-  RecipeFormValues,
-  RecipeIngredient,
-} from "../types/recipe";
-import { recipeFormSchema } from "../types/recipe";
+import { useRecipeFormController } from "../hooks/use-recipe-form-controller";
+import { RecipeIngredientsEditor } from "./recipe-ingredients-editor";
 
 type RecipeFormViewProps = {
   id: string;
@@ -43,135 +28,26 @@ type RecipeFormViewProps = {
 /** Form view for creating or editing a recipe with ingredients */
 const RecipeFormView = ({ id }: RecipeFormViewProps) => {
   const router = useRouter();
-  const isNew = id === "new";
-  const { data: existing, isLoading } = useRecipeDetail(isNew ? undefined : id);
-  const saveMutation = useSaveRecipe();
-  const deleteMutation = useDeleteRecipe();
-  const [isDeleteConfirmOpen, setIsDeleteConfirmOpen] = useState(false);
-
-  /** Local ingredients state managed separately from react-hook-form */
-  const [ingredients, setIngredients] = useState<
-    (IngredientFormValues & { tempId: string })[]
-  >(() => {
-    if (existing?.ingredients) {
-      return existing.ingredients.map((ing: RecipeIngredient) => ({
-        tempId: crypto.randomUUID(),
-        id: ing.id,
-        ingredientName: ing.ingredientName,
-        quantity: ing.quantity,
-        unit: ing.unit,
-        unitPrice: ing.unitPrice,
-      }));
-    }
-    return [];
-  });
-
-  /** Sync ingredients from existing data when loaded */
-  const [hasInitialized, setHasInitialized] = useState(false);
-  if (existing && !hasInitialized && !isNew) {
-    setIngredients(
-      existing.ingredients.map((ing: RecipeIngredient) => ({
-        tempId: crypto.randomUUID(),
-        id: ing.id,
-        ingredientName: ing.ingredientName,
-        quantity: ing.quantity,
-        unit: ing.unit,
-        unitPrice: ing.unitPrice,
-      })),
-    );
-    setHasInitialized(true);
-  }
-
   const {
-    register,
-    handleSubmit,
-    formState: { errors },
-  } = useForm<RecipeFormValues>({
-    resolver: zodResolver(recipeFormSchema) as Resolver<RecipeFormValues>,
-    values: existing
-      ? {
-          name: existing.name,
-          servings: existing.servings,
-          calories: existing.calories,
-          protein: existing.protein,
-          fat: existing.fat,
-          carbs: existing.carbs,
-          notes: existing.notes ?? undefined,
-        }
-      : {
-          name: "",
-          servings: 1,
-          calories: 0,
-          protein: 0,
-          fat: 0,
-          carbs: 0,
-        },
-  });
-
-  /** Add a blank ingredient row */
-  const handleAddIngredient = useCallback(() => {
-    setIngredients((prev) => [
-      ...prev,
-      {
-        tempId: crypto.randomUUID(),
-        ingredientName: "",
-        quantity: 1,
-        unit: "",
-        unitPrice: 0,
-      },
-    ]);
-  }, []);
-
-  /** Remove an ingredient by tempId */
-  const handleRemoveIngredient = useCallback((tempId: string) => {
-    setIngredients((prev) => prev.filter((ing) => ing.tempId !== tempId));
-  }, []);
-
-  /** Update an ingredient field */
-  const handleIngredientChange = useCallback(
-    (tempId: string, field: keyof IngredientFormValues, value: string) => {
-      setIngredients((prev) =>
-        prev.map((ing) => {
-          if (ing.tempId !== tempId) return ing;
-          if (field === "ingredientName" || field === "unit") {
-            return { ...ing, [field]: value };
-          }
-          return { ...ing, [field]: Number(value) || 0 };
-        }),
-      );
+    form: {
+      register,
+      formState: { errors },
     },
-    [],
-  );
-
-  /** Calculate total ingredient cost */
-  const totalIngredientCost = ingredients.reduce(
-    (sum, ing) => sum + ing.unitPrice * ing.quantity,
-    0,
-  );
-
-  const handleSave = async (values: RecipeFormValues) => {
-    try {
-      await saveMutation.mutateAsync({
-        id: isNew ? undefined : id,
-        values,
-        ingredients: ingredients.filter((ing) => ing.ingredientName.trim()),
-      });
-      toast.success(isNew ? "レシピを登録しました" : "変更を保存しました");
-      router.push("/recipes");
-    } catch {
-      toast.error("保存に失敗しました");
-    }
-  };
-
-  const handleDelete = async () => {
-    try {
-      await deleteMutation.mutateAsync(id);
-      toast.success("レシピを削除しました");
-      router.push("/recipes");
-    } catch {
-      toast.error("削除に失敗しました");
-    }
-  };
+    existing,
+    ingredients,
+    isDeleteConfirmOpen,
+    isLoading,
+    isNew,
+    totalIngredientCost,
+    deleteMutation,
+    saveMutation,
+    setIsDeleteConfirmOpen,
+    handleAddIngredient,
+    handleDelete,
+    handleIngredientChange,
+    handleRemoveIngredient,
+    handleSave,
+  } = useRecipeFormController({ id });
 
   if (!isNew && isLoading) {
     return (
@@ -214,7 +90,7 @@ const RecipeFormView = ({ id }: RecipeFormViewProps) => {
         </Button>
       </Header>
       <PageContainer>
-        <form onSubmit={handleSubmit(handleSave)} className="space-y-5 p-4">
+        <form onSubmit={handleSave} className="space-y-5 p-4">
           {/* ── 基本情報セクション ── */}
           <section className="space-y-3">
             <SectionHeader icon={Tag} label="基本情報" />
@@ -345,112 +221,12 @@ const RecipeFormView = ({ id }: RecipeFormViewProps) => {
           </section>
 
           {/* ── 材料セクション ── */}
-          <section className="space-y-3">
-            <SectionHeader icon={ShoppingBasket} label="材料">
-              <Button
-                type="button"
-                variant="ghost"
-                size="sm"
-                className="ml-auto h-7 gap-1 text-xs"
-                onClick={handleAddIngredient}
-              >
-                <Plus className="h-3.5 w-3.5" />
-                追加
-              </Button>
-            </SectionHeader>
-            <div className="space-y-3 rounded-xl border border-border/60 bg-muted/30 p-3.5">
-              {ingredients.length === 0 ? (
-                <p className="py-6 text-center text-sm text-muted-foreground">
-                  「追加」から材料を入力してください
-                </p>
-              ) : (
-                <div className="space-y-2.5">
-                  {ingredients.map((ing) => (
-                    <div
-                      key={ing.tempId}
-                      className="relative rounded-lg border border-border/60 bg-white p-3 shadow-sm dark:bg-background"
-                    >
-                      <Button
-                        type="button"
-                        variant="ghost"
-                        size="icon-sm"
-                        className="absolute right-1.5 top-1.5 h-6 w-6 text-muted-foreground hover:text-destructive"
-                        onClick={() => handleRemoveIngredient(ing.tempId)}
-                      >
-                        <X className="h-3.5 w-3.5" />
-                      </Button>
-                      <div className="space-y-2 pr-7">
-                        <Input
-                          placeholder="材料名"
-                          value={ing.ingredientName}
-                          onChange={(e) =>
-                            handleIngredientChange(
-                              ing.tempId,
-                              "ingredientName",
-                              e.target.value,
-                            )
-                          }
-                        />
-                        <div className="grid grid-cols-3 gap-2">
-                          <div className="space-y-1">
-                            <Label className="text-[10px] text-muted-foreground">
-                              数量
-                            </Label>
-                            <Input
-                              type="number"
-                              inputMode="decimal"
-                              step="any"
-                              value={ing.quantity || ""}
-                              onChange={(e) =>
-                                handleIngredientChange(
-                                  ing.tempId,
-                                  "quantity",
-                                  e.target.value,
-                                )
-                              }
-                            />
-                          </div>
-                          <div className="space-y-1">
-                            <Label className="text-[10px] text-muted-foreground">
-                              単位
-                            </Label>
-                            <Input
-                              placeholder="g, ml..."
-                              value={ing.unit}
-                              onChange={(e) =>
-                                handleIngredientChange(
-                                  ing.tempId,
-                                  "unit",
-                                  e.target.value,
-                                )
-                              }
-                            />
-                          </div>
-                          <div className="space-y-1">
-                            <Label className="text-[10px] text-muted-foreground">
-                              単価(円)
-                            </Label>
-                            <Input
-                              type="number"
-                              inputMode="decimal"
-                              value={ing.unitPrice || ""}
-                              onChange={(e) =>
-                                handleIngredientChange(
-                                  ing.tempId,
-                                  "unitPrice",
-                                  e.target.value,
-                                )
-                              }
-                            />
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              )}
-            </div>
-          </section>
+          <RecipeIngredientsEditor
+            ingredients={ingredients}
+            onAdd={handleAddIngredient}
+            onChange={handleIngredientChange}
+            onRemove={handleRemoveIngredient}
+          />
 
           {/* ── メモセクション ── */}
           <section className="space-y-3">

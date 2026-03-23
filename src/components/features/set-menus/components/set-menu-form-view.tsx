@@ -1,6 +1,5 @@
 "use client";
 
-import { zodResolver } from "@hookform/resolvers/zod";
 import {
   ArrowLeft,
   ClipboardList,
@@ -14,13 +13,7 @@ import {
   X,
 } from "lucide-react";
 import { useRouter } from "next/navigation";
-import { useCallback, useState } from "react";
-import type { Resolver } from "react-hook-form";
-import { useForm } from "react-hook-form";
-import { toast } from "sonner";
-import { useFoodMasters } from "@/components/features/food-masters/hooks/use-food-masters";
 import { Header, PageContainer } from "@/components/features/layout";
-import { useRecipes } from "@/components/features/recipes/hooks/use-recipes";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -29,16 +22,7 @@ import { PfcDot } from "@/components/ui/pfc-display";
 import { SectionHeader } from "@/components/ui/section-header";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { useDebounce } from "@/hooks";
-import { useDeleteSetMenu } from "../hooks/use-delete-set-menu";
-import { useSaveSetMenu } from "../hooks/use-save-set-menu";
-import { useSetMenuDetail } from "../hooks/use-set-menu-detail";
-import type {
-  SetMenuFormValues,
-  SetMenuItem,
-  SetMenuItemDraft,
-} from "../types/set-menu";
-import { setMenuFormSchema } from "../types/set-menu";
+import { useSetMenuFormController } from "../hooks/use-set-menu-form-controller";
 
 type SetMenuFormViewProps = {
   id: string;
@@ -47,158 +31,33 @@ type SetMenuFormViewProps = {
 /** Form view for creating or editing a set menu */
 const SetMenuFormView = ({ id }: SetMenuFormViewProps) => {
   const router = useRouter();
-  const isNew = id === "new";
-  const { data: existing, isLoading } = useSetMenuDetail(
-    isNew ? undefined : id,
-  );
-  const saveMutation = useSaveSetMenu();
-  const deleteMutation = useDeleteSetMenu();
-  const [isDeleteConfirmOpen, setIsDeleteConfirmOpen] = useState(false);
-  const [recipeSearch, setRecipeSearch] = useState("");
-  const [fmSearch, setFmSearch] = useState("");
-  const debouncedRecipeSearch = useDebounce(recipeSearch);
-  const debouncedFmSearch = useDebounce(fmSearch);
-  const { data: recipes } = useRecipes(debouncedRecipeSearch);
-  const { data: foodMasters } = useFoodMasters(debouncedFmSearch);
-
-  /** Items in the set menu */
-  const [items, setItems] = useState<SetMenuItemDraft[]>([]);
-
-  /** Sync items from existing data when loaded */
-  const [hasInitialized, setHasInitialized] = useState(false);
-  if (existing && !hasInitialized && !isNew) {
-    setItems(
-      existing.items.map((item: SetMenuItem) => ({
-        tempId: crypto.randomUUID(),
-        name: item.name,
-        recipeId: item.recipeId,
-        foodMasterId: item.foodMasterId,
-        calories: item.calories,
-        protein: item.protein,
-        fat: item.fat,
-        carbs: item.carbs,
-        cost: item.cost,
-        servingQuantity: item.servingQuantity,
-      })),
-    );
-    setHasInitialized(true);
-  }
-
   const {
-    register,
-    handleSubmit,
-    formState: { errors },
-  } = useForm<SetMenuFormValues>({
-    resolver: zodResolver(setMenuFormSchema) as Resolver<SetMenuFormValues>,
-    values: existing ? { name: existing.name } : { name: "" },
-  });
-
-  /** Add a recipe to items (1 serving = per-person values) */
-  const handleAddRecipe = useCallback(
-    (recipe: NonNullable<typeof recipes>[number]) => {
-      setItems((prev) => [
-        ...prev,
-        {
-          tempId: crypto.randomUUID(),
-          name: recipe.name,
-          recipeId: recipe.id,
-          foodMasterId: null,
-          calories: recipe.calories / recipe.servings,
-          protein: recipe.protein / recipe.servings,
-          fat: recipe.fat / recipe.servings,
-          carbs: recipe.carbs / recipe.servings,
-          cost:
-            recipe.ingredients.reduce(
-              (sum, ing) => sum + ing.unitPrice * ing.quantity,
-              0,
-            ) / recipe.servings,
-          servingQuantity: 1,
-        },
-      ]);
+    form: {
+      register,
+      formState: { errors },
     },
-    [],
-  );
-
-  /** Add a food master to items */
-  const handleAddFoodMaster = useCallback(
-    (fm: NonNullable<typeof foodMasters>[number]) => {
-      setItems((prev) => [
-        ...prev,
-        {
-          tempId: crypto.randomUUID(),
-          name: fm.name,
-          recipeId: null,
-          foodMasterId: fm.id,
-          calories: fm.calories,
-          protein: fm.protein,
-          fat: fm.fat,
-          carbs: fm.carbs,
-          cost: fm.defaultPrice ?? 0,
-          servingQuantity: 1,
-        },
-      ]);
-    },
-    [],
-  );
-
-  /** Remove item */
-  const handleRemoveItem = useCallback((tempId: string) => {
-    setItems((prev) => prev.filter((item) => item.tempId !== tempId));
-  }, []);
-
-  /** Adjust serving quantity by delta */
-  const handleAdjustQuantity = useCallback((tempId: string, delta: number) => {
-    setItems((prev) =>
-      prev.map((item) => {
-        if (item.tempId !== tempId) return item;
-        const newQty = Math.max(0.5, item.servingQuantity + delta);
-        return { ...item, servingQuantity: newQty };
-      }),
-    );
-  }, []);
-
-  /** Calculate totals */
-  const totals = items.reduce(
-    (acc, item) => ({
-      calories: acc.calories + item.calories * item.servingQuantity,
-      protein: acc.protein + item.protein * item.servingQuantity,
-      fat: acc.fat + item.fat * item.servingQuantity,
-      carbs: acc.carbs + item.carbs * item.servingQuantity,
-      cost: acc.cost + item.cost * item.servingQuantity,
-    }),
-    { calories: 0, protein: 0, fat: 0, carbs: 0, cost: 0 },
-  );
-
-  const handleSave = async (values: SetMenuFormValues) => {
-    if (items.length === 0) {
-      toast.error("アイテムを1つ以上追加してください");
-      return;
-    }
-
-    try {
-      await saveMutation.mutateAsync({
-        id: isNew ? undefined : id,
-        name: values.name,
-        items,
-      });
-      toast.success(
-        isNew ? "セットメニューを登録しました" : "変更を保存しました",
-      );
-      router.push("/other/set-menus");
-    } catch {
-      toast.error("保存に失敗しました");
-    }
-  };
-
-  const handleDelete = async () => {
-    try {
-      await deleteMutation.mutateAsync(id);
-      toast.success("セットメニューを削除しました");
-      router.push("/other/set-menus");
-    } catch {
-      toast.error("削除に失敗しました");
-    }
-  };
+    existing,
+    foodMasters,
+    fmSearch,
+    isDeleteConfirmOpen,
+    isLoading,
+    isNew,
+    items,
+    recipes,
+    recipeSearch,
+    totals,
+    deleteMutation,
+    saveMutation,
+    setFmSearch,
+    setIsDeleteConfirmOpen,
+    setRecipeSearch,
+    handleAddFoodMaster,
+    handleAddRecipe,
+    handleAdjustQuantity,
+    handleDelete,
+    handleRemoveItem,
+    handleSave,
+  } = useSetMenuFormController(id);
 
   if (!isNew && isLoading) {
     return (
@@ -236,7 +95,7 @@ const SetMenuFormView = ({ id }: SetMenuFormViewProps) => {
         </Button>
       </Header>
       <PageContainer>
-        <form onSubmit={handleSubmit(handleSave)} className="space-y-5 p-4">
+        <form onSubmit={handleSave} className="space-y-5 p-4">
           {/* ── 基本情報セクション ── */}
           <section className="space-y-3">
             <SectionHeader icon={Tag} label="基本情報" />

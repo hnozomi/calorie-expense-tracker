@@ -1,6 +1,5 @@
 "use client";
 
-import { zodResolver } from "@hookform/resolvers/zod";
 import {
   ArrowLeft,
   Camera,
@@ -14,15 +13,8 @@ import {
   Utensils,
 } from "lucide-react";
 import { useRouter } from "next/navigation";
-import { useCallback, useState } from "react";
-import type { Resolver } from "react-hook-form";
-import { useForm } from "react-hook-form";
-import { toast } from "sonner";
 import { Header, PageContainer } from "@/components/features/layout";
-import {
-  OcrCameraOverlay,
-  type OcrNutritionResult,
-} from "@/components/features/ocr";
+import { OcrCameraOverlay } from "@/components/features/ocr";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -38,13 +30,8 @@ import {
 import { Skeleton } from "@/components/ui/skeleton";
 import { Textarea } from "@/components/ui/textarea";
 import { FOOD_CATEGORIES, FOOD_CATEGORY_LABELS } from "@/types";
-import { useDeleteFoodMaster } from "../hooks/use-delete-food-master";
-import { useFoodMasterDetail } from "../hooks/use-food-master-detail";
-import { useSaveFoodMaster } from "../hooks/use-save-food-master";
-import {
-  type FoodMasterFormValues,
-  foodMasterFormSchema,
-} from "../types/food-master";
+import { useFoodMasterFormController } from "../hooks/use-food-master-form-controller";
+import type { FoodMasterFormValues } from "../types/food-master";
 
 type FoodMasterFormViewProps = {
   id: string;
@@ -53,81 +40,28 @@ type FoodMasterFormViewProps = {
 /** Form view for creating or editing a food master */
 const FoodMasterFormView = ({ id }: FoodMasterFormViewProps) => {
   const router = useRouter();
-  const isNew = id === "new";
-  const { data: existing, isLoading } = useFoodMasterDetail(
-    isNew ? undefined : id,
-  );
-  const saveMutation = useSaveFoodMaster();
-  const deleteMutation = useDeleteFoodMaster();
-  const [isDeleteConfirmOpen, setIsDeleteConfirmOpen] = useState(false);
-  const [isOcrOpen, setIsOcrOpen] = useState(false);
-
   const {
-    register,
-    handleSubmit,
-    setValue,
-    watch,
-    formState: { errors },
-  } = useForm<FoodMasterFormValues>({
-    resolver: zodResolver(
-      foodMasterFormSchema,
-    ) as Resolver<FoodMasterFormValues>,
-    values: existing
-      ? {
-          name: existing.name,
-          brand: existing.brand ?? undefined,
-          category: existing.category ?? undefined,
-          calories: existing.calories,
-          protein: existing.protein,
-          fat: existing.fat,
-          carbs: existing.carbs,
-          defaultPrice: existing.defaultPrice ?? undefined,
-          notes: existing.notes ?? undefined,
-        }
-      : undefined,
-  });
+    form: {
+      register,
+      watch,
+      setValue,
+      formState: { errors },
+    },
+    existing,
+    isDeleteConfirmOpen,
+    isLoading,
+    isNew,
+    isOcrOpen,
+    deleteMutation,
+    saveMutation,
+    setIsDeleteConfirmOpen,
+    setIsOcrOpen,
+    handleDelete,
+    handleOcrResult,
+    handleSave,
+  } = useFoodMasterFormController(id);
 
   const categoryValue = watch("category");
-
-  /** Fill form fields with OCR recognition results */
-  const handleOcrResult = useCallback(
-    (result: OcrNutritionResult) => {
-      if (result.name) setValue("name", result.name, { shouldValidate: true });
-      if (result.calories != null)
-        setValue("calories", result.calories, { shouldValidate: true });
-      if (result.protein != null)
-        setValue("protein", result.protein, { shouldValidate: true });
-      if (result.fat != null)
-        setValue("fat", result.fat, { shouldValidate: true });
-      if (result.carbs != null)
-        setValue("carbs", result.carbs, { shouldValidate: true });
-      toast.success("OCR結果を反映しました");
-    },
-    [setValue],
-  );
-
-  const handleSave = async (values: FoodMasterFormValues) => {
-    try {
-      await saveMutation.mutateAsync({
-        id: isNew ? undefined : id,
-        values,
-      });
-      toast.success(isNew ? "食品を登録しました" : "変更を保存しました");
-      router.push("/other/food-masters");
-    } catch {
-      toast.error("保存に失敗しました");
-    }
-  };
-
-  const handleDelete = async () => {
-    try {
-      await deleteMutation.mutateAsync(id);
-      toast.success("食品を削除しました");
-      router.push("/other/food-masters");
-    } catch {
-      toast.error("削除に失敗しました");
-    }
-  };
 
   if (!isNew && isLoading) {
     return (
@@ -176,7 +110,7 @@ const FoodMasterFormView = ({ id }: FoodMasterFormViewProps) => {
         </Button>
       </Header>
       <PageContainer>
-        <form onSubmit={handleSubmit(handleSave)} className="space-y-5 p-4">
+        <form onSubmit={handleSave} className="space-y-5 p-4">
           {/* ── 基本情報セクション ── */}
           <section className="space-y-3">
             <SectionHeader icon={Tag} label="基本情報" />

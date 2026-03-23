@@ -1,10 +1,5 @@
 "use client";
 
-import { useCallback, useState } from "react";
-import { toast } from "sonner";
-import { useFoodMasters } from "@/components/features/food-masters/hooks/use-food-masters";
-import { useRecipes } from "@/components/features/recipes/hooks/use-recipes";
-import { useSetMenus } from "@/components/features/set-menus/hooks/use-set-menus";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -16,12 +11,11 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { useDebounce } from "@/hooks";
 import type { MealType } from "@/types";
 import { MEAL_TYPE_LABELS } from "@/types";
-import { useDeleteMealPlan } from "../hooks/use-delete-meal-plan";
-import { useSaveMealPlan } from "../hooks/use-save-meal-plan";
-import type { MealPlan, MealPlanFormValues } from "../types/meal-plan";
+import { formatDisplayDate } from "@/utils";
+import { usePlanMenuSelectController } from "../hooks/use-plan-menu-select-controller";
+import type { MealPlan } from "../types/meal-plan";
 
 type PlanMenuSelectModalProps = {
   isOpen: boolean;
@@ -39,146 +33,35 @@ const PlanMenuSelectModal = ({
   mealType,
   existingPlan,
 }: PlanMenuSelectModalProps) => {
-  const saveMutation = useSaveMealPlan();
-  const deleteMutation = useDeleteMealPlan();
-  const [recipeSearch, setRecipeSearch] = useState("");
-  const [fmSearch, setFmSearch] = useState("");
-  const debouncedRecipeSearch = useDebounce(recipeSearch);
-  const debouncedFmSearch = useDebounce(fmSearch);
-  const { data: recipes } = useRecipes(debouncedRecipeSearch);
-  const { data: foodMasters } = useFoodMasters(debouncedFmSearch);
-  const { data: setMenus } = useSetMenus();
+  const {
+    deleteMutation,
+    foodMasters,
+    fmSearch,
+    manualCalories,
+    manualCost,
+    manualName,
+    recipes,
+    recipeSearch,
+    saveMutation,
+    setFmSearch,
+    setManualCalories,
+    setManualCost,
+    setManualName,
+    setRecipeSearch,
+    setMenus,
+    handleDelete,
+    handleSaveManual,
+    handleSelectFoodMaster,
+    handleSelectRecipe,
+    handleSelectSetMenu,
+  } = usePlanMenuSelectController({
+    date,
+    mealType,
+    existingPlan,
+    onClose,
+  });
 
-  /** Manual input state */
-  const [manualName, setManualName] = useState(existingPlan?.plannedName ?? "");
-  const [manualCalories, setManualCalories] = useState(
-    existingPlan ? String(existingPlan.calories) : "0",
-  );
-  const [manualCost, setManualCost] = useState(
-    existingPlan ? String(existingPlan.estimatedCost) : "0",
-  );
-
-  /** Save a plan entry from the given values */
-  const handleSave = useCallback(
-    async (
-      values: MealPlanFormValues,
-      refs?: {
-        recipeId?: string;
-        foodMasterId?: string;
-        setMenuId?: string;
-      },
-    ) => {
-      try {
-        await saveMutation.mutateAsync({
-          id: existingPlan?.id,
-          date,
-          mealType,
-          values,
-          recipeId: refs?.recipeId ?? null,
-          foodMasterId: refs?.foodMasterId ?? null,
-          setMenuId: refs?.setMenuId ?? null,
-        });
-        toast.success("献立を保存しました");
-        onClose();
-      } catch (error) {
-        console.error("Failed to save meal plan:", error);
-        toast.error("保存に失敗しました");
-      }
-    },
-    [saveMutation, existingPlan, date, mealType, onClose],
-  );
-
-  /** Save manual entry */
-  const handleSaveManual = useCallback(() => {
-    if (!manualName.trim()) {
-      toast.error("メニュー名を入力してください");
-      return;
-    }
-    handleSave({
-      plannedName: manualName.trim(),
-      calories: Number(manualCalories) || 0,
-      protein: 0,
-      fat: 0,
-      carbs: 0,
-      estimatedCost: Number(manualCost) || 0,
-    });
-  }, [manualName, manualCalories, manualCost, handleSave]);
-
-  /** Add from recipe */
-  const handleSelectRecipe = useCallback(
-    (recipe: NonNullable<typeof recipes>[number]) => {
-      const perPerson = recipe.servings || 1;
-      const cost =
-        recipe.ingredients.reduce(
-          (sum, ing) => sum + ing.unitPrice * ing.quantity,
-          0,
-        ) / perPerson;
-      handleSave(
-        {
-          plannedName: recipe.name,
-          calories: recipe.calories / perPerson,
-          protein: recipe.protein / perPerson,
-          fat: recipe.fat / perPerson,
-          carbs: recipe.carbs / perPerson,
-          estimatedCost: cost,
-        },
-        { recipeId: recipe.id },
-      );
-    },
-    [handleSave],
-  );
-
-  /** Add from food master */
-  const handleSelectFoodMaster = useCallback(
-    (fm: NonNullable<typeof foodMasters>[number]) => {
-      handleSave(
-        {
-          plannedName: fm.name,
-          calories: fm.calories,
-          protein: fm.protein,
-          fat: fm.fat,
-          carbs: fm.carbs,
-          estimatedCost: fm.defaultPrice ?? 0,
-        },
-        { foodMasterId: fm.id },
-      );
-    },
-    [handleSave],
-  );
-
-  /** Add from set menu */
-  const handleSelectSetMenu = useCallback(
-    (sm: NonNullable<typeof setMenus>[number]) => {
-      handleSave(
-        {
-          plannedName: sm.name,
-          calories: sm.totalCalories,
-          protein: sm.totalProtein,
-          fat: sm.totalFat,
-          carbs: sm.totalCarbs,
-          estimatedCost: sm.totalCost,
-        },
-        { setMenuId: sm.id },
-      );
-    },
-    [handleSave],
-  );
-
-  /** Delete existing plan */
-  const handleDelete = useCallback(async () => {
-    if (!existingPlan) return;
-    try {
-      await deleteMutation.mutateAsync(existingPlan.id);
-      toast.success("献立を削除しました");
-      onClose();
-    } catch (error) {
-      console.error("Failed to delete meal plan:", error);
-      toast.error("削除に失敗しました");
-    }
-  }, [existingPlan, deleteMutation, onClose]);
-
-  const dateObj = new Date(`${date}T00:00:00`);
-  const dateLabel = `${dateObj.getMonth() + 1}/${dateObj.getDate()}（${"日月火水木金土"[dateObj.getDay()]}）`;
+  const dateLabel = formatDisplayDate(date);
 
   return (
     <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
