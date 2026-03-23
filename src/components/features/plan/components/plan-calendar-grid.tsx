@@ -4,7 +4,7 @@ import { PfcDisplay } from "@/components/ui/pfc-display";
 import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area";
 import { useNutritionTarget } from "@/hooks";
 import { MEAL_TYPE_LABELS } from "@/types";
-import { cn } from "@/utils";
+import { buildWeekDays, cn, getTodayString } from "@/utils";
 import type { MealPlan } from "../types/meal-plan";
 import { PlanCell } from "./plan-cell";
 
@@ -16,41 +16,44 @@ type PlanCalendarGridProps = {
   plans: MealPlan[];
 };
 
-/** Build 7 days starting from weekStart */
-const buildWeekDays = (weekStart: string) => {
-  const days: { date: string; label: string; dayOfWeek: string }[] = [];
-  const weekDays = "日月火水木金土";
-  for (let i = 0; i < 7; i++) {
-    const d = new Date(`${weekStart}T00:00:00`);
-    d.setDate(d.getDate() + i);
-    const y = d.getFullYear();
-    const m = String(d.getMonth() + 1).padStart(2, "0");
-    const day = String(d.getDate()).padStart(2, "0");
-    days.push({
-      date: `${y}-${m}-${day}`,
-      label: `${d.getMonth() + 1}/${d.getDate()}`,
-      dayOfWeek: weekDays[d.getDay()],
-    });
-  }
-  return days;
+type DailyTotals = {
+  calories: number;
+  protein: number;
+  fat: number;
+  carbs: number;
 };
 
-/** Calculate total calories for a specific date */
-const getDailyCalories = (plans: MealPlan[], date: string) =>
-  plans.filter((p) => p.date === date).reduce((sum, p) => sum + p.calories, 0);
+const EMPTY_TOTALS: DailyTotals = {
+  calories: 0,
+  protein: 0,
+  fat: 0,
+  carbs: 0,
+};
 
-/** Calculate total PFC for a specific date */
-const getDailyPfc = (plans: MealPlan[], date: string) =>
-  plans
-    .filter((p) => p.date === date)
-    .reduce(
-      (acc, p) => ({
-        protein: acc.protein + p.protein,
-        fat: acc.fat + p.fat,
-        carbs: acc.carbs + p.carbs,
-      }),
-      { protein: 0, fat: 0, carbs: 0 },
-    );
+const buildPlanIndex = (plans: MealPlan[]) => {
+  const plansBySlot = new Map<string, MealPlan[]>();
+  const totalsByDate = new Map<string, DailyTotals>();
+
+  for (const plan of plans) {
+    const slotKey = `${plan.date}:${plan.mealType}`;
+    const existingSlotPlans = plansBySlot.get(slotKey);
+    if (existingSlotPlans) {
+      existingSlotPlans.push(plan);
+    } else {
+      plansBySlot.set(slotKey, [plan]);
+    }
+
+    const currentTotals = totalsByDate.get(plan.date) ?? EMPTY_TOTALS;
+    totalsByDate.set(plan.date, {
+      calories: currentTotals.calories + plan.calories,
+      protein: currentTotals.protein + plan.protein,
+      fat: currentTotals.fat + plan.fat,
+      carbs: currentTotals.carbs + plan.carbs,
+    });
+  }
+
+  return { plansBySlot, totalsByDate };
+};
 
 /** Horizontally scrollable 7-day × 3-meal grid with daily calorie totals */
 const PlanCalendarGrid = ({ weekStart, plans }: PlanCalendarGridProps) => {
@@ -58,22 +61,11 @@ const PlanCalendarGrid = ({ weekStart, plans }: PlanCalendarGridProps) => {
   const { data: target } = useNutritionTarget();
   const targetCalories = target?.targetCalories ?? 0;
   const hasTarget = targetCalories > 0;
-
-  /** Get plans for a specific date and meal type */
-  const getPlans = (date: string, mealType: string) =>
-    plans.filter((p) => p.date === date && p.mealType === mealType);
-
-  /** Check if a date is today */
-  const todayStr = (() => {
-    const now = new Date();
-    const y = now.getFullYear();
-    const m = String(now.getMonth() + 1).padStart(2, "0");
-    const d = String(now.getDate()).padStart(2, "0");
-    return `${y}-${m}-${d}`;
-  })();
-
-  /** Find min/max daily calories for relative coloring */
-  const dailyCalories = days.map((day) => getDailyCalories(plans, day.date));
+  const { plansBySlot, totalsByDate } = buildPlanIndex(plans);
+  const todayStr = getTodayString();
+  const dailyCalories = days.map(
+    (day) => (totalsByDate.get(day.date) ?? EMPTY_TOTALS).calories,
+  );
   const maxCal = Math.max(...dailyCalories, 1);
 
   return (
@@ -134,7 +126,7 @@ const PlanCalendarGrid = ({ weekStart, plans }: PlanCalendarGridProps) => {
                   <PlanCell
                     date={day.date}
                     mealType={mealType}
-                    plans={getPlans(day.date, mealType)}
+                    plans={plansBySlot.get(`${day.date}:${mealType}`) ?? []}
                   />
                 </div>
               );
@@ -150,8 +142,8 @@ const PlanCalendarGrid = ({ weekStart, plans }: PlanCalendarGridProps) => {
             </span>
           </div>
           {days.map((day, i) => {
+            const totals = totalsByDate.get(day.date) ?? EMPTY_TOTALS;
             const cal = dailyCalories[i];
-            const pfc = getDailyPfc(plans, day.date);
             const isToday = day.date === todayStr;
             const isOver = hasTarget && cal > targetCalories;
             const isLow = hasTarget && cal > 0 && cal < targetCalories * 0.8;
@@ -199,9 +191,9 @@ const PlanCalendarGrid = ({ weekStart, plans }: PlanCalendarGridProps) => {
                       />
                     </div>
                     <PfcDisplay
-                      protein={pfc.protein}
-                      fat={pfc.fat}
-                      carbs={pfc.carbs}
+                      protein={totals.protein}
+                      fat={totals.fat}
+                      carbs={totals.carbs}
                       className="mt-1 flex-col gap-0 text-[9px]"
                       precision={0}
                     />
