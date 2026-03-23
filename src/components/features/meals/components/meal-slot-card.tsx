@@ -5,6 +5,7 @@ import { Plus } from "lucide-react";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { PfcDisplay } from "@/components/ui/pfc-display";
 import { MEAL_TYPE_LABELS, type MealType } from "@/types";
 import { cn, MEAL_TYPE_META } from "@/utils";
 import { selectedDateAtom } from "../stores/date-atom";
@@ -78,15 +79,23 @@ const MealSlotCard = ({ mealType, items }: MealSlotCardProps) => {
                 <button
                   key={item.id}
                   type="button"
-                  className="flex w-full items-center justify-between rounded-lg px-2.5 py-2 text-left text-sm transition-colors hover:bg-muted active:bg-muted/80"
+                  className="flex w-full flex-col rounded-lg px-2.5 py-2 text-left text-sm transition-colors hover:bg-muted active:bg-muted/80"
                   onClick={() => setEditingItem(item)}
                 >
-                  <span className="flex-1 truncate font-medium">
-                    {item.name}
-                  </span>
-                  <span className="ml-2 tabular-nums text-muted-foreground">
-                    {Math.round(item.calories)} kcal
-                  </span>
+                  <div className="flex w-full items-center justify-between">
+                    <span className="flex-1 truncate font-medium">
+                      {item.name}
+                    </span>
+                    <span className="ml-2 tabular-nums text-muted-foreground">
+                      {Math.round(item.calories)} kcal
+                    </span>
+                  </div>
+                  <PfcDisplay
+                    protein={item.protein}
+                    fat={item.fat}
+                    carbs={item.carbs}
+                    className="mt-0.5 self-end"
+                  />
                 </button>
               ))}
               <Button

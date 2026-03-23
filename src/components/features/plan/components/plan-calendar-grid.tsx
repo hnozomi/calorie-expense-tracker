@@ -1,5 +1,6 @@
 "use client";
 
+import { PfcDisplay } from "@/components/ui/pfc-display";
 import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area";
 import { useNutritionTarget } from "@/hooks";
 import { MEAL_TYPE_LABELS } from "@/types";
@@ -37,6 +38,19 @@ const buildWeekDays = (weekStart: string) => {
 /** Calculate total calories for a specific date */
 const getDailyCalories = (plans: MealPlan[], date: string) =>
   plans.filter((p) => p.date === date).reduce((sum, p) => sum + p.calories, 0);
+
+/** Calculate total PFC for a specific date */
+const getDailyPfc = (plans: MealPlan[], date: string) =>
+  plans
+    .filter((p) => p.date === date)
+    .reduce(
+      (acc, p) => ({
+        protein: acc.protein + p.protein,
+        fat: acc.fat + p.fat,
+        carbs: acc.carbs + p.carbs,
+      }),
+      { protein: 0, fat: 0, carbs: 0 },
+    );
 
 /** Horizontally scrollable 7-day × 3-meal grid with daily calorie totals */
 const PlanCalendarGrid = ({ weekStart, plans }: PlanCalendarGridProps) => {
@@ -137,6 +151,7 @@ const PlanCalendarGrid = ({ weekStart, plans }: PlanCalendarGridProps) => {
           </div>
           {days.map((day, i) => {
             const cal = dailyCalories[i];
+            const pfc = getDailyPfc(plans, day.date);
             const isToday = day.date === todayStr;
             const isOver = hasTarget && cal > targetCalories;
             const isLow = hasTarget && cal > 0 && cal < targetCalories * 0.8;
@@ -183,6 +198,13 @@ const PlanCalendarGrid = ({ weekStart, plans }: PlanCalendarGridProps) => {
                         style={{ width: `${Math.min(intensity * 100, 100)}%` }}
                       />
                     </div>
+                    <PfcDisplay
+                      protein={pfc.protein}
+                      fat={pfc.fat}
+                      carbs={pfc.carbs}
+                      className="mt-1 flex-col gap-0 text-[9px]"
+                      precision={0}
+                    />
                   </>
                 ) : (
                   <span className="text-[10px] text-muted-foreground/40">
