@@ -26,15 +26,15 @@ const MealRegisterCard = ({ items, onRemove }: MealRegisterCardProps) => {
   );
 
   return (
-    <div className="space-y-2 rounded-xl border bg-muted/30 p-3">
-      <div className="flex items-center gap-2">
-        <ShoppingCart className="h-4 w-4 text-muted-foreground" />
-        <p className="text-sm font-semibold">登録予定（{items.length}件）</p>
+    <div className="space-y-1.5 rounded-xl border bg-muted/30 p-2.5">
+      <div className="flex items-center gap-1.5 px-0.5">
+        <ShoppingCart className="h-3.5 w-3.5 text-muted-foreground" />
+        <p className="text-xs font-semibold">登録予定（{items.length}件）</p>
       </div>
       {items.map((item) => (
         <div
           key={item.tempId}
-          className="flex items-center justify-between gap-2 rounded-lg bg-background px-3 py-2 text-sm shadow-sm"
+          className="flex items-center justify-between gap-2 rounded-lg bg-background px-2.5 py-1.5 text-sm shadow-sm"
         >
           <span className="flex-1 truncate font-medium">{item.name}</span>
           <span className="tabular-nums text-muted-foreground">
@@ -50,12 +50,12 @@ const MealRegisterCard = ({ items, onRemove }: MealRegisterCardProps) => {
           </Button>
         </div>
       ))}
-      <div className="flex items-center justify-between border-t pt-2">
+      <div className="flex items-center justify-between border-t px-0.5 pt-1.5">
         <div className="flex items-baseline gap-2">
-          <span className="text-sm font-bold tabular-nums">
+          <span className="text-xs font-bold tabular-nums">
             合計 {Math.round(totals.calories)} kcal
           </span>
-          <span className="text-xs text-muted-foreground">
+          <span className="text-[11px] text-muted-foreground">
             ¥{Math.round(totals.cost).toLocaleString()}
           </span>
         </div>

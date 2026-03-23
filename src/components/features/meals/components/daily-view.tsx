@@ -22,7 +22,7 @@ const DailyView = () => {
         <DateNavigator />
         <DailySummaryCard date={selectedDate} />
 
-        <div className="space-y-3 px-4 pt-5 pb-4">
+        <div className="space-y-2.5 px-4 pt-4 pb-4">
           {MEAL_TYPES.map((type) => (
             <MealSlotCard
               key={type}

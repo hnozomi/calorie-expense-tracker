@@ -29,7 +29,7 @@ const ManualInputForm = ({ onAdd }: ManualInputFormProps) => {
   };
 
   return (
-    <form onSubmit={handleSubmit(handleAdd)} className="space-y-4">
+    <form onSubmit={handleSubmit(handleAdd)} className="space-y-3">
       <NutritionFormFields register={register} errors={errors} />
 
       <Button type="submit" variant="secondary" className="w-full">

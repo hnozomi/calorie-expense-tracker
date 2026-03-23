@@ -23,7 +23,9 @@ const NutritionFormFields = ({
     <>
       {/* Menu name */}
       <div className="space-y-1">
-        <Label htmlFor={id("name")}>メニュー名</Label>
+        <Label htmlFor={id("name")} className="text-xs">
+          メニュー名
+        </Label>
         <Input
           id={id("name")}
           placeholder="例: サラダチキン"
@@ -35,9 +37,11 @@ const NutritionFormFields = ({
       </div>
 
       {/* Calories and cost */}
-      <div className="grid grid-cols-2 gap-3">
+      <div className="grid grid-cols-2 gap-2.5">
         <div className="space-y-1">
-          <Label htmlFor={id("calories")}>カロリー (kcal)</Label>
+          <Label htmlFor={id("calories")} className="text-xs">
+            カロリー (kcal)
+          </Label>
           <Input
             id={id("calories")}
             type="number"
@@ -47,7 +51,9 @@ const NutritionFormFields = ({
           />
         </div>
         <div className="space-y-1">
-          <Label htmlFor={id("cost")}>食費 (円)</Label>
+          <Label htmlFor={id("cost")} className="text-xs">
+            食費 (円)
+          </Label>
           <Input
             id={id("cost")}
             type="number"
@@ -58,11 +64,11 @@ const NutritionFormFields = ({
       </div>
 
       {/* PFC fields with color-coded backgrounds */}
-      <div className="grid grid-cols-3 gap-3">
+      <div className="grid grid-cols-3 gap-2">
         <div className="space-y-1">
           <Label
             htmlFor={id("protein")}
-            className="text-blue-600 dark:text-blue-400"
+            className="text-xs text-blue-600 dark:text-blue-400"
           >
             P (g)
           </Label>
@@ -78,7 +84,7 @@ const NutritionFormFields = ({
         <div className="space-y-1">
           <Label
             htmlFor={id("fat")}
-            className="text-amber-600 dark:text-amber-400"
+            className="text-xs text-amber-600 dark:text-amber-400"
           >
             F (g)
           </Label>
@@ -94,7 +100,7 @@ const NutritionFormFields = ({
         <div className="space-y-1">
           <Label
             htmlFor={id("carbs")}
-            className="text-green-600 dark:text-green-400"
+            className="text-xs text-green-600 dark:text-green-400"
           >
             C (g)
           </Label>

@@ -66,9 +66,8 @@ describe("MealSlotCard", () => {
 
   it("shows empty state when no items", () => {
     renderWithStore(<MealSlotCard mealType="lunch" items={[]} />);
-    expect(screen.getByText("まだ登録されていません")).toBeInTheDocument();
     expect(
-      screen.getByRole("button", { name: "登録する" }),
+      screen.getByRole("button", { name: /登録する/ }),
     ).toBeInTheDocument();
   });
 

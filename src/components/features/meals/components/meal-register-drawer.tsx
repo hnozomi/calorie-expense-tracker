@@ -1,7 +1,7 @@
 "use client";
 
 import { useAtom, useAtomValue } from "jotai";
-import { BookOpen, Camera, Database, PenLine } from "lucide-react";
+import { BookOpen, Camera, Database, ListChecks, PenLine } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useCallback, useState } from "react";
 import { toast } from "sonner";
@@ -12,13 +12,13 @@ import {
 } from "@/components/features/ocr";
 import { Button } from "@/components/ui/button";
 import {
-  Sheet,
-  SheetContent,
-  SheetHeader,
-  SheetTitle,
-} from "@/components/ui/sheet";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+  Drawer,
+  DrawerContent,
+  DrawerHeader,
+  DrawerTitle,
+} from "@/components/ui/drawer";
 import { MEAL_TYPE_LABELS, type SourceType } from "@/types";
+import { cn } from "@/utils";
 import { useRegisterMealItems } from "../hooks/use-register-meal-items";
 import { selectedDateAtom } from "../stores/date-atom";
 import {
@@ -31,8 +31,9 @@ import { FoodMasterSelector } from "./food-master-selector";
 import { ManualInputForm } from "./manual-input-form";
 import { MealRegisterCard } from "./meal-register-card";
 import { RecipeSelector } from "./recipe-selector";
+import { SetMenuSelector } from "./set-menu-selector";
 
-/** Bottom sheet drawer for adding meal items and batch registering */
+/** Bottom drawer for adding meal items and batch registering */
 const MealRegisterDrawer = () => {
   const router = useRouter();
   const [isOpen, setIsOpen] = useAtom(isDrawerOpenAtom);
@@ -40,6 +41,9 @@ const MealRegisterDrawer = () => {
   const [draftItems, setDraftItems] = useAtom(draftItemsAtom);
   const selectedDate = useAtomValue(selectedDateAtom);
   const registerMutation = useRegisterMealItems();
+  const [activeTab, setActiveTab] = useState<
+    "manual" | "recipe" | "food_master" | "set_menu" | "ocr"
+  >("manual");
   const [isOcrOpen, setIsOcrOpen] = useState(false);
   const [ocrResult, setOcrResult] = useState<OcrNutritionResult | null>(null);
 
@@ -73,6 +77,22 @@ const MealRegisterDrawer = () => {
     [addDraftItem],
   );
 
+  /** Add all items from a set menu as individual draft items */
+  const handleSetMenuAdd = useCallback(
+    (items: MealItemFormValues[]) => {
+      setDraftItems((prev) => [
+        ...prev,
+        ...items.map((values) => ({
+          ...values,
+          tempId: crypto.randomUUID(),
+          sourceType: "set_menu" as SourceType,
+        })),
+      ]);
+      toast.success(`${items.length}件のアイテムを追加しました`);
+    },
+    [setDraftItems],
+  );
+
   const handleOcrAdd = useCallback(
     (values: MealItemFormValues) => {
       addDraftItem(values, "ocr");
@@ -88,7 +108,6 @@ const MealRegisterDrawer = () => {
   /** Navigate to food master form with OCR values pre-filled */
   const handleSaveToMaster = useCallback(
     (_values: MealItemFormValues) => {
-      // Close drawer and navigate to food master creation
       setIsOpen(false);
       router.push("/other/food-masters/new");
     },
@@ -121,61 +140,65 @@ const MealRegisterDrawer = () => {
 
   return (
     <>
-      <Sheet open={isOpen} onOpenChange={setIsOpen}>
-        <SheetContent side="bottom" className="max-h-[85dvh] overflow-y-auto">
-          <SheetHeader className="pb-2">
-            <SheetTitle className="text-lg">
+      <Drawer open={isOpen} onOpenChange={setIsOpen}>
+        <DrawerContent className="max-h-[85dvh]">
+          <DrawerHeader className="pb-2">
+            <DrawerTitle className="text-base">
               {MEAL_TYPE_LABELS[mealType]}を登録
-            </SheetTitle>
-          </SheetHeader>
+            </DrawerTitle>
+          </DrawerHeader>
 
-          <div className="space-y-4 py-2">
-            <Tabs defaultValue="manual">
-              <TabsList className="h-auto w-full gap-1 bg-muted/60 p-1">
-                <TabsTrigger
-                  value="manual"
-                  className="flex flex-1 flex-col items-center gap-0.5 rounded-md px-2 py-1.5 text-xs data-[state=active]:bg-background data-[state=active]:shadow-sm"
+          {/* Scrollable content */}
+          <div className="flex-1 overflow-y-auto px-4 pb-4">
+            {/* Tab bar */}
+            <div
+              className="flex gap-1 rounded-xl bg-muted/50 p-1"
+              role="tablist"
+            >
+              {(
+                [
+                  { value: "manual", icon: PenLine, label: "手動" },
+                  { value: "recipe", icon: BookOpen, label: "レシピ" },
+                  { value: "food_master", icon: Database, label: "マスタ" },
+                  { value: "set_menu", icon: ListChecks, label: "セット" },
+                  { value: "ocr", icon: Camera, label: "OCR" },
+                ] as const
+              ).map(({ value, icon: Icon, label }) => (
+                <button
+                  key={value}
+                  type="button"
+                  role="tab"
+                  aria-selected={activeTab === value}
+                  onClick={() => setActiveTab(value)}
+                  className={cn(
+                    "flex flex-1 flex-col items-center gap-1 rounded-lg py-2 text-[11px] font-medium transition-all",
+                    activeTab === value
+                      ? "bg-background text-foreground shadow-sm"
+                      : "text-muted-foreground hover:text-foreground/80",
+                  )}
                 >
-                  <PenLine className="h-4 w-4" />
-                  手動
-                </TabsTrigger>
-                <TabsTrigger
-                  value="recipe"
-                  className="flex flex-1 flex-col items-center gap-0.5 rounded-md px-2 py-1.5 text-xs data-[state=active]:bg-background data-[state=active]:shadow-sm"
-                >
-                  <BookOpen className="h-4 w-4" />
-                  レシピ
-                </TabsTrigger>
-                <TabsTrigger
-                  value="food_master"
-                  className="flex flex-1 flex-col items-center gap-0.5 rounded-md px-2 py-1.5 text-xs data-[state=active]:bg-background data-[state=active]:shadow-sm"
-                >
-                  <Database className="h-4 w-4" />
-                  マスタ
-                </TabsTrigger>
-                <TabsTrigger
-                  value="ocr"
-                  className="flex flex-1 flex-col items-center gap-0.5 rounded-md px-2 py-1.5 text-xs data-[state=active]:bg-background data-[state=active]:shadow-sm"
-                >
-                  <Camera className="h-4 w-4" />
-                  OCR
-                </TabsTrigger>
-              </TabsList>
+                  <Icon className="size-4 shrink-0" />
+                  {label}
+                </button>
+              ))}
+            </div>
 
-              <TabsContent value="manual" className="mt-4">
+            {/* Tab content */}
+            <div className="mt-3">
+              {activeTab === "manual" && (
                 <ManualInputForm onAdd={handleManualAdd} />
-              </TabsContent>
-
-              <TabsContent value="recipe" className="mt-4">
+              )}
+              {activeTab === "recipe" && (
                 <RecipeSelector onSelect={handleRecipeAdd} />
-              </TabsContent>
-
-              <TabsContent value="food_master" className="mt-4">
+              )}
+              {activeTab === "food_master" && (
                 <FoodMasterSelector onSelect={handleFoodMasterAdd} />
-              </TabsContent>
-
-              <TabsContent value="ocr" className="mt-4">
-                {ocrResult ? (
+              )}
+              {activeTab === "set_menu" && (
+                <SetMenuSelector onSelect={handleSetMenuAdd} />
+              )}
+              {activeTab === "ocr" &&
+                (ocrResult ? (
                   <OcrResultForm
                     ocrResult={ocrResult}
                     onAdd={handleOcrAdd}
@@ -194,24 +217,32 @@ const MealRegisterDrawer = () => {
                       カメラを起動
                     </Button>
                   </div>
-                )}
-              </TabsContent>
-            </Tabs>
+                ))}
+            </div>
 
-            <MealRegisterCard items={draftItems} onRemove={handleRemove} />
-
-            <Button
-              className="w-full"
-              disabled={draftItems.length === 0 || registerMutation.isPending}
-              onClick={handleRegister}
-            >
-              {registerMutation.isPending
-                ? "登録中..."
-                : `${draftItems.length}件まとめて登録する`}
-            </Button>
+            {draftItems.length > 0 && (
+              <div className="mt-3">
+                <MealRegisterCard items={draftItems} onRemove={handleRemove} />
+              </div>
+            )}
           </div>
-        </SheetContent>
-      </Sheet>
+
+          {/* Sticky footer with register button */}
+          {draftItems.length > 0 && (
+            <div className="shrink-0 border-t bg-background px-4 pt-3 pb-[calc(0.75rem+env(safe-area-inset-bottom))]">
+              <Button
+                className="w-full"
+                disabled={registerMutation.isPending}
+                onClick={handleRegister}
+              >
+                {registerMutation.isPending
+                  ? "登録中..."
+                  : `${draftItems.length}件まとめて登録する`}
+              </Button>
+            </div>
+          )}
+        </DrawerContent>
+      </Drawer>
 
       <OcrCameraOverlay
         isOpen={isOcrOpen}

@@ -1,8 +1,43 @@
 import { cleanup, render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
+import type { ReactNode } from "react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { MealItemEditModal } from "@/components/features/meals/components/meal-item-edit-modal";
 import type { MealItem } from "@/components/features/meals/types/meal";
+
+/** Mock vaul Drawer as a simple div wrapper to avoid jsdom pointer/transform issues */
+vi.mock("vaul", () => {
+  const Drawer = ({
+    children,
+    open,
+  }: {
+    children: ReactNode;
+    open?: boolean;
+  }) => (open ? <div data-testid="drawer">{children}</div> : null);
+  const Content = ({ children }: { children: ReactNode }) => (
+    <div>{children}</div>
+  );
+  const Overlay = () => <div />;
+  const Portal = ({ children }: { children: ReactNode }) => (
+    <div>{children}</div>
+  );
+  const Title = ({ children }: { children: ReactNode }) => (
+    <div>{children}</div>
+  );
+  Drawer.Root = Drawer;
+  Drawer.Portal = Portal;
+  Drawer.Overlay = Overlay;
+  Drawer.Content = Content;
+  Drawer.Title = Title;
+  Drawer.Close = ({ children }: { children: ReactNode }) => (
+    <div>{children}</div>
+  );
+  Drawer.Handle = () => <div />;
+  Drawer.Description = ({ children }: { children: ReactNode }) => (
+    <div>{children}</div>
+  );
+  return { Drawer };
+});
 
 const mockUpdateMutateAsync = vi.fn();
 const mockDeleteMutateAsync = vi.fn();

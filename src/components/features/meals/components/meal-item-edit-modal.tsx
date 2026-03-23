@@ -1,7 +1,6 @@
 "use client";
 
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Pencil } from "lucide-react";
 import { useState } from "react";
 import type { Resolver } from "react-hook-form";
 import { useForm } from "react-hook-form";
@@ -9,12 +8,11 @@ import { toast } from "sonner";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
+  Drawer,
+  DrawerContent,
+  DrawerHeader,
+  DrawerTitle,
+} from "@/components/ui/drawer";
 import type { SourceType } from "@/types";
 import { useDeleteMealItem } from "../hooks/use-delete-meal-item";
 import { useUpdateMealItem } from "../hooks/use-update-meal-item";
@@ -40,7 +38,7 @@ const SOURCE_TYPE_LABELS: Record<SourceType, string> = {
   set_menu: "セット",
 };
 
-/** Modal for editing or deleting an existing meal item */
+/** Bottom drawer for editing or deleting an existing meal item */
 const MealItemEditModal = ({
   item,
   date,
@@ -95,77 +93,79 @@ const MealItemEditModal = ({
   if (!item) return null;
 
   return (
-    <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
-      <DialogContent className="sm:max-w-md">
-        <DialogHeader>
-          <DialogTitle className="flex items-center gap-2">
-            <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-primary/10">
-              <Pencil className="h-3.5 w-3.5 text-primary" />
-            </div>
-            アイテム編集
-            <Badge variant="secondary" className="ml-auto text-xs">
-              {SOURCE_TYPE_LABELS[item.sourceType]}
-            </Badge>
-          </DialogTitle>
-          <DialogDescription>
-            食事アイテムの内容を編集できます
-          </DialogDescription>
-        </DialogHeader>
+    <Drawer open={isOpen} onOpenChange={(open) => !open && onClose()}>
+      <DrawerContent className="max-h-[80dvh]">
+        <DrawerHeader className="flex-row items-center justify-between pb-2">
+          <DrawerTitle className="text-base">アイテム編集</DrawerTitle>
+          <Badge variant="secondary" className="text-xs">
+            {SOURCE_TYPE_LABELS[item.sourceType]}
+          </Badge>
+        </DrawerHeader>
 
-        <form onSubmit={handleSubmit(handleSave)} className="space-y-4">
-          <NutritionFormFields
-            register={register}
-            errors={errors}
-            idPrefix="edit"
-          />
-
-          <div className="flex gap-2 pt-2">
-            <Button
-              type="submit"
-              className="flex-1"
-              disabled={updateMutation.isPending}
-            >
-              {updateMutation.isPending ? "保存中..." : "変更を保存"}
-            </Button>
-          </div>
-
-          <button
-            type="button"
-            className="w-full text-center text-sm text-destructive transition-colors hover:text-destructive/80 hover:underline"
-            onClick={() => setIsDeleteConfirmOpen(true)}
+        {/* Scrollable form */}
+        <div className="flex-1 overflow-y-auto px-4 pb-4">
+          <form
+            id="edit-meal-form"
+            onSubmit={handleSubmit(handleSave)}
+            className="space-y-3"
           >
-            このアイテムを削除する
-          </button>
-        </form>
+            <NutritionFormFields
+              register={register}
+              errors={errors}
+              idPrefix="edit"
+            />
+          </form>
 
-        {isDeleteConfirmOpen && (
-          <div className="space-y-3 rounded-xl border border-destructive/30 bg-destructive/5 p-4">
-            <p className="text-sm font-medium">
-              「{item.name}」を削除しますか？
-            </p>
-            <div className="flex gap-2">
-              <Button
-                variant="outline"
-                size="sm"
-                className="flex-1"
-                onClick={() => setIsDeleteConfirmOpen(false)}
-              >
-                キャンセル
-              </Button>
-              <Button
-                variant="destructive"
-                size="sm"
-                className="flex-1"
-                disabled={deleteMutation.isPending}
-                onClick={handleDelete}
-              >
-                {deleteMutation.isPending ? "削除中..." : "削除する"}
-              </Button>
+          {/* Delete section */}
+          {isDeleteConfirmOpen ? (
+            <div className="mt-4 space-y-3 rounded-xl border border-destructive/30 bg-destructive/5 p-3">
+              <p className="text-sm font-medium">
+                「{item.name}」を削除しますか？
+              </p>
+              <div className="flex gap-2">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="flex-1"
+                  onClick={() => setIsDeleteConfirmOpen(false)}
+                >
+                  キャンセル
+                </Button>
+                <Button
+                  variant="destructive"
+                  size="sm"
+                  className="flex-1"
+                  disabled={deleteMutation.isPending}
+                  onClick={handleDelete}
+                >
+                  {deleteMutation.isPending ? "削除中..." : "削除する"}
+                </Button>
+              </div>
             </div>
-          </div>
-        )}
-      </DialogContent>
-    </Dialog>
+          ) : (
+            <button
+              type="button"
+              className="mt-4 w-full text-center text-sm text-destructive transition-colors hover:text-destructive/80 hover:underline"
+              onClick={() => setIsDeleteConfirmOpen(true)}
+            >
+              このアイテムを削除する
+            </button>
+          )}
+        </div>
+
+        {/* Sticky footer */}
+        <div className="shrink-0 border-t bg-background px-4 pt-3 pb-[calc(0.75rem+env(safe-area-inset-bottom))]">
+          <Button
+            type="submit"
+            form="edit-meal-form"
+            className="w-full"
+            disabled={updateMutation.isPending}
+          >
+            {updateMutation.isPending ? "保存中..." : "変更を保存"}
+          </Button>
+        </div>
+      </DrawerContent>
+    </Drawer>
   );
 };
 
