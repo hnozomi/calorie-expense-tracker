@@ -20,6 +20,15 @@ export const SOURCE_TYPES = [
 ] as const;
 export type SourceType = (typeof SOURCE_TYPES)[number];
 
+/** Display labels for meal item source types */
+export const SOURCE_TYPE_LABELS: Record<SourceType, string> = {
+  manual: "手動",
+  ocr: "OCR",
+  recipe: "レシピ",
+  food_master: "食品マスタ",
+  set_menu: "セット",
+} as const;
+
 /** Food master categories */
 export const FOOD_CATEGORIES = [
   "bento",

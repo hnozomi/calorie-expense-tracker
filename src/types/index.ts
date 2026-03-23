@@ -9,6 +9,7 @@ export {
   FOOD_CATEGORY_LABELS,
   MEAL_TYPE_LABELS,
   MEAL_TYPES,
+  SOURCE_TYPE_LABELS,
   SOURCE_TYPES,
 } from "./common";
 export type {

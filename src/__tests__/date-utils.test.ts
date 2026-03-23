@@ -1,5 +1,13 @@
 import { describe, expect, it } from "vitest";
-import { formatDateToString, getThisMonday, shiftDate } from "@/utils";
+import {
+  buildWeekDays,
+  formatDateToString,
+  formatDisplayDate,
+  formatWeekLabel,
+  getThisMonday,
+  getTodayString,
+  shiftDate,
+} from "@/utils";
 
 describe("formatDateToString", () => {
   it("formats a date as YYYY-MM-DD", () => {
@@ -94,5 +102,40 @@ describe("getThisMonday", () => {
       (today.getTime() - mondayDate.getTime()) / (1000 * 60 * 60 * 24);
     expect(diffDays).toBeGreaterThanOrEqual(0);
     expect(diffDays).toBeLessThan(7);
+  });
+});
+
+describe("getTodayString", () => {
+  it("returns today's date in YYYY-MM-DD format", () => {
+    expect(getTodayString()).toMatch(/^\d{4}-\d{2}-\d{2}$/);
+  });
+});
+
+describe("formatDisplayDate", () => {
+  it("formats a YYYY-MM-DD string for Japanese display", () => {
+    expect(formatDisplayDate("2026-03-15")).toBe("3/15（日）");
+  });
+});
+
+describe("formatWeekLabel", () => {
+  it("formats a week range label", () => {
+    expect(formatWeekLabel("2026-03-16")).toBe("3/16 - 3/22");
+  });
+});
+
+describe("buildWeekDays", () => {
+  it("builds 7 days from the given week start", () => {
+    const days = buildWeekDays("2026-03-16");
+    expect(days).toHaveLength(7);
+    expect(days[0]).toEqual({
+      date: "2026-03-16",
+      label: "3/16",
+      dayOfWeek: "月",
+    });
+    expect(days[6]).toEqual({
+      date: "2026-03-22",
+      label: "3/22",
+      dayOfWeek: "日",
+    });
   });
 });
