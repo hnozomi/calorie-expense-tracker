@@ -1,5 +1,12 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type { QueryClient } from "@tanstack/react-query";
+import {
+  getDailyMealsQueryOptions,
+  getDailySummaryQueryOptions,
+} from "@/components/features/meals/queries";
+import { getMealPlansQueryOptions } from "@/components/features/plan/queries";
+import { getWeeklyReportQueryOptions } from "@/components/features/report/queries";
+import { getNutritionTargetQueryOptions } from "@/components/features/settings/queries";
 import { queryKeys } from "@/hooks/query-keys";
 import type { MealType } from "@/types";
 
@@ -9,57 +16,7 @@ export const prefetchDailyMeals = (
   supabase: SupabaseClient,
   date: string,
 ) =>
-  queryClient.prefetchQuery({
-    queryKey: queryKeys.meals.daily(date),
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from("meals")
-        .select("id, meal_type, meal_items(*)")
-        .eq("date", date)
-        .order("created_at", { ascending: true });
-
-      if (error) throw error;
-
-      const grouped: Record<
-        MealType,
-        { mealId: string | null; items: unknown[] }
-      > = {
-        breakfast: { mealId: null, items: [] },
-        lunch: { mealId: null, items: [] },
-        dinner: { mealId: null, items: [] },
-        snack: { mealId: null, items: [] },
-      };
-
-      for (const meal of data ?? []) {
-        const mealType = meal.meal_type as MealType;
-        grouped[mealType] = {
-          mealId: meal.id,
-          items: ((meal.meal_items as Record<string, unknown>[]) ?? []).map(
-            (item) => ({
-              id: item.id as string,
-              mealId: item.meal_id as string,
-              name: item.name as string,
-              calories: item.calories as number,
-              protein: item.protein as number,
-              fat: item.fat as number,
-              carbs: item.carbs as number,
-              cost: item.cost as number | null,
-              sourceType: item.source_type as string,
-              recipeId: item.recipe_id as string | null,
-              foodMasterId: item.food_master_id as string | null,
-              setMenuId: item.set_menu_id as string | null,
-              servingQuantity: item.serving_quantity as number,
-              sortOrder: item.sort_order as number,
-              createdAt: item.created_at as string,
-              updatedAt: item.updated_at as string,
-            }),
-          ),
-        };
-      }
-
-      return grouped;
-    },
-  });
+  queryClient.prefetchQuery(getDailyMealsQueryOptions(supabase, date));
 
 /** Prefetch daily summary (calories/PFC/cost per meal_type) via RPC */
 export const prefetchDailySummary = (
@@ -67,61 +24,14 @@ export const prefetchDailySummary = (
   supabase: SupabaseClient,
   date: string,
 ) =>
-  queryClient.prefetchQuery({
-    queryKey: queryKeys.meals.summary(date),
-    queryFn: async () => {
-      const { data, error } = await supabase.rpc("get_daily_summary", {
-        p_target_date: date,
-      });
-
-      if (error) throw error;
-
-      return (data ?? []).map((row: Record<string, unknown>) => ({
-        mealType: row.meal_type as MealType,
-        calories: row.total_calories as number,
-        protein: row.total_protein as number,
-        fat: row.total_fat as number,
-        carbs: row.total_carbs as number,
-        totalCost: row.total_cost as number,
-        itemCount: row.item_count as number,
-      }));
-    },
-  });
+  queryClient.prefetchQuery(getDailySummaryQueryOptions(supabase, date));
 
 /** Prefetch nutrition target settings */
 export const prefetchNutritionTarget = (
   queryClient: QueryClient,
   supabase: SupabaseClient,
 ) =>
-  queryClient.prefetchQuery({
-    queryKey: queryKeys.settings.nutritionTarget(),
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from("user_settings")
-        .select("*")
-        .maybeSingle();
-
-      if (error) throw error;
-
-      if (!data) {
-        return {
-          targetCalories: 2000,
-          targetProtein: 60,
-          targetFat: 55,
-          targetCarbs: 300,
-        };
-      }
-
-      return {
-        id: data.id,
-        userId: data.user_id,
-        targetCalories: Number(data.target_calories),
-        targetProtein: Number(data.target_protein),
-        targetFat: Number(data.target_fat),
-        targetCarbs: Number(data.target_carbs),
-      };
-    },
-  });
+  queryClient.prefetchQuery(getNutritionTargetQueryOptions(supabase));
 
 /** Prefetch recipes list */
 export const prefetchRecipes = (
@@ -298,40 +208,8 @@ export const prefetchMealPlans = (
   queryClient: QueryClient,
   supabase: SupabaseClient,
   weekStart: string,
-  weekEnd: string,
 ) =>
-  queryClient.prefetchQuery({
-    queryKey: queryKeys.plans.weekly(weekStart),
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from("meal_plans")
-        .select("*")
-        .gte("date", weekStart)
-        .lte("date", weekEnd)
-        .order("date", { ascending: true })
-        .order("created_at", { ascending: true });
-
-      if (error) throw error;
-
-      return (data ?? []).map((row) => ({
-        id: row.id,
-        userId: row.user_id,
-        date: row.date,
-        mealType: row.meal_type as MealType,
-        plannedName: row.planned_name,
-        recipeId: row.recipe_id,
-        foodMasterId: row.food_master_id,
-        setMenuId: row.set_menu_id,
-        calories: Number(row.calories),
-        protein: Number(row.protein),
-        fat: Number(row.fat),
-        carbs: Number(row.carbs),
-        estimatedCost: Number(row.estimated_cost),
-        isTransferred: row.is_transferred,
-        createdAt: row.created_at,
-      }));
-    },
-  });
+  queryClient.prefetchQuery(getMealPlansQueryOptions(supabase, weekStart));
 
 /** Prefetch set menus list */
 export const prefetchSetMenus = (
@@ -387,55 +265,4 @@ export const prefetchWeeklyReport = (
   supabase: SupabaseClient,
   weekStart: string,
 ) =>
-  queryClient.prefetchQuery({
-    queryKey: queryKeys.report.weekly(weekStart),
-    queryFn: async () => {
-      const { data, error } = await supabase.rpc("get_weekly_summary", {
-        p_start_date: weekStart,
-      });
-      if (error) throw error;
-
-      const entries = (
-        data as {
-          date: string;
-          total_calories: number;
-          total_protein: number;
-          total_fat: number;
-          total_carbs: number;
-          total_cost: number;
-        }[]
-      ).map((row) => ({
-        date: row.date,
-        calories: Number(row.total_calories),
-        protein: Number(row.total_protein),
-        fat: Number(row.total_fat),
-        carbs: Number(row.total_carbs),
-        totalCost: Number(row.total_cost),
-      }));
-
-      const daysWithData = entries.filter((e) => e.calories > 0).length;
-      const divisor = Math.max(daysWithData, 1);
-
-      const totals = entries.reduce(
-        (acc, e) => ({
-          calories: acc.calories + e.calories,
-          protein: acc.protein + e.protein,
-          fat: acc.fat + e.fat,
-          carbs: acc.carbs + e.carbs,
-          cost: acc.cost + e.totalCost,
-        }),
-        { calories: 0, protein: 0, fat: 0, carbs: 0, cost: 0 },
-      );
-
-      return {
-        weekStart,
-        entries,
-        averageCalories: totals.calories / divisor,
-        averageProtein: totals.protein / divisor,
-        averageFat: totals.fat / divisor,
-        averageCarbs: totals.carbs / divisor,
-        averageCost: totals.cost / divisor,
-        totalCost: totals.cost,
-      };
-    },
-  });
+  queryClient.prefetchQuery(getWeeklyReportQueryOptions(supabase, weekStart));
