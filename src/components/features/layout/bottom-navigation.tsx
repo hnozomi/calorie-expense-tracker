@@ -8,7 +8,6 @@ import {
 } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { useEffect, useState } from "react";
 import { cn } from "@/utils";
 
 const NAV_ITEMS = [
@@ -21,16 +20,6 @@ const NAV_ITEMS = [
 /** Bottom tab navigation with glass background and active indicator pill */
 const BottomNavigation = () => {
   const pathname = usePathname();
-  const [pendingHref, setPendingHref] = useState<string | null>(null);
-
-  /** Reset optimistic state when navigation completes */
-  // biome-ignore lint/correctness/useExhaustiveDependencies: reset pending state on pathname change
-  useEffect(() => {
-    setPendingHref(null);
-  }, [pathname]);
-
-  /** Determine displayed active tab — pending click takes priority */
-  const activeHref = pendingHref ?? pathname;
 
   return (
     <nav
@@ -44,14 +33,11 @@ const BottomNavigation = () => {
       <div className="mx-auto flex h-16 max-w-lg items-center justify-around">
         {NAV_ITEMS.map(({ href, label, icon: Icon }) => {
           const isActive =
-            activeHref === href || activeHref.startsWith(`${href}/`);
+            pathname === href || pathname.startsWith(`${href}/`);
           return (
             <Link
               key={href}
               href={href}
-              onClick={() => {
-                if (!isActive) setPendingHref(href);
-              }}
               className={cn(
                 "relative flex min-w-[64px] flex-col items-center gap-0.5 px-3 py-2 text-xs",
                 "transition-colors duration-150",
