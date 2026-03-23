@@ -1,4 +1,8 @@
 export { queryKeys } from "./query-keys";
+export {
+  useSelectedDateNavigation,
+  useWeekStartNavigation,
+} from "./use-date-navigation";
 export { useDebounce } from "./use-debounce";
 export {
   useNutritionTarget,

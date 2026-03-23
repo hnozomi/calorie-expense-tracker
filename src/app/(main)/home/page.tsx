@@ -9,18 +9,29 @@ import {
   prefetchNutritionTarget,
 } from "@/lib/prefetch";
 import { createClient } from "@/lib/supabase/server";
-import { formatDateToString } from "@/utils";
+import { formatDateToString, isValidDateString } from "@/utils";
+
+type HomePageProps = {
+  searchParams?: Promise<{
+    date?: string | string[];
+  }>;
+};
 
 /** S-01: Home daily view page — prefetch today's data server-side */
-export default async function HomePage() {
+export default async function HomePage({ searchParams }: HomePageProps) {
   const queryClient = getQueryClient();
   const supabase = await createClient();
-  const today = formatDateToString(new Date());
+  const resolvedSearchParams = await searchParams;
+  const requestedDate = resolvedSearchParams?.date;
+  const dateParam =
+    typeof requestedDate === "string" && isValidDateString(requestedDate)
+      ? requestedDate
+      : formatDateToString(new Date());
 
   /** Prefetch data so dehydrate() captures it in the cache */
   await Promise.all([
-    prefetchDailyMeals(queryClient, supabase, today),
-    prefetchDailySummary(queryClient, supabase, today),
+    prefetchDailyMeals(queryClient, supabase, dateParam),
+    prefetchDailySummary(queryClient, supabase, dateParam),
     prefetchNutritionTarget(queryClient, supabase),
   ]);
 
@@ -37,7 +48,7 @@ export default async function HomePage() {
           </div>
         }
       >
-        <DailyView />
+        <DailyView key={dateParam} initialDate={dateParam} />
       </Suspense>
     </HydrationBoundary>
   );

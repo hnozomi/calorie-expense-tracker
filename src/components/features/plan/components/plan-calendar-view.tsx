@@ -1,26 +1,30 @@
 "use client";
 
-import { useAtom } from "jotai";
+import { useHydrateAtoms } from "jotai/utils";
 import { ChevronLeft, ChevronRight } from "lucide-react";
+import { useWeekStartNavigation } from "@/hooks";
 import { Header, PageContainer } from "@/components/features/layout";
 import { Button } from "@/components/ui/button";
-import { shiftDate } from "@/utils";
+import { formatWeekLabel, getThisMonday } from "@/utils";
 import { useMealPlans } from "../hooks/use-meal-plans";
 import { planWeekStartAtom } from "../stores/plan-week-atom";
 import { PlanCalendarGrid } from "./plan-calendar-grid";
 import { PlanWeeklySummary } from "./plan-weekly-summary";
 
 /** Main view for the meal planning calendar */
-const PlanCalendarView = () => {
-  const [weekStart, setWeekStart] = useAtom(planWeekStartAtom);
+const PlanCalendarView = ({
+  initialWeekStart,
+}: {
+  initialWeekStart: string;
+}) => {
+  useHydrateAtoms([[planWeekStartAtom, initialWeekStart]]);
+
+  const { value: weekStart, shiftBackward, shiftForward } = useWeekStartNavigation(
+    planWeekStartAtom,
+    getThisMonday(),
+  );
   const { data: plans } = useMealPlans(weekStart);
-
-  /** Build week label */
-  const startObj = new Date(`${weekStart}T00:00:00`);
-  const endObj = new Date(`${weekStart}T00:00:00`);
-  endObj.setDate(endObj.getDate() + 6);
-  const weekLabel = `${startObj.getMonth() + 1}/${startObj.getDate()} - ${endObj.getMonth() + 1}/${endObj.getDate()}`;
-
+  const weekLabel = formatWeekLabel(weekStart);
   return (
     <>
       <Header title="献立カレンダー" />
@@ -32,7 +36,7 @@ const PlanCalendarView = () => {
             size="icon-sm"
             aria-label="前の週"
             className="h-8 w-8 rounded-full transition-colors hover:bg-muted"
-            onClick={() => setWeekStart(shiftDate(weekStart, -7))}
+            onClick={shiftBackward}
           >
             <ChevronLeft className="h-4 w-4" />
           </Button>
@@ -44,13 +48,12 @@ const PlanCalendarView = () => {
             size="icon-sm"
             aria-label="次の週"
             className="h-8 w-8 rounded-full transition-colors hover:bg-muted"
-            onClick={() => setWeekStart(shiftDate(weekStart, 7))}
+            onClick={shiftForward}
           >
             <ChevronRight className="h-4 w-4" />
           </Button>
         </div>
 
-        {/* Calendar grid */}
         <PlanCalendarGrid weekStart={weekStart} plans={plans} />
         <div className="px-4 pb-4 pt-3">
           <PlanWeeklySummary plans={plans} weekStart={weekStart} />

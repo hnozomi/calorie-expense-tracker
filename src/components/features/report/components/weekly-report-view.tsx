@@ -1,6 +1,6 @@
 "use client";
 
-import { useAtom } from "jotai";
+import { useHydrateAtoms } from "jotai/utils";
 import {
   ChevronLeft,
   ChevronRight,
@@ -8,10 +8,11 @@ import {
   Flame,
   Wallet,
 } from "lucide-react";
+import { useWeekStartNavigation } from "@/hooks";
 import { Header, PageContainer } from "@/components/features/layout";
 import { Button } from "@/components/ui/button";
 import { SectionHeader } from "@/components/ui/section-header";
-import { shiftDate } from "@/utils";
+import { formatWeekLabel, getThisMonday } from "@/utils";
 import { useWeeklyReport } from "../hooks/use-weekly-report";
 import { reportWeekStartAtom } from "../stores/report-week-atom";
 import { WeeklyCalorieChart } from "./weekly-calorie-chart";
@@ -19,15 +20,19 @@ import { WeeklyCostChart } from "./weekly-cost-chart";
 import { WeeklyPfcChart } from "./weekly-pfc-chart";
 
 /** Main view for the weekly report */
-const WeeklyReportView = () => {
-  const [weekStart, setWeekStart] = useAtom(reportWeekStartAtom);
-  const { data: report } = useWeeklyReport(weekStart);
+const WeeklyReportView = ({
+  initialWeekStart,
+}: {
+  initialWeekStart: string;
+}) => {
+  useHydrateAtoms([[reportWeekStartAtom, initialWeekStart]]);
 
-  /** Build week label */
-  const startObj = new Date(`${weekStart}T00:00:00`);
-  const endObj = new Date(`${weekStart}T00:00:00`);
-  endObj.setDate(endObj.getDate() + 6);
-  const weekLabel = `${startObj.getMonth() + 1}/${startObj.getDate()} - ${endObj.getMonth() + 1}/${endObj.getDate()}`;
+  const { value: weekStart, shiftBackward, shiftForward } = useWeekStartNavigation(
+    reportWeekStartAtom,
+    getThisMonday(),
+  );
+  const { data: report } = useWeeklyReport(weekStart);
+  const weekLabel = formatWeekLabel(weekStart);
 
   return (
     <>
@@ -40,7 +45,7 @@ const WeeklyReportView = () => {
             size="icon-sm"
             aria-label="前の週"
             className="rounded-full"
-            onClick={() => setWeekStart(shiftDate(weekStart, -7))}
+            onClick={shiftBackward}
           >
             <ChevronLeft className="h-5 w-5" />
           </Button>
@@ -52,7 +57,7 @@ const WeeklyReportView = () => {
             size="icon-sm"
             aria-label="次の週"
             className="rounded-full"
-            onClick={() => setWeekStart(shiftDate(weekStart, 7))}
+            onClick={shiftForward}
           >
             <ChevronRight className="h-5 w-5" />
           </Button>

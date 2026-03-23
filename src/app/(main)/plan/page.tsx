@@ -5,18 +5,29 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { getQueryClient } from "@/lib/get-query-client";
 import { prefetchMealPlans, prefetchNutritionTarget } from "@/lib/prefetch";
 import { createClient } from "@/lib/supabase/server";
-import { getThisMonday, shiftDate } from "@/utils";
+import { getThisMonday, isValidDateString } from "@/utils";
+
+type PlanPageProps = {
+  searchParams?: Promise<{
+    weekStart?: string | string[];
+  }>;
+};
 
 /** Meal plan calendar page — prefetch this week's plans server-side */
-export default async function PlanPage() {
+export default async function PlanPage({ searchParams }: PlanPageProps) {
   const queryClient = getQueryClient();
   const supabase = await createClient();
-  const weekStart = getThisMonday();
-  const weekEnd = shiftDate(weekStart, 6);
+  const resolvedSearchParams = await searchParams;
+  const requestedWeekStart = resolvedSearchParams?.weekStart;
+  const weekStart =
+    typeof requestedWeekStart === "string" &&
+    isValidDateString(requestedWeekStart)
+      ? requestedWeekStart
+      : getThisMonday();
 
   /** Prefetch data so dehydrate() captures it in the cache */
   await Promise.all([
-    prefetchMealPlans(queryClient, supabase, weekStart, weekEnd),
+    prefetchMealPlans(queryClient, supabase, weekStart),
     prefetchNutritionTarget(queryClient, supabase),
   ]);
 
@@ -31,7 +42,7 @@ export default async function PlanPage() {
           </div>
         }
       >
-        <PlanCalendarView />
+        <PlanCalendarView key={weekStart} initialWeekStart={weekStart} />
       </Suspense>
     </HydrationBoundary>
   );

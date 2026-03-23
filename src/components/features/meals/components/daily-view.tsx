@@ -1,6 +1,7 @@
 "use client";
 
 import { useAtomValue } from "jotai";
+import { useHydrateAtoms } from "jotai/utils";
 import { Header, PageContainer } from "@/components/features/layout";
 import { MEAL_TYPES } from "@/types";
 import { useDailyMeals } from "../hooks/use-daily-meals";
@@ -11,7 +12,9 @@ import { MealRegisterDrawer } from "./meal-register-drawer";
 import { MealSlotCard } from "./meal-slot-card";
 
 /** Top-level daily view combining summary, meal slots, and register drawer */
-const DailyView = () => {
+const DailyView = ({ initialDate }: { initialDate: string }) => {
+  useHydrateAtoms([[selectedDateAtom, initialDate]]);
+
   const selectedDate = useAtomValue(selectedDateAtom);
   const { data: dailyMeals } = useDailyMeals(selectedDate);
 
@@ -27,7 +30,7 @@ const DailyView = () => {
             <MealSlotCard
               key={type}
               mealType={type}
-              items={dailyMeals[type]?.items ?? []}
+              items={dailyMeals[type].items}
             />
           ))}
         </div>
