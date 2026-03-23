@@ -1,14 +1,22 @@
 "use client";
 
 import { useAtom, useAtomValue } from "jotai";
-import { BookOpen, Camera, Database, ListChecks, PenLine } from "lucide-react";
+import {
+  BookOpen,
+  Camera,
+  Database,
+  ImageIcon,
+  ListChecks,
+  PenLine,
+} from "lucide-react";
 import { useRouter } from "next/navigation";
-import { useCallback, useState } from "react";
+import { useCallback, useRef, useState } from "react";
 import { toast } from "sonner";
 import {
   OcrCameraOverlay,
   type OcrNutritionResult,
   OcrResultForm,
+  useOcr,
 } from "@/components/features/ocr";
 import { Button } from "@/components/ui/button";
 import {
@@ -46,6 +54,8 @@ const MealRegisterDrawer = () => {
   >("manual");
   const [isOcrOpen, setIsOcrOpen] = useState(false);
   const [ocrResult, setOcrResult] = useState<OcrNutritionResult | null>(null);
+  const libraryInputRef = useRef<HTMLInputElement>(null);
+  const { isProcessing: isOcrProcessing, processImage } = useOcr();
 
   /** Add a draft item with the given source type */
   const addDraftItem = useCallback(
@@ -104,6 +114,18 @@ const MealRegisterDrawer = () => {
   const handleOcrResult = useCallback((result: OcrNutritionResult) => {
     setOcrResult(result);
   }, []);
+
+  /** Process an image from the photo library via OCR */
+  const handleLibraryFile = useCallback(
+    async (event: React.ChangeEvent<HTMLInputElement>) => {
+      const file = event.target.files?.[0];
+      if (!file) return;
+      const result = await processImage(file);
+      if (result) setOcrResult(result);
+      event.target.value = "";
+    },
+    [processImage],
+  );
 
   /** Navigate to food master form with OCR values pre-filled */
   const handleSaveToMaster = useCallback(
@@ -204,18 +226,42 @@ const MealRegisterDrawer = () => {
                     onAdd={handleOcrAdd}
                     onSaveToMaster={handleSaveToMaster}
                   />
+                ) : isOcrProcessing ? (
+                  <div className="py-10 text-center">
+                    <div className="mx-auto mb-3 h-10 w-10 animate-spin rounded-full border-4 border-muted border-t-primary" />
+                    <p className="text-sm text-muted-foreground">
+                      OCR解析中...
+                    </p>
+                  </div>
                 ) : (
                   <div className="rounded-lg border border-dashed border-muted-foreground/25 py-6 text-center">
                     <Camera className="mx-auto mb-2 h-8 w-8 text-muted-foreground/50" />
                     <p className="mb-3 text-sm text-muted-foreground">
                       栄養成分表示を撮影して自動入力
                     </p>
-                    <Button
-                      variant="outline"
-                      onClick={() => setIsOcrOpen(true)}
-                    >
-                      カメラを起動
-                    </Button>
+                    <div className="flex flex-col items-center gap-2">
+                      <Button
+                        variant="outline"
+                        onClick={() => setIsOcrOpen(true)}
+                      >
+                        <Camera className="mr-1.5 size-4" />
+                        カメラを起動
+                      </Button>
+                      <input
+                        ref={libraryInputRef}
+                        type="file"
+                        accept="image/*"
+                        className="hidden"
+                        onChange={handleLibraryFile}
+                      />
+                      <Button
+                        variant="ghost"
+                        onClick={() => libraryInputRef.current?.click()}
+                      >
+                        <ImageIcon className="mr-1.5 size-4" />
+                        ライブラリから選択
+                      </Button>
+                    </div>
                   </div>
                 ))}
             </div>
