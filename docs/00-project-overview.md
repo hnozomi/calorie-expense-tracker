@@ -39,6 +39,8 @@
 | [03-db-design.md](./03-db-design.md) | DB設計 |
 | [04-api-tech-stack.md](./04-api-tech-stack.md) | API設計・技術スタック |
 | [05-development-tasks.md](./05-development-tasks.md) | 開発タスク |
+| [06-ssr-csr-data-fetching.md](./06-ssr-csr-data-fetching.md) | SSR/CSR データフェッチ設計 |
+| [07-frontend-architecture.md](./07-frontend-architecture.md) | フロントエンド設計ガイド |
 
 ---
 
