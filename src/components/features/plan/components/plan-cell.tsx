@@ -30,13 +30,13 @@ const PlanCell = ({ date, mealType, plans }: PlanCellProps) => {
 
   return (
     <>
-      <div className="flex h-full min-h-[68px] flex-col gap-1 p-1.5">
+      <div className="flex h-full min-h-[68px] min-w-0 flex-col gap-1 overflow-hidden p-1.5">
         {plans.map((plan) => (
           <button
             key={plan.id}
             type="button"
             className={cn(
-              "truncate rounded-md px-1.5 py-1 text-left text-[11px] leading-tight transition-colors",
+              "block w-full truncate rounded-md px-1.5 py-1 text-left text-[11px] leading-tight transition-colors",
               plan.isTransferred
                 ? "bg-muted/40 text-muted-foreground line-through hover:bg-muted/60"
                 : "bg-primary/8 font-medium text-foreground hover:bg-primary/15",
