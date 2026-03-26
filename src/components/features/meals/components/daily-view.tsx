@@ -1,10 +1,12 @@
 "use client";
 
 import { useAtomValue } from "jotai";
+import { useEffect, useState } from "react";
 import { Header, PageContainer } from "@/components/features/layout";
 import { MEAL_TYPES } from "@/types";
 import { useDailyMeals } from "../hooks/use-daily-meals";
 import { selectedDateAtom } from "../stores/date-atom";
+import { DailySkeleton } from "./daily-skeleton";
 import { DailySummaryCard } from "./daily-summary-card";
 import { DateNavigator } from "./date-navigator";
 import { MealRegisterDrawer } from "./meal-register-drawer";
@@ -12,8 +14,13 @@ import { MealSlotCard } from "./meal-slot-card";
 
 /** Top-level daily view combining summary, meal slots, and register drawer */
 const DailyView = () => {
+  const [isMounted, setIsMounted] = useState(false);
+  useEffect(() => setIsMounted(true), []);
+
   const selectedDate = useAtomValue(selectedDateAtom);
   const { data: dailyMeals } = useDailyMeals(selectedDate);
+
+  if (!isMounted) return <DailySkeleton />;
 
   return (
     <>
