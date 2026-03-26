@@ -12,6 +12,17 @@ vi.mock("@/components/features/plan/hooks/use-transfer-plan", () => ({
   }),
 }));
 
+/** Mock useNutritionTarget */
+vi.mock("@/hooks", async (importOriginal) => {
+  const original = await importOriginal<typeof import("@/hooks")>();
+  return {
+    ...original,
+    useNutritionTarget: () => ({
+      data: { targetCalories: 2000, targetProtein: 60, targetFat: 55, targetCarbs: 300 },
+    }),
+  };
+});
+
 afterEach(() => {
   cleanup();
   mockMutateAsync.mockClear();

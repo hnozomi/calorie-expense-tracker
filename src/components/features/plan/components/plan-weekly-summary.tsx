@@ -2,8 +2,9 @@
 
 import { Button } from "@/components/ui/button";
 import { PfcDisplay } from "@/components/ui/pfc-display";
+import { useNutritionTarget } from "@/hooks";
 import type { MealType } from "@/types";
-import { getTodayString } from "@/utils";
+import { cn, getTodayString } from "@/utils";
 import { useTransferPlan } from "../hooks/use-transfer-plan";
 import type { MealPlan } from "../types/meal-plan";
 
@@ -15,6 +16,7 @@ type PlanWeeklySummaryProps = {
 /** Weekly totals summary for planned meals with transfer action */
 const PlanWeeklySummary = ({ plans, weekStart }: PlanWeeklySummaryProps) => {
   const transferMutation = useTransferPlan();
+  const { data: target } = useNutritionTarget();
 
   /** Calculate weekly totals */
   const totals = plans.reduce(
@@ -45,6 +47,12 @@ const PlanWeeklySummary = ({ plans, weekStart }: PlanWeeklySummaryProps) => {
       });
     }
   };
+
+  /** Calculate weekly calorie target vs actual */
+  const dailyTarget = target?.targetCalories ?? 0;
+  const weeklyTarget = dailyTarget * 7;
+  const hasTarget = weeklyTarget > 0;
+  const calorieDiff = Math.round(totals.calories - weeklyTarget);
 
   /** Check if today has any plans */
   const todayStr = getTodayString();
@@ -96,6 +104,45 @@ const PlanWeeklySummary = ({ plans, weekStart }: PlanWeeklySummaryProps) => {
             </p>
           </div>
         </div>
+
+        {/* Weekly calorie target comparison */}
+        {hasTarget && (
+          <div className="rounded-lg bg-muted/40 px-3 py-2">
+            <div className="flex items-center justify-between text-xs">
+              <span className="text-muted-foreground">
+                週間目標: {weeklyTarget.toLocaleString()} kcal
+                <span className="ml-1 text-[10px]">
+                  ({dailyTarget.toLocaleString()} × 7日)
+                </span>
+              </span>
+              <span
+                className={cn(
+                  "font-bold tabular-nums",
+                  calorieDiff > 0
+                    ? "text-destructive"
+                    : calorieDiff < 0
+                      ? "text-blue-600 dark:text-blue-400"
+                      : "text-emerald-600 dark:text-emerald-400",
+                )}
+              >
+                {calorieDiff > 0 ? "+" : ""}
+                {calorieDiff.toLocaleString()} kcal
+              </span>
+            </div>
+            {/* Progress bar */}
+            <div className="mt-1.5 h-1.5 w-full overflow-hidden rounded-full bg-muted">
+              <div
+                className={cn(
+                  "h-full rounded-full transition-all",
+                  calorieDiff > 0 ? "bg-destructive" : "bg-brand",
+                )}
+                style={{
+                  width: `${Math.min((totals.calories / weeklyTarget) * 100, 100)}%`,
+                }}
+              />
+            </div>
+          </div>
+        )}
 
         {/* PFC display using shared component */}
         <PfcDisplay
