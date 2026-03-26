@@ -21,6 +21,7 @@ type DailyTotals = {
   protein: number;
   fat: number;
   carbs: number;
+  cost: number;
 };
 
 const EMPTY_TOTALS: DailyTotals = {
@@ -28,6 +29,7 @@ const EMPTY_TOTALS: DailyTotals = {
   protein: 0,
   fat: 0,
   carbs: 0,
+  cost: 0,
 };
 
 const buildPlanIndex = (plans: MealPlan[]) => {
@@ -49,6 +51,7 @@ const buildPlanIndex = (plans: MealPlan[]) => {
       protein: currentTotals.protein + plan.protein,
       fat: currentTotals.fat + plan.fat,
       carbs: currentTotals.carbs + plan.carbs,
+      cost: currentTotals.cost + plan.estimatedCost,
     });
   }
 
@@ -197,6 +200,11 @@ const PlanCalendarGrid = ({ weekStart, plans }: PlanCalendarGridProps) => {
                       className="mt-1 flex-col gap-0 text-[9px]"
                       precision={0}
                     />
+                    {totals.cost > 0 && (
+                      <span className="mt-0.5 text-[9px] font-medium tabular-nums text-muted-foreground">
+                        ¥{Math.round(totals.cost).toLocaleString()}
+                      </span>
+                    )}
                   </>
                 ) : (
                   <span className="text-[10px] text-muted-foreground/40">
