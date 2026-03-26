@@ -5,6 +5,7 @@ import {
   type OcrNutritionResult,
   parseNutritionText,
 } from "../utils/ocr-parser";
+import { preprocessImage } from "../utils/ocr-preprocess";
 
 type OcrState = {
   isProcessing: boolean;
@@ -12,7 +13,7 @@ type OcrState = {
   error: string | null;
 };
 
-/** Hook for OCR processing using Tesseract.js */
+/** Hook for OCR processing with image preprocessing and Tesseract.js */
 export const useOcr = () => {
   const [state, setState] = useState<OcrState>({
     isProcessing: false,
@@ -20,18 +21,26 @@ export const useOcr = () => {
     error: null,
   });
 
-  /** Process an image file through OCR and parse nutrition data */
+  /** Preprocess image, then run Tesseract OCR and parse nutrition data */
   const processImage = useCallback(async (imageSource: File | string) => {
     setState({ isProcessing: true, result: null, error: null });
 
     try {
+      // Preprocess: grayscale, contrast, binarization, upscale
+      const preprocessedDataUrl = await preprocessImage(imageSource);
+
       // Dynamic import to avoid loading Tesseract.js on initial page load
       const { createWorker } = await import("tesseract.js");
-      const worker = await createWorker("jpn");
+      const worker = await createWorker("jpn+eng");
+
+      // PSM 6: Assume a single uniform block of text (best for nutrition labels)
+      await worker.setParameters({
+        tessedit_pageseg_mode: "6",
+      });
 
       const {
         data: { text },
-      } = await worker.recognize(imageSource);
+      } = await worker.recognize(preprocessedDataUrl);
       await worker.terminate();
 
       const result = parseNutritionText(text);

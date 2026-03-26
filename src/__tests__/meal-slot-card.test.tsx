@@ -12,6 +12,9 @@ vi.mock("@/components/features/meals/hooks/use-delete-meal-item", () => ({
 vi.mock("@/components/features/meals/hooks/use-update-meal-item", () => ({
   useUpdateMealItem: () => ({ mutateAsync: vi.fn(), isPending: false }),
 }));
+vi.mock("@/components/features/meals/hooks/use-transfer-meal-to-plan", () => ({
+  useTransferMealToPlan: () => ({ mutateAsync: vi.fn(), isPending: false }),
+}));
 
 afterEach(() => {
   cleanup();

@@ -112,14 +112,17 @@ describe("FoodMasterSelector", () => {
 
     await user.click(screen.getByText("サラダチキン"));
 
-    expect(onSelect).toHaveBeenCalledWith({
-      name: "サラダチキン",
-      calories: 110,
-      protein: 23.8,
-      fat: 1.2,
-      carbs: 0.3,
-      cost: 250,
-    });
+    expect(onSelect).toHaveBeenCalledWith(
+      {
+        name: "サラダチキン",
+        calories: 110,
+        protein: 23.8,
+        fat: 1.2,
+        carbs: 0.3,
+        cost: 250,
+      },
+      "fm-1",
+    );
   });
 
   it("passes undefined for cost when defaultPrice is null", async () => {
@@ -135,6 +138,7 @@ describe("FoodMasterSelector", () => {
 
     expect(onSelect).toHaveBeenCalledWith(
       expect.objectContaining({ cost: undefined }),
+      "fm-2",
     );
   });
 

@@ -81,32 +81,17 @@ describe("PlanWeeklySummary", () => {
     expect(screen.getByText(/C 100\.0/)).toBeInTheDocument();
   });
 
-  it("shows transfer button when untransferred plans exist", () => {
-    const plans = [createPlan({ isTransferred: false })];
+  it("shows transfer button when today has plans", () => {
+    const todayStr = new Date().toISOString().split("T")[0];
+    const plans = [createPlan({ date: todayStr })];
     render(<PlanWeeklySummary plans={plans} weekStart="2026-03-16" />);
     expect(screen.getByText("今日の献立を転記")).toBeInTheDocument();
   });
 
-  it("hides transfer button when all plans are transferred", () => {
-    const plans = [createPlan({ isTransferred: true })];
+  it("hides transfer button when today has no plans", () => {
+    const plans = [createPlan({ date: "2099-01-01" })];
     render(<PlanWeeklySummary plans={plans} weekStart="2026-03-16" />);
     expect(screen.queryByText("今日の献立を転記")).not.toBeInTheDocument();
-  });
-
-  it("shows untransferred count", () => {
-    const plans = [
-      createPlan({ id: "p1", isTransferred: false }),
-      createPlan({ id: "p2", isTransferred: true }),
-      createPlan({ id: "p3", isTransferred: false }),
-    ];
-    render(<PlanWeeklySummary plans={plans} weekStart="2026-03-16" />);
-    expect(screen.getByText("未転記: 2件")).toBeInTheDocument();
-  });
-
-  it("hides untransferred count when all are transferred", () => {
-    const plans = [createPlan({ isTransferred: true })];
-    render(<PlanWeeklySummary plans={plans} weekStart="2026-03-16" />);
-    expect(screen.queryByText(/未転記/)).not.toBeInTheDocument();
   });
 
   it("rounds calorie totals", () => {
