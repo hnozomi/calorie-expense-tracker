@@ -119,7 +119,7 @@ const PlanCalendarGrid = ({ weekStart, plans }: PlanCalendarGridProps) => {
                 <div
                   key={`${day.date}-${mealType}`}
                   className={cn(
-                    "border-r border-border/30 last:border-r-0",
+                    "min-w-0 overflow-hidden border-r border-border/30 last:border-r-0",
                     isToday && "bg-primary/[0.02]",
                   )}
                 >

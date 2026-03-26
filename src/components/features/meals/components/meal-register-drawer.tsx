@@ -67,10 +67,7 @@ const MealRegisterDrawer = () => {
           </DrawerHeader>
 
           {/* Fixed tab bar */}
-          <div
-            className="shrink-0 px-4"
-            role="tablist"
-          >
+          <div className="shrink-0 px-4" role="tablist">
             <div className="flex gap-1 rounded-xl bg-muted/50 p-1">
               {(
                 [
