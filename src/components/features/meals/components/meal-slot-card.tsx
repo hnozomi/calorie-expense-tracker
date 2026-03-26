@@ -1,11 +1,13 @@
 "use client";
 
 import { useAtomValue, useSetAtom } from "jotai";
-import { ChevronRight, Plus } from "lucide-react";
+import { CalendarPlus, ChevronRight, Plus } from "lucide-react";
 import { useState } from "react";
+import { toast } from "sonner";
 import { PfcDisplay } from "@/components/ui/pfc-display";
 import { MEAL_TYPE_LABELS, type MealType } from "@/types";
 import { cn, MEAL_TYPE_META } from "@/utils";
+import { useTransferMealToPlan } from "../hooks/use-transfer-meal-to-plan";
 import { selectedDateAtom } from "../stores/date-atom";
 import {
   drawerMealTypeAtom,
@@ -25,10 +27,23 @@ const MealSlotCard = ({ mealType, items }: MealSlotCardProps) => {
   const setDrawerMealType = useSetAtom(drawerMealTypeAtom);
   const selectedDate = useAtomValue(selectedDateAtom);
   const [editingItem, setEditingItem] = useState<MealItem | null>(null);
+  const transferToPlan = useTransferMealToPlan();
 
   const openDrawer = () => {
     setDrawerMealType(mealType);
     setIsDrawerOpen(true);
+  };
+
+  const handleTransferToPlan = async () => {
+    try {
+      await transferToPlan.mutateAsync({
+        targetDate: selectedDate,
+        mealType,
+      });
+      toast.success("献立に反映しました");
+    } catch {
+      toast.error("献立への反映に失敗しました");
+    }
   };
 
   const totalCalories = items.reduce((sum, item) => sum + item.calories, 0);
@@ -54,9 +69,20 @@ const MealSlotCard = ({ mealType, items }: MealSlotCardProps) => {
             </span>
           </div>
           {items.length > 0 && (
-            <span className="text-sm font-semibold tabular-nums text-muted-foreground">
-              {Math.round(totalCalories)} kcal
-            </span>
+            <div className="flex items-center gap-2">
+              <span className="text-sm font-semibold tabular-nums text-muted-foreground">
+                {Math.round(totalCalories)} kcal
+              </span>
+              <button
+                type="button"
+                className="flex h-6 w-6 items-center justify-center rounded-md text-muted-foreground/60 transition-colors hover:bg-muted hover:text-foreground active:bg-muted/80"
+                onClick={handleTransferToPlan}
+                disabled={transferToPlan.isPending}
+                title="献立に反映"
+              >
+                <CalendarPlus className="h-3.5 w-3.5" />
+              </button>
+            </div>
           )}
         </div>
 
