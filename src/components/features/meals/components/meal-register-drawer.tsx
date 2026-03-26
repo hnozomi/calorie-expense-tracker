@@ -56,8 +56,8 @@ const MealRegisterDrawer = () => {
   return (
     <>
       <Drawer open={isOpen} onOpenChange={setIsOpen}>
-        <DrawerContent className="max-h-[85dvh]">
-          <DrawerHeader className="pb-2">
+        <DrawerContent className="h-[50dvh]">
+          <DrawerHeader className="shrink-0 pb-2">
             <DrawerTitle className="text-base">
               {MEAL_TYPE_LABELS[mealType]}を登録
             </DrawerTitle>
@@ -66,13 +66,12 @@ const MealRegisterDrawer = () => {
             </DrawerDescription>
           </DrawerHeader>
 
-          {/* Scrollable content */}
-          <div className="flex-1 overflow-y-auto px-4 pb-4">
-            {/* Tab bar */}
-            <div
-              className="flex gap-1 rounded-xl bg-muted/50 p-1"
-              role="tablist"
-            >
+          {/* Fixed tab bar */}
+          <div
+            className="shrink-0 px-4"
+            role="tablist"
+          >
+            <div className="flex gap-1 rounded-xl bg-muted/50 p-1">
               {(
                 [
                   { value: "manual", icon: PenLine, label: "手動" },
@@ -100,8 +99,10 @@ const MealRegisterDrawer = () => {
                 </button>
               ))}
             </div>
+          </div>
 
-            {/* Tab content */}
+          {/* Scrollable tab content */}
+          <div className="min-h-0 flex-1 overflow-y-auto px-4 pb-[calc(2.5rem+env(safe-area-inset-bottom))]">
             <div className="mt-3">
               {activeTab === "manual" && (
                 <ManualInputForm onAdd={handleManualAdd} />
@@ -171,7 +172,7 @@ const MealRegisterDrawer = () => {
 
           {/* Sticky footer with register button */}
           {draftItems.length > 0 && (
-            <div className="shrink-0 border-t bg-background px-4 pt-3 pb-[calc(0.75rem+env(safe-area-inset-bottom))]">
+            <div className="shrink-0 border-t bg-background px-4 pt-3 pb-[calc(1rem+env(safe-area-inset-bottom))]">
               <Button
                 className="w-full"
                 disabled={registerMutation.isPending}
