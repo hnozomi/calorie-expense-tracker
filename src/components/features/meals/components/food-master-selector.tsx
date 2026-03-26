@@ -10,7 +10,7 @@ import { useDebounce } from "@/hooks";
 import type { MealItemFormValues } from "../types/meal";
 
 type FoodMasterSelectorProps = {
-  onSelect: (values: MealItemFormValues) => void;
+  onSelect: (values: MealItemFormValues, foodMasterId: string) => void;
 };
 
 /** Select a food master item to add to the meal registration card */
@@ -20,14 +20,17 @@ const FoodMasterSelector = ({ onSelect }: FoodMasterSelectorProps) => {
   const { data: foodMasters, isLoading } = useFoodMasters(debouncedSearch);
 
   const handleSelect = (fm: NonNullable<typeof foodMasters>[number]) => {
-    onSelect({
-      name: fm.name,
-      calories: fm.calories,
-      protein: fm.protein,
-      fat: fm.fat,
-      carbs: fm.carbs,
-      cost: fm.defaultPrice ?? undefined,
-    });
+    onSelect(
+      {
+        name: fm.name,
+        calories: fm.calories,
+        protein: fm.protein,
+        fat: fm.fat,
+        carbs: fm.carbs,
+        cost: fm.defaultPrice ?? undefined,
+      },
+      fm.id,
+    );
   };
 
   return (

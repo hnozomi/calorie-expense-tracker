@@ -52,4 +52,7 @@ export type MealItemFormValues = z.output<typeof mealItemFormSchema>;
 export type MealItemDraft = MealItemFormValues & {
   tempId: string;
   sourceType: SourceType;
+  foodMasterId?: string;
+  recipeId?: string;
+  setMenuId?: string;
 };

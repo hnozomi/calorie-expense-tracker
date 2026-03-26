@@ -6,8 +6,14 @@ import { PfcDisplay } from "@/components/ui/pfc-display";
 import { Skeleton } from "@/components/ui/skeleton";
 import type { MealItemFormValues } from "../types/meal";
 
+type SetMenuItemWithIds = MealItemFormValues & {
+  setMenuId?: string;
+  foodMasterId?: string;
+  recipeId?: string;
+};
+
 type SetMenuSelectorProps = {
-  onSelect: (items: MealItemFormValues[]) => void;
+  onSelect: (items: SetMenuItemWithIds[]) => void;
 };
 
 /** List of set menus with items; selecting adds all items to draft */
@@ -16,13 +22,16 @@ const SetMenuSelectorInner = ({ onSelect }: SetMenuSelectorProps) => {
 
   const handleSelect = (menu: NonNullable<typeof setMenus>[number]) => {
     if (menu.items.length === 0) return;
-    const items: MealItemFormValues[] = menu.items.map((item) => ({
+    const items = menu.items.map((item) => ({
       name: item.name,
       calories: item.calories,
       protein: item.protein,
       fat: item.fat,
       carbs: item.carbs,
       cost: item.cost || undefined,
+      setMenuId: menu.id,
+      foodMasterId: item.foodMasterId ?? undefined,
+      recipeId: item.recipeId ?? undefined,
     }));
     onSelect(items);
   };

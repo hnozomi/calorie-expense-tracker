@@ -12,7 +12,7 @@ import {
   drawerMealTypeAtom,
   isDrawerOpenAtom,
 } from "../stores/meal-register-atom";
-import type { MealItemFormValues } from "../types/meal";
+import type { MealItemDraft, MealItemFormValues } from "../types/meal";
 import { useRegisterMealItems } from "./use-register-meal-items";
 
 export const useMealRegisterDrawerController = () => {
@@ -31,13 +31,21 @@ export const useMealRegisterDrawerController = () => {
   const { isProcessing: isOcrProcessing, processImage } = useOcr();
 
   const addDraftItem = useCallback(
-    (values: MealItemFormValues, sourceType: SourceType) => {
+    (
+      values: MealItemFormValues,
+      sourceType: SourceType,
+      masterIds?: Pick<
+        MealItemDraft,
+        "foodMasterId" | "recipeId" | "setMenuId"
+      >,
+    ) => {
       setDraftItems((prev) => [
         ...prev,
         {
           ...values,
           tempId: crypto.randomUUID(),
           sourceType,
+          ...masterIds,
         },
       ]);
     },
@@ -50,23 +58,34 @@ export const useMealRegisterDrawerController = () => {
   );
 
   const handleRecipeAdd = useCallback(
-    (values: MealItemFormValues) => addDraftItem(values, "recipe"),
+    (values: MealItemFormValues, recipeId: string) =>
+      addDraftItem(values, "recipe", { recipeId }),
     [addDraftItem],
   );
 
   const handleFoodMasterAdd = useCallback(
-    (values: MealItemFormValues) => addDraftItem(values, "food_master"),
+    (values: MealItemFormValues, foodMasterId: string) =>
+      addDraftItem(values, "food_master", { foodMasterId }),
     [addDraftItem],
   );
 
   const handleSetMenuAdd = useCallback(
-    (items: MealItemFormValues[]) => {
+    (
+      items: (MealItemFormValues & {
+        setMenuId?: string;
+        foodMasterId?: string;
+        recipeId?: string;
+      })[],
+    ) => {
       setDraftItems((prev) => [
         ...prev,
-        ...items.map((values) => ({
+        ...items.map(({ setMenuId, foodMasterId, recipeId, ...values }) => ({
           ...values,
           tempId: crypto.randomUUID(),
           sourceType: "set_menu" as SourceType,
+          setMenuId,
+          foodMasterId,
+          recipeId,
         })),
       ]);
       toast.success(`${items.length}件のアイテムを追加しました`);

@@ -47,6 +47,9 @@ export const useRegisterMealItems = () => {
           carbs: item.carbs,
           cost: item.cost ?? null,
           source_type: item.sourceType,
+          food_master_id: item.foodMasterId ?? null,
+          recipe_id: item.recipeId ?? null,
+          set_menu_id: item.setMenuId ?? null,
         })),
       });
 

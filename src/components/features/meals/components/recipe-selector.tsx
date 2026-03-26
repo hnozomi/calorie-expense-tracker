@@ -11,7 +11,7 @@ import { useDebounce } from "@/hooks";
 import type { MealItemFormValues } from "../types/meal";
 
 type RecipeSelectorProps = {
-  onSelect: (values: MealItemFormValues) => void;
+  onSelect: (values: MealItemFormValues, recipeId: string) => void;
 };
 
 /** Select a recipe to add to the meal registration card (per-person values) */
@@ -27,14 +27,17 @@ const RecipeSelector = ({ onSelect }: RecipeSelectorProps) => {
       0,
     );
 
-    onSelect({
-      name: recipe.name,
-      calories: recipe.calories / perPerson,
-      protein: recipe.protein / perPerson,
-      fat: recipe.fat / perPerson,
-      carbs: recipe.carbs / perPerson,
-      cost: totalIngredientCost / perPerson,
-    });
+    onSelect(
+      {
+        name: recipe.name,
+        calories: recipe.calories / perPerson,
+        protein: recipe.protein / perPerson,
+        fat: recipe.fat / perPerson,
+        carbs: recipe.carbs / perPerson,
+        cost: totalIngredientCost / perPerson,
+      },
+      recipe.id,
+    );
   };
 
   return (
