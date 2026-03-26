@@ -3,6 +3,7 @@
 import { Button } from "@/components/ui/button";
 import { PfcDisplay } from "@/components/ui/pfc-display";
 import type { MealType } from "@/types";
+import { getTodayString } from "@/utils";
 import { useTransferPlan } from "../hooks/use-transfer-plan";
 import type { MealPlan } from "../types/meal-plan";
 
@@ -27,23 +28,13 @@ const PlanWeeklySummary = ({ plans, weekStart }: PlanWeeklySummaryProps) => {
     { calories: 0, protein: 0, fat: 0, carbs: 0, cost: 0 },
   );
 
-  /** Count untransferred plans */
-  const untransferredCount = plans.filter((p) => !p.isTransferred).length;
-
-  /** Transfer all untransferred plans for today */
+  /** Transfer today's plans to daily meals */
   const handleTransferToday = async () => {
-    const today = new Date();
-    const y = today.getFullYear();
-    const m = String(today.getMonth() + 1).padStart(2, "0");
-    const d = String(today.getDate()).padStart(2, "0");
-    const todayStr = `${y}-${m}-${d}`;
+    const todayStr = getTodayString();
 
-    /** Find untransferred meal types for today */
     const todayMealTypes = [
       ...new Set(
-        plans
-          .filter((p) => p.date === todayStr && !p.isTransferred)
-          .map((p) => p.mealType),
+        plans.filter((p) => p.date === todayStr).map((p) => p.mealType),
       ),
     ];
 
@@ -54,6 +45,10 @@ const PlanWeeklySummary = ({ plans, weekStart }: PlanWeeklySummaryProps) => {
       });
     }
   };
+
+  /** Check if today has any plans */
+  const todayStr = getTodayString();
+  const hasTodayPlans = plans.some((p) => p.date === todayStr);
 
   /** Build date range label */
   const endDate = new Date(`${weekStart}T00:00:00`);
@@ -68,7 +63,7 @@ const PlanWeeklySummary = ({ plans, weekStart }: PlanWeeklySummaryProps) => {
         <p className="text-xs font-semibold tracking-wide text-muted-foreground">
           週間サマリー ({rangeLabel})
         </p>
-        {untransferredCount > 0 && (
+        {hasTodayPlans && (
           <Button
             size="sm"
             variant="outline"
@@ -109,13 +104,6 @@ const PlanWeeklySummary = ({ plans, weekStart }: PlanWeeklySummaryProps) => {
           carbs={totals.carbs}
           size="md"
         />
-
-        {/* Untransferred count badge */}
-        {untransferredCount > 0 && (
-          <p className="inline-flex items-center gap-1 rounded-full bg-amber-100 px-2.5 py-0.5 text-xs font-medium text-amber-700 dark:bg-amber-900/30 dark:text-amber-400">
-            未転記: {untransferredCount}件
-          </p>
-        )}
       </div>
     </div>
   );

@@ -3,7 +3,6 @@
 import { Plus } from "lucide-react";
 import { useState } from "react";
 import type { MealType } from "@/types";
-import { cn } from "@/utils";
 import type { MealPlan } from "../types/meal-plan";
 import { PlanMenuSelectModal } from "./plan-menu-select-modal";
 
@@ -35,12 +34,7 @@ const PlanCell = ({ date, mealType, plans }: PlanCellProps) => {
           <button
             key={plan.id}
             type="button"
-            className={cn(
-              "block w-full truncate rounded-md px-1.5 py-1 text-left text-[11px] leading-tight transition-colors",
-              plan.isTransferred
-                ? "bg-muted/40 text-muted-foreground line-through hover:bg-muted/60"
-                : "bg-primary/8 font-medium text-foreground hover:bg-primary/15",
-            )}
+            className="block w-full truncate rounded-md bg-primary/8 px-1.5 py-1 text-left text-[11px] font-medium leading-tight text-foreground transition-colors hover:bg-primary/15"
             onClick={() => handleOpenEdit(plan)}
           >
             {plan.plannedName}
