@@ -30,12 +30,12 @@ export const useOcr = () => {
       const preprocessedDataUrl = await preprocessImage(imageSource);
 
       // Dynamic import to avoid loading Tesseract.js on initial page load
-      const { createWorker } = await import("tesseract.js");
+      const { createWorker, PSM } = await import("tesseract.js");
       const worker = await createWorker("jpn+eng");
 
-      // PSM 6: Assume a single uniform block of text (best for nutrition labels)
+      // PSM SINGLE_BLOCK: Assume a single uniform block of text (best for nutrition labels)
       await worker.setParameters({
-        tessedit_pageseg_mode: "6",
+        tessedit_pageseg_mode: PSM.SINGLE_BLOCK,
       });
 
       const {
