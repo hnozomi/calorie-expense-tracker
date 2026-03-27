@@ -36,5 +36,13 @@ src/
 - `pnpm test` — Run tests in watch mode
 - `pnpm test:run` — Run tests once
 
+## Deploy Checklist
+- **Before `git push`**: Always run `pnpm build` and confirm it succeeds. Turbopack dev server skips TypeScript type checking and does not prerender pages, so errors only caught by production build will silently break Vercel deployments.
+- **After `git push`**: Verify Vercel deployment status using `mcp__vercel__list_deployments`. Do not assume a push is deployed.
+
+## Supabase Migrations
+- `generate_series(DATE, DATE, INTERVAL)` returns `timestamp with time zone`, not `DATE`. Always cast explicitly with `::DATE` when the function signature expects `DATE`.
+- Test RPC functions against the actual database schema before applying migrations. Type mismatches between SQL return types and function signatures cause runtime errors during SSG prerendering.
+
 ## Coding Rules
 See `.claude/rules/` for detailed coding rules.
