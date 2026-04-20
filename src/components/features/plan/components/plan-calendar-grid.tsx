@@ -8,8 +8,8 @@ import { buildWeekDays, cn, getTodayString } from "@/utils";
 import type { MealPlan } from "../types/meal-plan";
 import { PlanCell } from "./plan-cell";
 
-/** Meal types displayed in the calendar (exclude snack for grid simplicity) */
-const CALENDAR_MEAL_TYPES = ["breakfast", "lunch", "dinner"] as const;
+/** Meal types displayed in the calendar */
+const CALENDAR_MEAL_TYPES = ["breakfast", "lunch", "dinner", "snack"] as const;
 
 type PlanCalendarGridProps = {
   weekStart: string;
@@ -58,7 +58,7 @@ const buildPlanIndex = (plans: MealPlan[]) => {
   return { plansBySlot, totalsByDate };
 };
 
-/** Horizontally scrollable 7-day × 3-meal grid with daily calorie totals */
+/** Horizontally scrollable 7-day × 4-meal grid with daily calorie totals */
 const PlanCalendarGrid = ({ weekStart, plans }: PlanCalendarGridProps) => {
   const days = buildWeekDays(weekStart);
   const { data: target } = useNutritionTarget();
