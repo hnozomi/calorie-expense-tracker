@@ -258,7 +258,7 @@ const PlanMenuSelectModal = ({
           {/* Food master selection */}
           <TabsContent value="food_master" className="mt-4 space-y-3">
             <Input
-              placeholder="食品名で検索..."
+              placeholder="食品名・ブランドで検索..."
               value={fmSearch}
               onChange={(e) => setFmSearch(e.target.value)}
               className="h-9"

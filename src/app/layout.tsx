@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import { ServiceWorkerRegister } from "@/components/features/pwa";
+import { Toaster } from "@/components/ui/sonner";
 import { Providers } from "./providers";
 import "./globals.css";
 
@@ -138,8 +139,18 @@ export default function RootLayout({
       <body
         className={`${geistSans.variable} ${geistMono.variable} bg-background antialiased`}
       >
-        <Providers>{children}</Providers>
-        <ServiceWorkerRegister />
+        <Providers>
+          {children}
+          {/* Bottom-center above the bottom navigation, clear of the sticky header */}
+          <Toaster
+            position="bottom-center"
+            richColors
+            mobileOffset={{
+              bottom: "calc(5.5rem + env(safe-area-inset-bottom))",
+            }}
+          />
+          <ServiceWorkerRegister />
+        </Providers>
       </body>
     </html>
   );

@@ -1,7 +1,16 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
-import { getTodayString } from "@/utils";
+import { formatDateToString, getTodayString } from "@/utils";
 
 export type CsvExportType = "meals" | "recipes" | "food_masters" | "set_menus";
+
+/** Date range option applied to the meal export */
+export type CsvExportPeriod = "all" | "this_month" | "last_month";
+
+export const CSV_EXPORT_PERIOD_LABELS: Record<CsvExportPeriod, string> = {
+  all: "全期間",
+  this_month: "今月",
+  last_month: "先月",
+};
 
 export type CsvRow = Record<string, string | number | null | undefined>;
 
@@ -14,10 +23,21 @@ type CsvExportDefinition = {
   filenamePrefix: string;
   headers: CsvHeader[];
   successMessage: string;
-  fetchRows: (supabase: SupabaseClient) => Promise<CsvRow[]>;
+  fetchRows: (
+    supabase: SupabaseClient,
+    period: CsvExportPeriod,
+  ) => Promise<CsvRow[]>;
 };
 
 const todaySuffix = () => getTodayString();
+
+/** First and last day of the month shifted by offsetMonths from now */
+const getMonthRange = (offsetMonths: number) => {
+  const now = new Date();
+  const start = new Date(now.getFullYear(), now.getMonth() + offsetMonths, 1);
+  const end = new Date(now.getFullYear(), now.getMonth() + offsetMonths + 1, 0);
+  return { start: formatDateToString(start), end: formatDateToString(end) };
+};
 
 const mealExportDefinition: CsvExportDefinition = {
   filenamePrefix: "meshilog_meals",
@@ -33,11 +53,18 @@ const mealExportDefinition: CsvExportDefinition = {
     { key: "cost", label: "食費(円)" },
     { key: "source_type", label: "登録元" },
   ],
-  fetchRows: async (supabase) => {
-    const { data, error } = await supabase
+  fetchRows: async (supabase, period) => {
+    let query = supabase
       .from("meal_items")
       .select("*, meals!inner(date, meal_type)")
       .order("created_at", { ascending: false });
+
+    if (period !== "all") {
+      const range = getMonthRange(period === "this_month" ? 0 : -1);
+      query = query.gte("meals.date", range.start).lte("meals.date", range.end);
+    }
+
+    const { data, error } = await query;
 
     if (error) throw error;
 

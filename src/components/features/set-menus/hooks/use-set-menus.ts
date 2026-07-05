@@ -15,7 +15,7 @@ export const useSetMenus = () => {
         .from("set_menus")
         .select("*, set_menu_items(*)")
         .is("deleted_at", null)
-        .order("updated_at", { ascending: false });
+        .order("name", { ascending: true });
 
       if (error) throw error;
 

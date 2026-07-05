@@ -95,7 +95,9 @@ describe("FoodMasterSelector", () => {
     mockFoodMasters.mockReturnValue({ data: [], isLoading: false });
     render(<FoodMasterSelector onSelect={vi.fn()} />);
 
-    const searchInput = screen.getByPlaceholderText("食品名で検索...");
+    const searchInput = screen.getByPlaceholderText(
+      "食品名・ブランドで検索...",
+    );
     await user.type(searchInput, "存在しない食品");
 
     expect(screen.getByText("該当する食品がありません")).toBeInTheDocument();
@@ -145,6 +147,8 @@ describe("FoodMasterSelector", () => {
   it("has a search input", () => {
     mockFoodMasters.mockReturnValue({ data: [], isLoading: false });
     render(<FoodMasterSelector onSelect={vi.fn()} />);
-    expect(screen.getByPlaceholderText("食品名で検索...")).toBeInTheDocument();
+    expect(
+      screen.getByPlaceholderText("食品名・ブランドで検索..."),
+    ).toBeInTheDocument();
   });
 });

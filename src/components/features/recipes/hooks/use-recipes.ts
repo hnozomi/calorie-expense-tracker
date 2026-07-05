@@ -15,7 +15,7 @@ export const useRecipes = (search?: string) => {
         .from("recipes")
         .select("*, recipe_ingredients(*)")
         .is("deleted_at", null)
-        .order("updated_at", { ascending: false });
+        .order("name", { ascending: true });
 
       if (search && search.trim().length > 0) {
         query = query.ilike("name", `%${search.trim()}%`);

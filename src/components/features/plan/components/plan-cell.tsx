@@ -34,15 +34,17 @@ const PlanCell = ({ date, mealType, plans }: PlanCellProps) => {
           <button
             key={plan.id}
             type="button"
-            className="block w-full truncate rounded-md bg-primary/8 px-1.5 py-1 text-left text-[11px] font-medium leading-tight text-foreground transition-colors hover:bg-primary/15"
+            className="block w-full truncate rounded-md bg-primary/8 px-1.5 py-2 text-left text-[11px] font-medium leading-tight text-foreground transition-colors hover:bg-primary/15"
             onClick={() => handleOpenEdit(plan)}
           >
             {plan.plannedName}
           </button>
         ))}
+        {/* flex-1 lets the add button absorb the empty cell area for a larger tap target */}
         <button
           type="button"
-          className="mt-auto flex items-center justify-center rounded-md border border-dashed border-border/50 py-1 text-muted-foreground/60 transition-all hover:border-primary/30 hover:bg-primary/5 hover:text-primary"
+          aria-label="献立を追加"
+          className="mt-auto flex min-h-[28px] flex-1 items-center justify-center rounded-md border border-dashed border-border/50 py-1.5 text-muted-foreground/60 transition-all hover:border-primary/30 hover:bg-primary/5 hover:text-primary"
           onClick={handleOpenNew}
         >
           <Plus className="h-3.5 w-3.5" />

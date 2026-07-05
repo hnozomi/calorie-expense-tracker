@@ -1,6 +1,7 @@
 "use client";
 
 import { Flame, Wallet } from "lucide-react";
+import Link from "next/link";
 import { Card, CardContent } from "@/components/ui/card";
 import { useNutritionTarget } from "@/hooks";
 import { cn } from "@/utils";
@@ -168,6 +169,12 @@ const DailySummaryCard = ({ date }: DailySummaryCardProps) => {
                 <p className="text-xs font-medium text-muted-foreground">
                   kcal
                 </p>
+                <Link
+                  href="/other/settings"
+                  className="mt-1 inline-block text-xs font-medium text-brand underline-offset-2 hover:underline"
+                >
+                  目標を設定する
+                </Link>
               </div>
             </div>
           )}

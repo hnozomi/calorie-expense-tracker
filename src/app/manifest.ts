@@ -2,11 +2,15 @@ import type { MetadataRoute } from "next";
 
 export default function manifest(): MetadataRoute.Manifest {
   return {
+    id: "/",
     name: "めしログ",
     short_name: "めしログ",
     description:
       "毎日の食事をサクッと記録。カロリー・PFC・食費をまるごと管理。",
     start_url: "/",
+    scope: "/",
+    lang: "ja",
+    dir: "ltr",
     display: "standalone",
     orientation: "any",
     background_color: "#FFFFFF",

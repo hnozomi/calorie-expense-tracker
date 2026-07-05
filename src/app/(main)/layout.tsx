@@ -1,7 +1,6 @@
 import { BottomNavigation } from "@/components/features/layout";
-import { Toaster } from "@/components/ui/sonner";
 
-/** Authenticated pages layout: bottom navigation + toaster */
+/** Authenticated pages layout: bottom navigation */
 export default function MainLayout({
   children,
 }: {
@@ -11,7 +10,6 @@ export default function MainLayout({
     <div className="flex min-h-dvh flex-col">
       {children}
       <BottomNavigation />
-      <Toaster position="top-center" richColors />
     </div>
   );
 }

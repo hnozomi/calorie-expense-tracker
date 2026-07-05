@@ -408,7 +408,7 @@ const FoodMasterFormView = ({ id }: FoodMasterFormViewProps) => {
                         「{existing?.name}」を削除しますか？
                       </p>
                       <p className="mt-0.5 text-xs text-muted-foreground">
-                        過去の食事記録は影響を受けません。
+                        過去の食事記録は影響を受けません。セットメニューに含まれている場合、既存の内容は保持されますが、新たに追加できなくなります。
                       </p>
                     </div>
                   </div>

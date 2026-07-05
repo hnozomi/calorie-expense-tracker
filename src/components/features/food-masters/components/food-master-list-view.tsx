@@ -34,7 +34,7 @@ const FoodMasterListView = () => {
           <div className="relative">
             <Search className="absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
             <Input
-              placeholder="食品名で検索..."
+              placeholder="食品名・ブランドで検索..."
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               className="rounded-full border-muted-foreground/20 bg-muted/50 pl-10 shadow-sm transition-shadow focus:shadow-md"

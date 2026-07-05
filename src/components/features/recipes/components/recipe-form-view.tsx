@@ -164,6 +164,9 @@ const RecipeFormView = ({ id }: RecipeFormViewProps) => {
               </span>
             </SectionHeader>
             <div className="space-y-3 rounded-xl border border-border/60 bg-muted/30 p-3.5">
+              <p className="text-xs text-muted-foreground">
+                レシピ全量の栄養成分を入力してください（材料からの自動計算は行われません）
+              </p>
               {/* Calories */}
               <div className="space-y-1.5">
                 <Label htmlFor="recipe-calories" className="text-xs">
@@ -332,7 +335,7 @@ const RecipeFormView = ({ id }: RecipeFormViewProps) => {
                         「{existing?.name}」を削除しますか？
                       </p>
                       <p className="mt-0.5 text-xs text-muted-foreground">
-                        過去の食事記録は影響を受けません。
+                        過去の食事記録は影響を受けません。セットメニューに含まれている場合、既存の内容は保持されますが、新たに追加できなくなります。
                       </p>
                     </div>
                   </div>

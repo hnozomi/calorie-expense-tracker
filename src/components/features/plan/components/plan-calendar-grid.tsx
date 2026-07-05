@@ -72,153 +72,174 @@ const PlanCalendarGrid = ({ weekStart, plans }: PlanCalendarGridProps) => {
   const maxCal = Math.max(...dailyCalories, 1);
 
   return (
-    <ScrollArea className="w-full">
-      <div className="min-w-[640px]">
-        {/* Header row: day labels */}
-        <div className="grid grid-cols-[60px_repeat(7,1fr)] border-b border-border/60 bg-muted/30">
-          <div className="sticky left-0 z-10 border-r border-border/40 bg-background p-2" />
-          {days.map((day) => {
-            const isToday = day.date === todayStr;
-            return (
-              <div
-                key={day.date}
-                className={cn(
-                  "flex flex-col items-center gap-0.5 py-2",
-                  isToday && "bg-primary/5",
-                )}
-              >
-                <p className="text-[10px] font-medium uppercase tracking-wider text-muted-foreground">
-                  {day.dayOfWeek}
-                </p>
-                <p
-                  className={cn(
-                    "flex h-6 w-6 items-center justify-center rounded-full text-xs font-semibold",
-                    isToday
-                      ? "bg-primary text-primary-foreground"
-                      : "text-foreground",
-                  )}
-                >
-                  {day.label.split("/")[1]}
-                </p>
-              </div>
-            );
-          })}
-        </div>
-
-        {/* Meal type rows */}
-        {CALENDAR_MEAL_TYPES.map((mealType) => (
-          <div
-            key={mealType}
-            className="grid grid-cols-[60px_repeat(7,1fr)] border-b border-border/40"
-          >
-            {/* Sticky label so meal rows stay identifiable while scrolling horizontally */}
-            <div className="sticky left-0 z-10 flex items-center justify-center border-r border-border/40 bg-background p-1">
-              <span className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
-                {MEAL_TYPE_LABELS[mealType]}
-              </span>
-            </div>
+    <>
+      <ScrollArea className="w-full">
+        <div className="min-w-[640px]">
+          {/* Header row: day labels */}
+          <div className="grid grid-cols-[60px_repeat(7,1fr)] border-b border-border/60 bg-muted/30">
+            <div className="sticky left-0 z-10 border-r border-border/40 bg-background p-2" />
             {days.map((day) => {
               const isToday = day.date === todayStr;
               return (
                 <div
-                  key={`${day.date}-${mealType}`}
+                  key={day.date}
                   className={cn(
-                    "min-w-0 overflow-hidden border-r border-border/30 last:border-r-0",
+                    "flex flex-col items-center gap-0.5 py-2",
                     isToday && "bg-primary/5",
                   )}
                 >
-                  <PlanCell
-                    date={day.date}
-                    mealType={mealType}
-                    plans={plansBySlot.get(`${day.date}:${mealType}`) ?? []}
-                  />
+                  <p className="text-[10px] font-medium uppercase tracking-wider text-muted-foreground">
+                    {day.dayOfWeek}
+                  </p>
+                  <p
+                    className={cn(
+                      "flex h-6 w-6 items-center justify-center rounded-full text-xs font-semibold",
+                      isToday
+                        ? "bg-primary text-primary-foreground"
+                        : "text-foreground",
+                    )}
+                  >
+                    {day.label.split("/")[1]}
+                  </p>
                 </div>
               );
             })}
           </div>
-        ))}
 
-        {/* Daily calorie totals row */}
-        <div className="grid grid-cols-[60px_repeat(7,1fr)] border-b border-border/60 bg-muted/20">
-          <div className="sticky left-0 z-10 flex items-center justify-center border-r border-border/40 bg-background p-1">
-            <span className="text-[10px] font-semibold tracking-wider text-muted-foreground">
-              合計
-            </span>
-          </div>
-          {days.map((day, i) => {
-            const totals = totalsByDate.get(day.date) ?? EMPTY_TOTALS;
-            const cal = dailyCalories[i];
-            const isToday = day.date === todayStr;
-            const isOver = hasTarget && cal > targetCalories;
-            const isLow = hasTarget && cal > 0 && cal < targetCalories * 0.8;
-
-            /** Relative intensity for background coloring */
-            const intensity = maxCal > 0 ? cal / maxCal : 0;
-
-            return (
-              <div
-                key={`total-${day.date}`}
-                className={cn(
-                  "flex flex-col items-center justify-center gap-0.5 border-r border-border/30 py-2 last:border-r-0",
-                  isToday && "bg-primary/5",
-                )}
-              >
-                {cal > 0 ? (
-                  <>
-                    <span
-                      className={cn(
-                        "text-xs font-bold tabular-nums",
-                        isOver
-                          ? "text-destructive"
-                          : isLow
-                            ? "text-amber-600 dark:text-amber-400"
-                            : "text-foreground",
-                      )}
-                    >
-                      {Math.round(cal)}
-                    </span>
-                    <span className="text-[9px] text-muted-foreground">
-                      kcal
-                    </span>
-                    {/* Mini bar showing relative amount */}
-                    <div className="mt-0.5 h-1 w-10 overflow-hidden rounded-full bg-muted">
-                      <div
-                        className={cn(
-                          "h-full rounded-full transition-all",
-                          isOver
-                            ? "bg-destructive"
-                            : isLow
-                              ? "bg-amber-400"
-                              : "bg-brand",
-                        )}
-                        style={{ width: `${Math.min(intensity * 100, 100)}%` }}
-                      />
-                    </div>
-                    <PfcDisplay
-                      protein={totals.protein}
-                      fat={totals.fat}
-                      carbs={totals.carbs}
-                      className="mt-1 flex-col gap-0 text-[9px]"
-                      precision={0}
-                    />
-                    {totals.cost > 0 && (
-                      <span className="mt-0.5 text-[9px] font-medium tabular-nums text-muted-foreground">
-                        ¥{Math.round(totals.cost).toLocaleString()}
-                      </span>
-                    )}
-                  </>
-                ) : (
-                  <span className="text-[10px] text-muted-foreground/40">
-                    —
-                  </span>
-                )}
+          {/* Meal type rows */}
+          {CALENDAR_MEAL_TYPES.map((mealType) => (
+            <div
+              key={mealType}
+              className="grid grid-cols-[60px_repeat(7,1fr)] border-b border-border/40"
+            >
+              {/* Sticky label so meal rows stay identifiable while scrolling horizontally */}
+              <div className="sticky left-0 z-10 flex items-center justify-center border-r border-border/40 bg-background p-1">
+                <span className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
+                  {MEAL_TYPE_LABELS[mealType]}
+                </span>
               </div>
-            );
-          })}
+              {days.map((day) => {
+                const isToday = day.date === todayStr;
+                return (
+                  <div
+                    key={`${day.date}-${mealType}`}
+                    className={cn(
+                      "min-w-0 overflow-hidden border-r border-border/30 last:border-r-0",
+                      isToday && "bg-primary/5",
+                    )}
+                  >
+                    <PlanCell
+                      date={day.date}
+                      mealType={mealType}
+                      plans={plansBySlot.get(`${day.date}:${mealType}`) ?? []}
+                    />
+                  </div>
+                );
+              })}
+            </div>
+          ))}
+
+          {/* Daily calorie totals row */}
+          <div className="grid grid-cols-[60px_repeat(7,1fr)] border-b border-border/60 bg-muted/20">
+            <div className="sticky left-0 z-10 flex items-center justify-center border-r border-border/40 bg-background p-1">
+              <span className="text-[10px] font-semibold tracking-wider text-muted-foreground">
+                合計
+              </span>
+            </div>
+            {days.map((day, i) => {
+              const totals = totalsByDate.get(day.date) ?? EMPTY_TOTALS;
+              const cal = dailyCalories[i];
+              const isToday = day.date === todayStr;
+              const isOver = hasTarget && cal > targetCalories;
+              const isLow = hasTarget && cal > 0 && cal < targetCalories * 0.8;
+
+              /** Relative intensity for background coloring */
+              const intensity = maxCal > 0 ? cal / maxCal : 0;
+
+              return (
+                <div
+                  key={`total-${day.date}`}
+                  className={cn(
+                    "flex flex-col items-center justify-center gap-0.5 border-r border-border/30 py-2 last:border-r-0",
+                    isToday && "bg-primary/5",
+                  )}
+                >
+                  {cal > 0 ? (
+                    <>
+                      <span
+                        className={cn(
+                          "text-xs font-bold tabular-nums",
+                          isOver
+                            ? "text-destructive"
+                            : isLow
+                              ? "text-amber-600 dark:text-amber-400"
+                              : "text-foreground",
+                        )}
+                      >
+                        {Math.round(cal)}
+                      </span>
+                      <span className="text-[9px] text-muted-foreground">
+                        kcal
+                      </span>
+                      {/* Mini bar showing relative amount */}
+                      <div className="mt-0.5 h-1 w-10 overflow-hidden rounded-full bg-muted">
+                        <div
+                          className={cn(
+                            "h-full rounded-full transition-all",
+                            isOver
+                              ? "bg-destructive"
+                              : isLow
+                                ? "bg-amber-400"
+                                : "bg-brand",
+                          )}
+                          style={{
+                            width: `${Math.min(intensity * 100, 100)}%`,
+                          }}
+                        />
+                      </div>
+                      <PfcDisplay
+                        protein={totals.protein}
+                        fat={totals.fat}
+                        carbs={totals.carbs}
+                        className="mt-1 flex-col gap-0 text-[9px]"
+                        precision={0}
+                      />
+                      {totals.cost > 0 && (
+                        <span className="mt-0.5 text-[9px] font-medium tabular-nums text-muted-foreground">
+                          ¥{Math.round(totals.cost).toLocaleString()}
+                        </span>
+                      )}
+                    </>
+                  ) : (
+                    <span className="text-[10px] text-muted-foreground/40">
+                      —
+                    </span>
+                  )}
+                </div>
+              );
+            })}
+          </div>
         </div>
-      </div>
-      <ScrollBar orientation="horizontal" />
-    </ScrollArea>
+        <ScrollBar orientation="horizontal" />
+      </ScrollArea>
+      {/* Legend for the daily total color coding */}
+      {hasTarget && (
+        <div className="flex items-center gap-3 px-4 pt-2 text-[10px] text-muted-foreground">
+          <span className="flex items-center gap-1">
+            <span className="h-2 w-2 rounded-full bg-destructive" />
+            目標超過
+          </span>
+          <span className="flex items-center gap-1">
+            <span className="h-2 w-2 rounded-full bg-amber-400" />
+            目標の80%未満
+          </span>
+          <span className="flex items-center gap-1">
+            <span className="h-2 w-2 rounded-full bg-brand" />
+            目標範囲内
+          </span>
+        </div>
+      )}
+    </>
   );
 };
 

@@ -3,17 +3,36 @@
 import { Info, Trash2 } from "lucide-react";
 import { useCallback } from "react";
 import { toast } from "sonner";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 import { Button } from "@/components/ui/button";
 import { SectionHeader } from "@/components/ui/section-header";
 
+const APP_VERSION = process.env.NEXT_PUBLIC_APP_VERSION ?? "-";
+
 /** Section displaying app version and cache management */
 const AppInfoSection = () => {
-  /** Clear Service Worker caches */
+  /** Clear Service Worker caches and prompt a reload to restore offline assets */
   const handleClearCache = useCallback(async () => {
     if ("caches" in window) {
       const keys = await caches.keys();
       await Promise.all(keys.map((key) => caches.delete(key)));
-      toast.success("キャッシュをクリアしました");
+      toast.success("キャッシュをクリアしました", {
+        description: "ページを再読み込みすると最新の状態になります",
+        action: {
+          label: "再読み込み",
+          onClick: () => window.location.reload(),
+        },
+      });
     } else {
       toast.error("キャッシュクリアに対応していないブラウザです");
     }
@@ -31,17 +50,31 @@ const AppInfoSection = () => {
             </p>
           </div>
           <span className="rounded-full bg-primary/10 px-2.5 py-0.5 text-xs font-medium text-primary">
-            v1.0.0
+            v{APP_VERSION}
           </span>
         </div>
-        <Button
-          variant="outline"
-          className="w-full gap-2"
-          onClick={handleClearCache}
-        >
-          <Trash2 className="h-4 w-4" />
-          キャッシュをクリア
-        </Button>
+        <AlertDialog>
+          <AlertDialogTrigger asChild>
+            <Button variant="outline" className="w-full gap-2">
+              <Trash2 className="h-4 w-4" />
+              キャッシュをクリア
+            </Button>
+          </AlertDialogTrigger>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>キャッシュをクリアしますか？</AlertDialogTitle>
+              <AlertDialogDescription>
+                保存済みのオフライン用データが削除されます。データ本体（食事記録など）には影響しません。
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel>キャンセル</AlertDialogCancel>
+              <AlertDialogAction onClick={handleClearCache}>
+                クリアする
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
       </div>
     </section>
   );

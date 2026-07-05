@@ -6,6 +6,7 @@ import { useSupabase } from "@/hooks";
 import { downloadCsv, toCsv } from "@/utils";
 import {
   buildCsvFilename,
+  type CsvExportPeriod,
   type CsvExportType,
   csvExportDefinitions,
 } from "../csv-export-config";
@@ -13,15 +14,21 @@ import {
 /** CSV export hook providing download functions for each data type */
 export const useCsvExport = () => {
   const supabase = useSupabase();
-  const [isExporting, setIsExporting] = useState(false);
+  const [exportingType, setExportingType] = useState<CsvExportType | null>(
+    null,
+  );
 
   const exportByType = useCallback(
-    async (type: CsvExportType) => {
+    async (type: CsvExportType, period: CsvExportPeriod = "all") => {
       const definition = csvExportDefinitions[type];
 
-      setIsExporting(true);
+      setExportingType(type);
       try {
-        const rows = await definition.fetchRows(supabase);
+        const rows = await definition.fetchRows(supabase, period);
+        if (rows.length === 0) {
+          toast.info("エクスポートするデータがありません");
+          return;
+        }
         const csv = toCsv(definition.headers, rows);
         downloadCsv(csv, buildCsvFilename(definition.filenamePrefix));
         toast.success(definition.successMessage);
@@ -29,11 +36,11 @@ export const useCsvExport = () => {
         console.error(`Failed to export ${type}:`, error);
         toast.error("エクスポートに失敗しました");
       } finally {
-        setIsExporting(false);
+        setExportingType(null);
       }
     },
     [supabase],
   );
 
-  return { isExporting, exportByType };
+  return { exportingType, exportByType };
 };

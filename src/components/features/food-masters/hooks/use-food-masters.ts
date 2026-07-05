@@ -15,10 +15,12 @@ export const useFoodMasters = (search?: string) => {
         .from("food_masters")
         .select("*")
         .is("deleted_at", null)
-        .order("updated_at", { ascending: false });
+        .order("name", { ascending: true });
 
       if (search && search.trim().length > 0) {
-        query = query.ilike("name", `%${search.trim()}%`);
+        // Strip PostgREST or() syntax characters so the filter stays valid
+        const term = search.trim().replace(/[,()]/g, "");
+        query = query.or(`name.ilike.%${term}%,brand.ilike.%${term}%`);
       }
 
       const { data, error } = await query;
