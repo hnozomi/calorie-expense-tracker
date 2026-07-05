@@ -36,6 +36,9 @@ export const usePlanMenuSelectController = ({
   const [fmSearch, setFmSearch] = useState("");
   const [manualName, setManualName] = useState("");
   const [manualCalories, setManualCalories] = useState("0");
+  const [manualProtein, setManualProtein] = useState("0");
+  const [manualFat, setManualFat] = useState("0");
+  const [manualCarbs, setManualCarbs] = useState("0");
   const [manualCost, setManualCost] = useState("0");
   const debouncedRecipeSearch = useDebounce(recipeSearch);
   const debouncedFmSearch = useDebounce(fmSearch);
@@ -46,6 +49,9 @@ export const usePlanMenuSelectController = ({
   useEffect(() => {
     setManualName(existingPlan?.plannedName ?? "");
     setManualCalories(existingPlan ? String(existingPlan.calories) : "0");
+    setManualProtein(existingPlan ? String(existingPlan.protein) : "0");
+    setManualFat(existingPlan ? String(existingPlan.fat) : "0");
+    setManualCarbs(existingPlan ? String(existingPlan.carbs) : "0");
     setManualCost(existingPlan ? String(existingPlan.estimatedCost) : "0");
   }, [existingPlan]);
 
@@ -77,15 +83,36 @@ export const usePlanMenuSelectController = ({
       return;
     }
 
-    handleSave({
-      plannedName: manualName.trim(),
-      calories: Number(manualCalories) || 0,
-      protein: 0,
-      fat: 0,
-      carbs: 0,
-      estimatedCost: Number(manualCost) || 0,
-    });
-  }, [handleSave, manualCalories, manualCost, manualName]);
+    // Keep the original source links when editing an existing plan via the manual tab
+    const existingRefs = existingPlan
+      ? {
+          recipeId: existingPlan.recipeId ?? undefined,
+          foodMasterId: existingPlan.foodMasterId ?? undefined,
+          setMenuId: existingPlan.setMenuId ?? undefined,
+        }
+      : undefined;
+
+    handleSave(
+      {
+        plannedName: manualName.trim(),
+        calories: Number(manualCalories) || 0,
+        protein: Number(manualProtein) || 0,
+        fat: Number(manualFat) || 0,
+        carbs: Number(manualCarbs) || 0,
+        estimatedCost: Number(manualCost) || 0,
+      },
+      existingRefs,
+    );
+  }, [
+    existingPlan,
+    handleSave,
+    manualCalories,
+    manualCarbs,
+    manualCost,
+    manualFat,
+    manualName,
+    manualProtein,
+  ]);
 
   const handleSelectRecipe = useCallback(
     (recipe: NonNullable<typeof recipes>[number]) => {
@@ -163,15 +190,21 @@ export const usePlanMenuSelectController = ({
     foodMasters,
     fmSearch,
     manualCalories,
+    manualCarbs,
     manualCost,
+    manualFat,
     manualName,
+    manualProtein,
     recipes,
     recipeSearch,
     saveMutation,
     setFmSearch,
     setManualCalories,
+    setManualCarbs,
     setManualCost,
+    setManualFat,
     setManualName,
+    setManualProtein,
     setRecipeSearch,
     setMenus,
     handleDelete,

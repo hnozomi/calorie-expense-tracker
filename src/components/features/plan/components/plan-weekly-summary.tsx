@@ -1,5 +1,6 @@
 "use client";
 
+import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { PfcDisplay } from "@/components/ui/pfc-display";
 import { useNutritionTarget } from "@/hooks";
@@ -40,11 +41,23 @@ const PlanWeeklySummary = ({ plans, weekStart }: PlanWeeklySummaryProps) => {
       ),
     ];
 
-    for (const mealType of todayMealTypes) {
-      await transferMutation.mutateAsync({
-        targetDate: todayStr,
-        mealType: mealType as MealType,
-      });
+    let transferredCount = 0;
+    try {
+      for (const mealType of todayMealTypes) {
+        await transferMutation.mutateAsync({
+          targetDate: todayStr,
+          mealType: mealType as MealType,
+        });
+        transferredCount += 1;
+      }
+      toast.success("今日の献立を食事記録に転記しました");
+    } catch (error) {
+      console.error("Failed to transfer today's plans:", error);
+      toast.error(
+        transferredCount > 0
+          ? `転記に失敗しました(${transferredCount}/${todayMealTypes.length}件は転記済み)`
+          : "転記に失敗しました",
+      );
     }
   };
 

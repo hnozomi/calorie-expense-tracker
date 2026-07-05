@@ -9,6 +9,16 @@ import {
   PenLine,
 } from "lucide-react";
 import { OcrCameraOverlay, OcrResultForm } from "@/components/features/ocr";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { Button } from "@/components/ui/button";
 import {
   Drawer,
@@ -31,6 +41,7 @@ const MealRegisterDrawer = () => {
   const {
     activeTab,
     draftItems,
+    isDiscardConfirmOpen,
     isOcrOpen,
     isOcrProcessing,
     isOpen,
@@ -39,13 +50,15 @@ const MealRegisterDrawer = () => {
     ocrResult,
     registerMutation,
     setActiveTab,
+    setIsDiscardConfirmOpen,
     setIsOcrOpen,
-    setIsOpen,
+    handleDiscardDrafts,
     handleFoodMasterAdd,
     handleLibraryFile,
     handleManualAdd,
     handleOcrAdd,
     handleOcrResult,
+    handleOpenChange,
     handleRecipeAdd,
     handleRegister,
     handleRemove,
@@ -55,7 +68,7 @@ const MealRegisterDrawer = () => {
 
   return (
     <>
-      <Drawer open={isOpen} onOpenChange={setIsOpen}>
+      <Drawer open={isOpen} onOpenChange={handleOpenChange}>
         <DrawerContent className="h-[50dvh]">
           <DrawerHeader className="shrink-0 pb-2">
             <DrawerTitle className="text-base">
@@ -189,6 +202,28 @@ const MealRegisterDrawer = () => {
         onClose={() => setIsOcrOpen(false)}
         onResult={handleOcrResult}
       />
+
+      {/* Confirm before discarding unsaved draft items on drawer close */}
+      <AlertDialog
+        open={isDiscardConfirmOpen}
+        onOpenChange={setIsDiscardConfirmOpen}
+      >
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>入力中のアイテムを破棄しますか?</AlertDialogTitle>
+            <AlertDialogDescription>
+              追加した{draftItems.length}
+              件のアイテムはまだ登録されていません。閉じると破棄されます。
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>入力を続ける</AlertDialogCancel>
+            <AlertDialogAction onClick={handleDiscardDrafts}>
+              破棄して閉じる
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </>
   );
 };

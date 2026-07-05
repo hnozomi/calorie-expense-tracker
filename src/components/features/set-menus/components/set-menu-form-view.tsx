@@ -18,6 +18,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { NotFoundState } from "@/components/ui/not-found-state";
 import { PfcDot } from "@/components/ui/pfc-display";
 import { SectionHeader } from "@/components/ui/section-header";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -78,6 +79,29 @@ const SetMenuFormView = ({ id }: SetMenuFormViewProps) => {
             <Skeleton className="h-24 w-full rounded-lg" />
             <Skeleton className="h-12 w-full rounded-lg" />
           </div>
+        </PageContainer>
+      </>
+    );
+  }
+
+  if (!isNew && !existing) {
+    return (
+      <>
+        <Header title="セットメニュー">
+          <Button
+            variant="ghost"
+            size="icon-sm"
+            onClick={() => router.push("/other/set-menus")}
+          >
+            <ArrowLeft className="h-5 w-5" />
+          </Button>
+        </Header>
+        <PageContainer>
+          <NotFoundState
+            message="セットメニューが見つかりませんでした。削除された可能性があります。"
+            backLabel="一覧に戻る"
+            onBack={() => router.push("/other/set-menus")}
+          />
         </PageContainer>
       </>
     );

@@ -27,8 +27,39 @@ export const useMealRegisterDrawerController = () => {
   >("manual");
   const [isOcrOpen, setIsOcrOpen] = useState(false);
   const [ocrResult, setOcrResult] = useState<OcrNutritionResult | null>(null);
+  const [isDiscardConfirmOpen, setIsDiscardConfirmOpen] = useState(false);
   const libraryInputRef = useRef<HTMLInputElement>(null);
   const { isProcessing: isOcrProcessing, processImage } = useOcr();
+
+  /** Close the drawer and reset all transient state so drafts never leak into another meal slot */
+  const closeDrawer = useCallback(() => {
+    setIsOpen(false);
+    setDraftItems([]);
+    setOcrResult(null);
+    setActiveTab("manual");
+  }, [setIsOpen, setDraftItems]);
+
+  /** Intercept drawer close: ask for confirmation when unsaved drafts exist */
+  const handleOpenChange = useCallback(
+    (nextOpen: boolean) => {
+      if (nextOpen) {
+        setIsOpen(true);
+        return;
+      }
+      if (draftItems.length > 0) {
+        setIsDiscardConfirmOpen(true);
+        return;
+      }
+      closeDrawer();
+    },
+    [draftItems.length, closeDrawer, setIsOpen],
+  );
+
+  /** Discard unsaved drafts and close the drawer */
+  const handleDiscardDrafts = useCallback(() => {
+    setIsDiscardConfirmOpen(false);
+    closeDrawer();
+  }, [closeDrawer]);
 
   const addDraftItem = useCallback(
     (
@@ -118,10 +149,10 @@ export const useMealRegisterDrawerController = () => {
 
   const handleSaveToMaster = useCallback(
     (_values: MealItemFormValues) => {
-      setIsOpen(false);
+      closeDrawer();
       router.push("/other/food-masters/new");
     },
-    [router, setIsOpen],
+    [router, closeDrawer],
   );
 
   const handleRemove = useCallback(
@@ -141,8 +172,7 @@ export const useMealRegisterDrawerController = () => {
         items: draftItems,
       });
       toast.success(`${draftItems.length}件の食事を登録しました`);
-      setDraftItems([]);
-      setIsOpen(false);
+      closeDrawer();
     } catch {
       toast.error("登録に失敗しました");
     }
@@ -151,6 +181,7 @@ export const useMealRegisterDrawerController = () => {
   return {
     activeTab,
     draftItems,
+    isDiscardConfirmOpen,
     isOcrOpen,
     isOcrProcessing,
     isOpen,
@@ -159,13 +190,15 @@ export const useMealRegisterDrawerController = () => {
     ocrResult,
     registerMutation,
     setActiveTab,
+    setIsDiscardConfirmOpen,
     setIsOcrOpen,
-    setIsOpen,
+    handleDiscardDrafts,
     handleFoodMasterAdd,
     handleLibraryFile,
     handleManualAdd,
     handleOcrAdd,
     handleOcrResult,
+    handleOpenChange,
     handleRecipeAdd,
     handleRegister,
     handleRemove,

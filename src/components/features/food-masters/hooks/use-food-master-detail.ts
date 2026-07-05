@@ -16,9 +16,11 @@ export const useFoodMasterDetail = (id: string | undefined) => {
         .from("food_masters")
         .select("*")
         .eq("id", id!)
-        .single();
+        .maybeSingle();
 
       if (error) throw error;
+      // Row is missing when the id is invalid or the record was deleted
+      if (!data) return null;
 
       const row = data;
       return {

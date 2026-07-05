@@ -14,6 +14,7 @@ import { Header, PageContainer } from "@/components/features/layout";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { NotFoundState } from "@/components/ui/not-found-state";
 import { PfcDot } from "@/components/ui/pfc-display";
 import { SectionHeader } from "@/components/ui/section-header";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -73,6 +74,29 @@ const RecipeFormView = ({ id }: RecipeFormViewProps) => {
             </div>
             <Skeleton className="h-24 w-full rounded-lg" />
           </div>
+        </PageContainer>
+      </>
+    );
+  }
+
+  if (!isNew && !existing) {
+    return (
+      <>
+        <Header title="レシピ">
+          <Button
+            variant="ghost"
+            size="icon-sm"
+            onClick={() => router.push("/recipes")}
+          >
+            <ArrowLeft className="h-5 w-5" />
+          </Button>
+        </Header>
+        <PageContainer>
+          <NotFoundState
+            message="レシピが見つかりませんでした。削除された可能性があります。"
+            backLabel="一覧に戻る"
+            onBack={() => router.push("/recipes")}
+          />
         </PageContainer>
       </>
     );

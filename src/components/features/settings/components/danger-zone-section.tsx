@@ -26,11 +26,15 @@ const DangerZoneSection = () => {
   const [confirmText, setConfirmText] = useState("");
   const [isOpen, setIsOpen] = useState(false);
 
-  /** Handle confirmed deletion */
+  /** Handle confirmed deletion; keep the dialog open when deletion fails */
   const handleDelete = async () => {
-    await deleteAllData();
-    setConfirmText("");
-    setIsOpen(false);
+    try {
+      await deleteAllData();
+      setConfirmText("");
+      setIsOpen(false);
+    } catch {
+      // Error toast is shown by the hook; leave the dialog open for retry
+    }
   };
 
   return (
@@ -82,7 +86,11 @@ const DangerZoneSection = () => {
             <AlertDialogFooter>
               <AlertDialogCancel>キャンセル</AlertDialogCancel>
               <AlertDialogAction
-                onClick={handleDelete}
+                onClick={(event) => {
+                  // Prevent the dialog's default auto-close so failures keep it open
+                  event.preventDefault();
+                  handleDelete();
+                }}
                 disabled={confirmText !== CONFIRMATION_TEXT || isDeleting}
                 className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
               >

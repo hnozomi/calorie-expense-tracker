@@ -41,46 +41,17 @@ export const useSaveSetMenu = () => {
         },
       );
 
-      const menuPayload = {
-        user_id: user.id,
-        name,
-        total_calories: totals.totalCalories,
-        total_protein: totals.totalProtein,
-        total_fat: totals.totalFat,
-        total_carbs: totals.totalCarbs,
-        total_cost: totals.totalCost,
-      };
-
-      let menuId: string;
-
-      if (id) {
-        const { error } = await supabase
-          .from("set_menus")
-          .update(menuPayload)
-          .eq("id", id);
-        if (error) throw error;
-        menuId = id;
-
-        // Delete existing items and re-insert
-        const { error: deleteError } = await supabase
-          .from("set_menu_items")
-          .delete()
-          .eq("set_menu_id", id);
-        if (deleteError) throw deleteError;
-      } else {
-        const { data, error } = await supabase
-          .from("set_menus")
-          .insert(menuPayload)
-          .select("id")
-          .single();
-        if (error) throw error;
-        menuId = data.id;
-      }
-
-      // Insert items
-      if (items.length > 0) {
-        const itemRows = items.map((item, index) => ({
-          set_menu_id: menuId,
+      // Save menu and items atomically so a mid-save failure
+      // cannot leave the menu without its items
+      const { data, error } = await supabase.rpc("save_set_menu_with_items", {
+        p_id: id ?? null,
+        p_name: name,
+        p_total_calories: totals.totalCalories,
+        p_total_protein: totals.totalProtein,
+        p_total_fat: totals.totalFat,
+        p_total_carbs: totals.totalCarbs,
+        p_total_cost: totals.totalCost,
+        p_items: items.map((item) => ({
           name: item.name,
           recipe_id: item.recipeId,
           food_master_id: item.foodMasterId,
@@ -90,16 +61,11 @@ export const useSaveSetMenu = () => {
           carbs: item.carbs,
           cost: item.cost,
           serving_quantity: item.servingQuantity,
-          sort_order: index,
-        }));
+        })),
+      });
+      if (error) throw error;
 
-        const { error: itemError } = await supabase
-          .from("set_menu_items")
-          .insert(itemRows);
-        if (itemError) throw itemError;
-      }
-
-      return menuId;
+      return data as string;
     },
     onSuccess: (_data, { id }) => {
       queryClient.invalidateQueries({

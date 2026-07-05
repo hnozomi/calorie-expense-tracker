@@ -16,9 +16,11 @@ export const useRecipeDetail = (id: string | undefined) => {
         .from("recipes")
         .select("*, recipe_ingredients(*)")
         .eq("id", id!)
-        .single();
+        .maybeSingle();
 
       if (error) throw error;
+      // Row is missing when the id is invalid or the record was deleted
+      if (!data) return null;
 
       return {
         id: data.id,

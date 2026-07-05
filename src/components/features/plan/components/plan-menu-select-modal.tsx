@@ -38,15 +38,21 @@ const PlanMenuSelectModal = ({
     foodMasters,
     fmSearch,
     manualCalories,
+    manualCarbs,
     manualCost,
+    manualFat,
     manualName,
+    manualProtein,
     recipes,
     recipeSearch,
     saveMutation,
     setFmSearch,
     setManualCalories,
+    setManualCarbs,
     setManualCost,
+    setManualFat,
     setManualName,
+    setManualProtein,
     setRecipeSearch,
     setMenus,
     handleDelete,
@@ -137,6 +143,56 @@ const PlanMenuSelectModal = ({
                   inputMode="decimal"
                   value={manualCost}
                   onChange={(e) => setManualCost(e.target.value)}
+                />
+              </div>
+            </div>
+            <div className="grid grid-cols-3 gap-3">
+              <div className="space-y-1.5">
+                <Label
+                  htmlFor="plan-manual-protein"
+                  className="text-xs font-medium"
+                >
+                  P (g)
+                </Label>
+                <Input
+                  id="plan-manual-protein"
+                  type="number"
+                  inputMode="decimal"
+                  step="any"
+                  value={manualProtein}
+                  onChange={(e) => setManualProtein(e.target.value)}
+                />
+              </div>
+              <div className="space-y-1.5">
+                <Label
+                  htmlFor="plan-manual-fat"
+                  className="text-xs font-medium"
+                >
+                  F (g)
+                </Label>
+                <Input
+                  id="plan-manual-fat"
+                  type="number"
+                  inputMode="decimal"
+                  step="any"
+                  value={manualFat}
+                  onChange={(e) => setManualFat(e.target.value)}
+                />
+              </div>
+              <div className="space-y-1.5">
+                <Label
+                  htmlFor="plan-manual-carbs"
+                  className="text-xs font-medium"
+                >
+                  C (g)
+                </Label>
+                <Input
+                  id="plan-manual-carbs"
+                  type="number"
+                  inputMode="decimal"
+                  step="any"
+                  value={manualCarbs}
+                  onChange={(e) => setManualCarbs(e.target.value)}
                 />
               </div>
             </div>

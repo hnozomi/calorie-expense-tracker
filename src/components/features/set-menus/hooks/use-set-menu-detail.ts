@@ -16,9 +16,11 @@ export const useSetMenuDetail = (id: string | undefined) => {
         .from("set_menus")
         .select("*, set_menu_items(*)")
         .eq("id", id!)
-        .single();
+        .maybeSingle();
 
       if (error) throw error;
+      // Row is missing when the id is invalid or the record was deleted
+      if (!data) return null;
 
       return {
         id: data.id,

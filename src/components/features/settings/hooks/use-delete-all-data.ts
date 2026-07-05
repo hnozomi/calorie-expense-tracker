@@ -1,5 +1,6 @@
 "use client";
 
+import { useQueryClient } from "@tanstack/react-query";
 import { useCallback, useState } from "react";
 import { toast } from "sonner";
 import { useSupabase } from "@/hooks";
@@ -7,9 +8,10 @@ import { useSupabase } from "@/hooks";
 /** Hook for deleting all user data with confirmation */
 export const useDeleteAllData = () => {
   const supabase = useSupabase();
+  const queryClient = useQueryClient();
   const [isDeleting, setIsDeleting] = useState(false);
 
-  /** Delete all user data across all tables */
+  /** Delete all user data across all tables. Rethrows on failure so callers can react. */
   const deleteAllData = useCallback(async () => {
     setIsDeleting(true);
     try {
@@ -40,14 +42,20 @@ export const useDeleteAllData = () => {
         }
       }
 
+      // Drop every cached query so deleted data disappears immediately app-wide
+      queryClient.clear();
+
       toast.success("全データを削除しました");
     } catch (error) {
       console.error("Failed to delete all data:", error);
-      toast.error("データの削除に失敗しました");
+      toast.error(
+        "データの削除に失敗しました。一部のデータのみ削除された可能性があります。もう一度お試しください。",
+      );
+      throw error;
     } finally {
       setIsDeleting(false);
     }
-  }, [supabase]);
+  }, [queryClient, supabase]);
 
   return { isDeleting, deleteAllData };
 };

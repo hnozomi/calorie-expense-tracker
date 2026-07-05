@@ -18,6 +18,7 @@ import { OcrCameraOverlay } from "@/components/features/ocr";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { NotFoundState } from "@/components/ui/not-found-state";
 import { PfcDot } from "@/components/ui/pfc-display";
 import { SectionHeader } from "@/components/ui/section-header";
 import {
@@ -93,6 +94,29 @@ const FoodMasterFormView = ({ id }: FoodMasterFormViewProps) => {
               <Skeleton className="h-10 rounded-lg" />
             </div>
           </div>
+        </PageContainer>
+      </>
+    );
+  }
+
+  if (!isNew && !existing) {
+    return (
+      <>
+        <Header title="食品マスタ">
+          <Button
+            variant="ghost"
+            size="icon-sm"
+            onClick={() => router.push("/other/food-masters")}
+          >
+            <ArrowLeft className="h-5 w-5" />
+          </Button>
+        </Header>
+        <PageContainer>
+          <NotFoundState
+            message="食品が見つかりませんでした。削除された可能性があります。"
+            backLabel="一覧に戻る"
+            onBack={() => router.push("/other/food-masters")}
+          />
         </PageContainer>
       </>
     );
