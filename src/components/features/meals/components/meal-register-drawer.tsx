@@ -46,13 +46,17 @@ const MealRegisterDrawer = () => {
     isOcrProcessing,
     isOpen,
     libraryInputRef,
+    manualPendingRef,
     mealType,
     ocrError,
+    ocrPendingRef,
     ocrResult,
+    pendingRegisterItems,
     registerMutation,
     setActiveTab,
     setIsDiscardConfirmOpen,
     setIsOcrOpen,
+    setPendingRegisterItems,
     handleDiscardDrafts,
     handleFoodMasterAdd,
     handleLibraryFile,
@@ -62,15 +66,22 @@ const MealRegisterDrawer = () => {
     handleOpenChange,
     handleRecipeAdd,
     handleRegister,
+    handleRegisterWithoutPending,
+    handleRegisterWithPending,
     handleRemove,
     handleSaveToMaster,
     handleSetMenuAdd,
   } = useMealRegisterDrawerController();
 
+  const totalDraftCalories = draftItems.reduce(
+    (sum, item) => sum + item.calories,
+    0,
+  );
+
   return (
     <>
       <Drawer open={isOpen} onOpenChange={handleOpenChange}>
-        <DrawerContent className="h-[50dvh]">
+        <DrawerContent className="h-[85dvh]">
           <DrawerHeader className="shrink-0 pb-2">
             <DrawerTitle className="text-base">
               {MEAL_TYPE_LABELS[mealType]}を登録
@@ -118,7 +129,10 @@ const MealRegisterDrawer = () => {
               {/* Manual and OCR panels stay mounted (hidden) so typed input and
                   OCR corrections survive tab switches */}
               <div className={cn(activeTab !== "manual" && "hidden")}>
-                <ManualInputForm onAdd={handleManualAdd} />
+                <ManualInputForm
+                  onAdd={handleManualAdd}
+                  pendingItemRef={manualPendingRef}
+                />
               </div>
               {activeTab === "recipe" && (
                 <RecipeSelector onSelect={handleRecipeAdd} />
@@ -138,6 +152,7 @@ const MealRegisterDrawer = () => {
                     ocrResult={ocrResult}
                     onAdd={handleOcrAdd}
                     onSaveToMaster={handleSaveToMaster}
+                    pendingItemRef={ocrPendingRef}
                   />
                 ) : isOcrProcessing ? (
                   <div className="py-10 text-center">
@@ -192,9 +207,25 @@ const MealRegisterDrawer = () => {
             )}
           </div>
 
-          {/* Sticky footer with register button */}
+          {/* Sticky footer with an always-visible summary and register button */}
           {draftItems.length > 0 && (
-            <div className="shrink-0 border-t bg-background px-4 pt-3 pb-[calc(1rem+env(safe-area-inset-bottom))]">
+            <div className="shrink-0 border-t bg-background px-4 pt-2.5 pb-[calc(1rem+env(safe-area-inset-bottom))]">
+              <div className="mb-2 flex items-center justify-between text-xs text-muted-foreground">
+                <span>
+                  登録予定{" "}
+                  <span className="font-semibold text-foreground">
+                    {draftItems.length}
+                  </span>{" "}
+                  件
+                </span>
+                <span>
+                  合計{" "}
+                  <span className="font-semibold tabular-nums text-foreground">
+                    {Math.round(totalDraftCalories)}
+                  </span>{" "}
+                  kcal
+                </span>
+              </div>
               <Button
                 className="w-full"
                 disabled={registerMutation.isPending}
@@ -215,7 +246,7 @@ const MealRegisterDrawer = () => {
         onResult={handleOcrResult}
       />
 
-      {/* Confirm before discarding unsaved draft items on drawer close */}
+      {/* Confirm before discarding unsaved draft items or typed input on drawer close */}
       <AlertDialog
         open={isDiscardConfirmOpen}
         onOpenChange={setIsDiscardConfirmOpen}
@@ -224,14 +255,44 @@ const MealRegisterDrawer = () => {
           <AlertDialogHeader>
             <AlertDialogTitle>入力中のアイテムを破棄しますか?</AlertDialogTitle>
             <AlertDialogDescription>
-              追加した{draftItems.length}
-              件のアイテムはまだ登録されていません。閉じると破棄されます。
+              {draftItems.length > 0
+                ? `追加した${draftItems.length}件のアイテムはまだ登録されていません。閉じると破棄されます。`
+                : "入力中の内容はまだカードに追加されていません。閉じると破棄されます。"}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel>入力を続ける</AlertDialogCancel>
             <AlertDialogAction onClick={handleDiscardDrafts}>
               破棄して閉じる
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      {/* Confirm when registering while typed input was never added to the card */}
+      <AlertDialog
+        open={pendingRegisterItems !== null}
+        onOpenChange={(open) => {
+          if (!open) setPendingRegisterItems(null);
+        }}
+      >
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>入力中のアイテムがあります</AlertDialogTitle>
+            <AlertDialogDescription>
+              {pendingRegisterItems
+                ?.map((pending) => `「${pending.values.name}」`)
+                .join("、")}
+              はまだカードに追加されていません。
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>キャンセル</AlertDialogCancel>
+            <Button variant="outline" onClick={handleRegisterWithoutPending}>
+              追加せずに登録
+            </Button>
+            <AlertDialogAction onClick={handleRegisterWithPending}>
+              追加して登録
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

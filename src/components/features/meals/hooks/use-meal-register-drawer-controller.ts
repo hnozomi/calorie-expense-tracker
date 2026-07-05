@@ -16,8 +16,18 @@ import {
   drawerMealTypeAtom,
   isDrawerOpenAtom,
 } from "../stores/meal-register-atom";
-import type { MealItemDraft, MealItemFormValues } from "../types/meal";
+import type {
+  MealItemDraft,
+  MealItemFormValues,
+  PendingMealItemCollector,
+} from "../types/meal";
 import { useRegisterMealItems } from "./use-register-meal-items";
+
+/** A valid form entry that was typed but never added to the card */
+type PendingFormItem = {
+  values: MealItemFormValues;
+  sourceType: SourceType;
+};
 
 export const useMealRegisterDrawerController = () => {
   const router = useRouter();
@@ -33,7 +43,12 @@ export const useMealRegisterDrawerController = () => {
   const [ocrResult, setOcrResult] = useState<OcrNutritionResult | null>(null);
   const [ocrNoValueError, setOcrNoValueError] = useState<string | null>(null);
   const [isDiscardConfirmOpen, setIsDiscardConfirmOpen] = useState(false);
+  const [pendingRegisterItems, setPendingRegisterItems] = useState<
+    PendingFormItem[] | null
+  >(null);
   const libraryInputRef = useRef<HTMLInputElement>(null);
+  const manualPendingRef = useRef<PendingMealItemCollector | null>(null);
+  const ocrPendingRef = useRef<PendingMealItemCollector | null>(null);
   const {
     isProcessing: isOcrProcessing,
     error: ocrProcessError,
@@ -49,20 +64,34 @@ export const useMealRegisterDrawerController = () => {
     setActiveTab("manual");
   }, [setIsOpen, setDraftItems]);
 
-  /** Intercept drawer close: ask for confirmation when unsaved drafts exist */
+  /** Collect valid form entries that were typed but never added to the card */
+  const collectPendingFormItems = useCallback((): PendingFormItem[] => {
+    const pendingItems: PendingFormItem[] = [];
+    const manualValues = manualPendingRef.current?.();
+    if (manualValues) {
+      pendingItems.push({ values: manualValues, sourceType: "manual" });
+    }
+    const ocrValues = ocrPendingRef.current?.();
+    if (ocrValues) {
+      pendingItems.push({ values: ocrValues, sourceType: "ocr" });
+    }
+    return pendingItems;
+  }, []);
+
+  /** Intercept drawer close: confirm when drafts or typed-but-unadded input exist */
   const handleOpenChange = useCallback(
     (nextOpen: boolean) => {
       if (nextOpen) {
         setIsOpen(true);
         return;
       }
-      if (draftItems.length > 0) {
+      if (draftItems.length > 0 || collectPendingFormItems().length > 0) {
         setIsDiscardConfirmOpen(true);
         return;
       }
       closeDrawer();
     },
-    [draftItems.length, closeDrawer, setIsOpen],
+    [draftItems.length, closeDrawer, collectPendingFormItems, setIsOpen],
   );
 
   /** Discard unsaved drafts and close the drawer */
@@ -194,21 +223,53 @@ export const useMealRegisterDrawerController = () => {
     [setDraftItems],
   );
 
-  const handleRegister = async () => {
+  /** Register the given items and close the drawer on success */
+  const registerItems = useCallback(
+    async (items: MealItemDraft[]) => {
+      try {
+        await registerMutation.mutateAsync({
+          date: selectedDate,
+          mealType,
+          items,
+        });
+        toast.success(`${items.length}件の食事を登録しました`);
+        closeDrawer();
+      } catch {
+        toast.error("登録に失敗しました");
+      }
+    },
+    [closeDrawer, mealType, registerMutation, selectedDate],
+  );
+
+  /** Register drafts; ask first when typed-but-unadded form input would be left behind */
+  const handleRegister = () => {
     if (draftItems.length === 0) return;
 
-    try {
-      await registerMutation.mutateAsync({
-        date: selectedDate,
-        mealType,
-        items: draftItems,
-      });
-      toast.success(`${draftItems.length}件の食事を登録しました`);
-      closeDrawer();
-    } catch {
-      toast.error("登録に失敗しました");
+    const pendingItems = collectPendingFormItems();
+    if (pendingItems.length > 0) {
+      setPendingRegisterItems(pendingItems);
+      return;
     }
+    registerItems(draftItems);
   };
+
+  /** Include the typed-but-unadded entries and register everything */
+  const handleRegisterWithPending = useCallback(() => {
+    if (!pendingRegisterItems) return;
+    const pendingDrafts = pendingRegisterItems.map((pending) => ({
+      ...pending.values,
+      tempId: crypto.randomUUID(),
+      sourceType: pending.sourceType,
+    }));
+    setPendingRegisterItems(null);
+    registerItems([...draftItems, ...pendingDrafts]);
+  }, [draftItems, pendingRegisterItems, registerItems]);
+
+  /** Register only the carded drafts, discarding typed-but-unadded input */
+  const handleRegisterWithoutPending = useCallback(() => {
+    setPendingRegisterItems(null);
+    registerItems(draftItems);
+  }, [draftItems, registerItems]);
 
   return {
     activeTab,
@@ -218,13 +279,17 @@ export const useMealRegisterDrawerController = () => {
     isOcrProcessing,
     isOpen,
     libraryInputRef,
+    manualPendingRef,
     mealType,
     ocrError: ocrProcessError ?? ocrNoValueError,
+    ocrPendingRef,
     ocrResult,
+    pendingRegisterItems,
     registerMutation,
     setActiveTab,
     setIsDiscardConfirmOpen,
     setIsOcrOpen,
+    setPendingRegisterItems,
     handleDiscardDrafts,
     handleFoodMasterAdd,
     handleLibraryFile,
@@ -234,6 +299,8 @@ export const useMealRegisterDrawerController = () => {
     handleOpenChange,
     handleRecipeAdd,
     handleRegister,
+    handleRegisterWithoutPending,
+    handleRegisterWithPending,
     handleRemove,
     handleSaveToMaster,
     handleSetMenuAdd,

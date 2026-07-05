@@ -56,3 +56,6 @@ export type MealItemDraft = MealItemFormValues & {
   recipeId?: string;
   setMenuId?: string;
 };
+
+/** Collector returning a valid but not-yet-added form entry, or null */
+export type PendingMealItemCollector = () => MealItemFormValues | null;

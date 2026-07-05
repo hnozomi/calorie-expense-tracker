@@ -1,12 +1,14 @@
 "use client";
 
 import { zodResolver } from "@hookform/resolvers/zod";
+import { useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { NutritionFormFields } from "@/components/features/meals/components/nutrition-form-fields";
 import {
   type MealItemFormInput,
   type MealItemFormValues,
   mealItemFormSchema,
+  type PendingMealItemCollector,
 } from "@/components/features/meals/types/meal";
 import { Button } from "@/components/ui/button";
 import type { OcrNutritionResult } from "../utils/ocr-parser";
@@ -15,6 +17,8 @@ type OcrResultFormProps = {
   ocrResult: OcrNutritionResult;
   onAdd: (values: MealItemFormValues) => void;
   onSaveToMaster: (values: MealItemFormValues) => void;
+  /** Lets the drawer detect scanned-but-unadded input at register/close time */
+  pendingItemRef?: React.MutableRefObject<PendingMealItemCollector | null>;
 };
 
 /** Form pre-filled with OCR results for user correction */
@@ -22,6 +26,7 @@ const OcrResultForm = ({
   ocrResult,
   onAdd,
   onSaveToMaster,
+  pendingItemRef,
 }: OcrResultFormProps) => {
   const {
     register,
@@ -38,6 +43,18 @@ const OcrResultForm = ({
       carbs: ocrResult.carbs ?? 0,
     },
   });
+
+  useEffect(() => {
+    if (!pendingItemRef) return;
+    pendingItemRef.current = () => {
+      const parsed = mealItemFormSchema.safeParse(getValues());
+      if (!parsed.success || !parsed.data.name.trim()) return null;
+      return parsed.data;
+    };
+    return () => {
+      pendingItemRef.current = null;
+    };
+  }, [pendingItemRef, getValues]);
 
   return (
     <div className="space-y-3">
