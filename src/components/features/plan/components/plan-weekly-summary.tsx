@@ -1,11 +1,23 @@
 "use client";
 
 import { toast } from "sonner";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 import { Button } from "@/components/ui/button";
 import { PfcDisplay } from "@/components/ui/pfc-display";
 import { useNutritionTarget } from "@/hooks";
 import type { MealType } from "@/types";
-import { cn, getTodayString } from "@/utils";
+import { cn, getTodayString, shiftDate } from "@/utils";
+import { useSyncMealsToPlans } from "../hooks/use-sync-meals-to-plans";
 import { useTransferPlan } from "../hooks/use-transfer-plan";
 import type { MealPlan } from "../types/meal-plan";
 
@@ -17,6 +29,7 @@ type PlanWeeklySummaryProps = {
 /** Weekly totals summary for planned meals with transfer action */
 const PlanWeeklySummary = ({ plans, weekStart }: PlanWeeklySummaryProps) => {
   const transferMutation = useTransferPlan();
+  const syncMutation = useSyncMealsToPlans();
   const { data: target } = useNutritionTarget();
 
   /** Calculate weekly totals */
@@ -72,6 +85,32 @@ const PlanWeeklySummary = ({ plans, weekStart }: PlanWeeklySummaryProps) => {
   const todayStr = getTodayString();
   const hasTodayPlans = plans.some((p) => p.date === todayStr);
 
+  /** Past-date range within the displayed week (clamped to yesterday, local time) */
+  const weekEndStr = shiftDate(weekStart, 6);
+  const lastPastDate = shiftDate(todayStr, -1);
+  const syncEndDate = weekEndStr < lastPastDate ? weekEndStr : lastPastDate;
+  const hasPastDays = syncEndDate >= weekStart;
+
+  /** Replace past planned menus with what was actually eaten */
+  const handleSyncActuals = async () => {
+    try {
+      const replacedCount = await syncMutation.mutateAsync({
+        startDate: weekStart,
+        endDate: syncEndDate,
+      });
+      if (replacedCount === 0) {
+        toast.info("反映できる食事記録がありませんでした");
+      } else {
+        toast.success(
+          `${replacedCount}枠の献立を実際の食事内容で置き換えました`,
+        );
+      }
+    } catch (error) {
+      console.error("Failed to sync meals to plans:", error);
+      toast.error("実績の反映に失敗しました");
+    }
+  };
+
   /** Build date range label */
   const endDate = new Date(`${weekStart}T00:00:00`);
   endDate.setDate(endDate.getDate() + 6);
@@ -80,22 +119,54 @@ const PlanWeeklySummary = ({ plans, weekStart }: PlanWeeklySummaryProps) => {
 
   return (
     <div className="overflow-hidden rounded-xl border border-border/60 bg-card shadow-sm">
-      {/* Header with title and transfer button */}
-      <div className="flex items-center justify-between border-b border-border/40 bg-muted/30 px-4 py-2.5">
+      {/* Header with title and sync/transfer actions */}
+      <div className="flex flex-wrap items-center justify-between gap-2 border-b border-border/40 bg-muted/30 px-4 py-2.5">
         <p className="text-xs font-semibold tracking-wide text-muted-foreground">
           週間サマリー ({rangeLabel})
         </p>
-        {hasTodayPlans && (
-          <Button
-            size="sm"
-            variant="outline"
-            className="h-7 rounded-full px-3 text-xs"
-            onClick={handleTransferToday}
-            disabled={transferMutation.isPending}
-          >
-            {transferMutation.isPending ? "転記中..." : "今日の献立を転記"}
-          </Button>
-        )}
+        <div className="flex items-center gap-1.5">
+          {hasPastDays && (
+            <AlertDialog>
+              <AlertDialogTrigger asChild>
+                <Button
+                  size="sm"
+                  variant="outline"
+                  className="h-7 rounded-full px-3 text-xs"
+                  disabled={syncMutation.isPending}
+                >
+                  {syncMutation.isPending ? "反映中..." : "実績を反映"}
+                </Button>
+              </AlertDialogTrigger>
+              <AlertDialogContent>
+                <AlertDialogHeader>
+                  <AlertDialogTitle>
+                    実際に食べた内容を献立に反映しますか？
+                  </AlertDialogTitle>
+                  <AlertDialogDescription>
+                    この週の過去の日付について、食事記録がある枠の献立を実際に食べた内容で置き換えます。食事記録がない枠の献立は変更されません。
+                  </AlertDialogDescription>
+                </AlertDialogHeader>
+                <AlertDialogFooter>
+                  <AlertDialogCancel>キャンセル</AlertDialogCancel>
+                  <AlertDialogAction onClick={handleSyncActuals}>
+                    反映する
+                  </AlertDialogAction>
+                </AlertDialogFooter>
+              </AlertDialogContent>
+            </AlertDialog>
+          )}
+          {hasTodayPlans && (
+            <Button
+              size="sm"
+              variant="outline"
+              className="h-7 rounded-full px-3 text-xs"
+              onClick={handleTransferToday}
+              disabled={transferMutation.isPending}
+            >
+              {transferMutation.isPending ? "転記中..." : "今日の献立を転記"}
+            </Button>
+          )}
+        </div>
       </div>
 
       {/* Stats body */}

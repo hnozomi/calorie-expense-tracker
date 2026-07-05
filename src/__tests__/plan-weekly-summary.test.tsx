@@ -12,6 +12,15 @@ vi.mock("@/components/features/plan/hooks/use-transfer-plan", () => ({
   }),
 }));
 
+/** Mock useSyncMealsToPlans */
+const mockSyncMutateAsync = vi.fn();
+vi.mock("@/components/features/plan/hooks/use-sync-meals-to-plans", () => ({
+  useSyncMealsToPlans: () => ({
+    mutateAsync: mockSyncMutateAsync,
+    isPending: false,
+  }),
+}));
+
 /** Mock useNutritionTarget */
 vi.mock("@/hooks", async (importOriginal) => {
   const original = await importOriginal<typeof import("@/hooks")>();
