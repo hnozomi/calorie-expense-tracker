@@ -9,6 +9,15 @@ export const proxy = async (request: NextRequest) => {
     return NextResponse.next();
   }
 
+  // Skip the Supabase auth round-trip for router prefetch requests; pages are
+  // static shells and the real navigation is still auth-checked below
+  if (
+    request.headers.get("next-router-prefetch") ||
+    request.headers.get("purpose") === "prefetch"
+  ) {
+    return NextResponse.next();
+  }
+
   const { updateSession } = await import("@/lib/supabase/middleware");
   const { response, user } = await updateSession(request);
 

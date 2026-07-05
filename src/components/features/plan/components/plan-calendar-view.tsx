@@ -1,9 +1,11 @@
 "use client";
 
+import { usePrefetchQuery } from "@tanstack/react-query";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { Header, PageContainer } from "@/components/features/layout";
+import { getNutritionTargetQueryOptions } from "@/components/features/settings/queries";
 import { Button } from "@/components/ui/button";
-import { useWeekStartNavigation } from "@/hooks";
+import { useSupabase, useWeekStartNavigation } from "@/hooks";
 import { formatWeekLabel, getThisMonday } from "@/utils";
 import { useMealPlans } from "../hooks/use-meal-plans";
 import { planWeekStartAtom } from "../stores/plan-week-atom";
@@ -17,6 +19,12 @@ const PlanCalendarView = () => {
     shiftBackward,
     shiftForward,
   } = useWeekStartNavigation(planWeekStartAtom, getThisMonday());
+  const supabase = useSupabase();
+
+  // Warm the nutrition target used by the grid and weekly summary before
+  // useMealPlans suspends, so both requests run in parallel
+  usePrefetchQuery(getNutritionTargetQueryOptions(supabase));
+
   const { data: plans } = useMealPlans(weekStart);
   const weekLabel = formatWeekLabel(weekStart);
   return (

@@ -1,4 +1,4 @@
-const CACHE_VERSION = "meshilog-v1";
+const CACHE_VERSION = "meshilog-v2";
 const STATIC_ASSETS = ["/", "/home", "/plan", "/recipes", "/other"];
 
 /** Install: pre-cache static assets */
@@ -25,18 +25,28 @@ self.addEventListener("activate", (event) => {
   self.clients.claim();
 });
 
-/** Fetch: Network First for API, Cache First for static assets */
+/** Whether the request targets an immutable static asset safe for Cache First */
+const isStaticAsset = (url) =>
+  url.pathname.startsWith("/_next/static/") ||
+  url.pathname.startsWith("/icons/") ||
+  /\.(?:png|jpg|jpeg|svg|gif|webp|ico|woff2?)$/.test(url.pathname);
+
+/** Fetch: Network First for navigations, Cache First for static assets only */
 self.addEventListener("fetch", (event) => {
   const url = new URL(event.request.url);
 
   // Skip non-GET requests
   if (event.request.method !== "GET") return;
 
-  // Skip Supabase API requests (auth, real-time)
-  if (url.hostname.includes("supabase.co")) return;
+  // Skip cross-origin requests (Supabase API, auth, real-time)
+  if (url.origin !== self.location.origin) return;
 
-  // Network First for navigation and API
-  if (event.request.mode === "navigate" || url.pathname.startsWith("/rest/")) {
+  // Skip RSC payload requests — the Next.js router manages its own cache,
+  // and serving them Cache First would pin stale pages across deploys
+  if (url.searchParams.has("_rsc") || event.request.headers.get("RSC")) return;
+
+  // Network First for navigations, falling back to cache when offline
+  if (event.request.mode === "navigate") {
     event.respondWith(
       fetch(event.request)
         .then((response) => {
@@ -55,7 +65,10 @@ self.addEventListener("fetch", (event) => {
     return;
   }
 
-  // Cache First for static assets (JS, CSS, images, fonts)
+  // Everything else (non-static requests) goes straight to the network
+  if (!isStaticAsset(url)) return;
+
+  // Cache First for immutable static assets (hashed JS/CSS, images, fonts)
   event.respondWith(
     caches.match(event.request).then(
       (cached) =>

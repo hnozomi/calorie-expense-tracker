@@ -13,6 +13,9 @@ const Providers = ({ children }: { children: React.ReactNode }) => {
         defaultOptions: {
           queries: {
             staleTime: 60 * 1000,
+            // Keep cached data long enough to survive tab switches; stale data
+            // is shown instantly and revalidated in the background
+            gcTime: 30 * 60 * 1000,
             retry: 1,
           },
         },

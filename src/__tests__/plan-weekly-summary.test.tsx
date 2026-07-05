@@ -18,7 +18,12 @@ vi.mock("@/hooks", async (importOriginal) => {
   return {
     ...original,
     useNutritionTarget: () => ({
-      data: { targetCalories: 2000, targetProtein: 60, targetFat: 55, targetCarbs: 300 },
+      data: {
+        targetCalories: 2000,
+        targetProtein: 60,
+        targetFat: 55,
+        targetCarbs: 300,
+      },
     }),
   };
 });
