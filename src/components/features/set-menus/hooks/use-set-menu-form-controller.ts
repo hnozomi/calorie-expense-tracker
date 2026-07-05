@@ -64,6 +64,7 @@ export const useSetMenuFormController = (id: string) => {
   const [recipeSearch, setRecipeSearch] = useState("");
   const [fmSearch, setFmSearch] = useState("");
   const [items, setItems] = useState<SetMenuItemDraft[]>([]);
+  const [hasItemEdits, setHasItemEdits] = useState(false);
   const debouncedRecipeSearch = useDebounce(recipeSearch);
   const debouncedFmSearch = useDebounce(fmSearch);
   const { data: recipes } = useRecipes(debouncedRecipeSearch);
@@ -78,11 +79,13 @@ export const useSetMenuFormController = (id: string) => {
     if (!existing) {
       form.reset(EMPTY_SET_MENU_FORM_VALUES);
       setItems([]);
+      setHasItemEdits(false);
       return;
     }
 
     form.reset(toSetMenuFormValues(existing));
     setItems(existing.items.map(toSetMenuItemDraft));
+    setHasItemEdits(false);
   }, [existing, form]);
 
   const handleAddRecipe = useCallback(
@@ -107,6 +110,7 @@ export const useSetMenuFormController = (id: string) => {
           servingQuantity: 1,
         },
       ]);
+      setHasItemEdits(true);
     },
     [],
   );
@@ -128,12 +132,14 @@ export const useSetMenuFormController = (id: string) => {
           servingQuantity: 1,
         },
       ]);
+      setHasItemEdits(true);
     },
     [],
   );
 
   const handleRemoveItem = useCallback((tempId: string) => {
     setItems((prev) => prev.filter((item) => item.tempId !== tempId));
+    setHasItemEdits(true);
   }, []);
 
   const handleAdjustQuantity = useCallback((tempId: string, delta: number) => {
@@ -146,6 +152,7 @@ export const useSetMenuFormController = (id: string) => {
         };
       }),
     );
+    setHasItemEdits(true);
   }, []);
 
   const totals = useMemo(() => calculateTotals(items), [items]);
@@ -186,6 +193,7 @@ export const useSetMenuFormController = (id: string) => {
     existing,
     foodMasters,
     fmSearch,
+    hasUnsavedChanges: form.formState.isDirty || hasItemEdits,
     isDeleteConfirmOpen,
     isLoading,
     isNew,

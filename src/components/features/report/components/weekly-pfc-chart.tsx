@@ -77,8 +77,8 @@ const WeeklyPfcChart = ({
               key={entry.date}
               className="group flex flex-1 flex-col items-center gap-1"
             >
-              {/* Hover total */}
-              <span className="min-h-[16px] text-[11px] font-semibold text-muted-foreground opacity-0 transition-opacity group-hover:opacity-100">
+              {/* Always-visible total (hover is unavailable on touch devices) */}
+              <span className="min-h-[16px] text-[11px] font-semibold tabular-nums text-muted-foreground">
                 {total > 0 ? `${Math.round(total)}g` : ""}
               </span>
               <div className="flex w-full flex-1 items-end justify-center">

@@ -95,20 +95,21 @@ export const useFoodMasterFormController = (id: string) => {
 
   const handleOcrResult = useCallback(
     (result: OcrNutritionResult) => {
+      const ocrSetOptions = { shouldValidate: true, shouldDirty: true };
       if (result.name) {
-        form.setValue("name", result.name, { shouldValidate: true });
+        form.setValue("name", result.name, ocrSetOptions);
       }
       if (result.calories != null) {
-        form.setValue("calories", result.calories, { shouldValidate: true });
+        form.setValue("calories", result.calories, ocrSetOptions);
       }
       if (result.protein != null) {
-        form.setValue("protein", result.protein, { shouldValidate: true });
+        form.setValue("protein", result.protein, ocrSetOptions);
       }
       if (result.fat != null) {
-        form.setValue("fat", result.fat, { shouldValidate: true });
+        form.setValue("fat", result.fat, ocrSetOptions);
       }
       if (result.carbs != null) {
-        form.setValue("carbs", result.carbs, { shouldValidate: true });
+        form.setValue("carbs", result.carbs, ocrSetOptions);
       }
       toast.success("OCR結果を反映しました");
     },
@@ -141,6 +142,7 @@ export const useFoodMasterFormController = (id: string) => {
   return {
     form,
     existing,
+    hasUnsavedChanges: form.formState.isDirty,
     isDeleteConfirmOpen,
     isLoading,
     isNew,

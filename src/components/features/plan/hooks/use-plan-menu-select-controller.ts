@@ -35,11 +35,11 @@ export const usePlanMenuSelectController = ({
   const [recipeSearch, setRecipeSearch] = useState("");
   const [fmSearch, setFmSearch] = useState("");
   const [manualName, setManualName] = useState("");
-  const [manualCalories, setManualCalories] = useState("0");
-  const [manualProtein, setManualProtein] = useState("0");
-  const [manualFat, setManualFat] = useState("0");
-  const [manualCarbs, setManualCarbs] = useState("0");
-  const [manualCost, setManualCost] = useState("0");
+  const [manualCalories, setManualCalories] = useState("");
+  const [manualProtein, setManualProtein] = useState("");
+  const [manualFat, setManualFat] = useState("");
+  const [manualCarbs, setManualCarbs] = useState("");
+  const [manualCost, setManualCost] = useState("");
   const debouncedRecipeSearch = useDebounce(recipeSearch);
   const debouncedFmSearch = useDebounce(fmSearch);
   const { data: recipes } = useRecipes(debouncedRecipeSearch);
@@ -48,11 +48,11 @@ export const usePlanMenuSelectController = ({
 
   useEffect(() => {
     setManualName(existingPlan?.plannedName ?? "");
-    setManualCalories(existingPlan ? String(existingPlan.calories) : "0");
-    setManualProtein(existingPlan ? String(existingPlan.protein) : "0");
-    setManualFat(existingPlan ? String(existingPlan.fat) : "0");
-    setManualCarbs(existingPlan ? String(existingPlan.carbs) : "0");
-    setManualCost(existingPlan ? String(existingPlan.estimatedCost) : "0");
+    setManualCalories(existingPlan ? String(existingPlan.calories) : "");
+    setManualProtein(existingPlan ? String(existingPlan.protein) : "");
+    setManualFat(existingPlan ? String(existingPlan.fat) : "");
+    setManualCarbs(existingPlan ? String(existingPlan.carbs) : "");
+    setManualCost(existingPlan ? String(existingPlan.estimatedCost) : "");
   }, [existingPlan]);
 
   const handleSave = useCallback(

@@ -89,6 +89,8 @@ export const useMealRegisterDrawerController = () => {
           ...masterIds,
         },
       ]);
+      // The register card may be below the fold, so confirm the add explicitly
+      toast.success(`「${values.name}」を追加しました`);
     },
     [setDraftItems],
   );

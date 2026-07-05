@@ -62,8 +62,8 @@ const WeeklyCostChart = ({
               key={entry.date}
               className="group flex flex-1 flex-col items-center gap-1"
             >
-              {/* Hover value tooltip */}
-              <span className="min-h-[16px] text-[11px] font-semibold text-brand/80 opacity-0 transition-opacity group-hover:opacity-100">
+              {/* Always-visible value (hover is unavailable on touch devices) */}
+              <span className="min-h-[16px] text-[11px] font-semibold tabular-nums text-brand/80">
                 {entry.totalCost > 0
                   ? `¥${Math.round(entry.totalCost).toLocaleString()}`
                   : ""}

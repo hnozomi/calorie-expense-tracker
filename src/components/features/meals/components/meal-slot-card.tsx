@@ -4,6 +4,17 @@ import { useAtomValue, useSetAtom } from "jotai";
 import { CalendarPlus, ChevronRight, Plus } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 import { PfcDisplay } from "@/components/ui/pfc-display";
 import { MEAL_TYPE_LABELS, type MealType } from "@/types";
 import { cn, MEAL_TYPE_META } from "@/utils";
@@ -73,15 +84,34 @@ const MealSlotCard = ({ mealType, items }: MealSlotCardProps) => {
               <span className="text-sm font-semibold tabular-nums text-muted-foreground">
                 {Math.round(totalCalories)} kcal
               </span>
-              <button
-                type="button"
-                className="flex h-6 w-6 items-center justify-center rounded-md text-muted-foreground/60 transition-colors hover:bg-muted hover:text-foreground active:bg-muted/80"
-                onClick={handleTransferToPlan}
-                disabled={transferToPlan.isPending}
-                title="献立に反映"
-              >
-                <CalendarPlus className="h-3.5 w-3.5" />
-              </button>
+              <AlertDialog>
+                <AlertDialogTrigger asChild>
+                  <button
+                    type="button"
+                    className="flex h-6 w-6 items-center justify-center rounded-md text-muted-foreground/60 transition-colors hover:bg-muted hover:text-foreground active:bg-muted/80"
+                    disabled={transferToPlan.isPending}
+                    title="献立に反映"
+                    aria-label="献立に反映"
+                  >
+                    <CalendarPlus className="h-3.5 w-3.5" />
+                  </button>
+                </AlertDialogTrigger>
+                <AlertDialogContent>
+                  <AlertDialogHeader>
+                    <AlertDialogTitle>献立に反映しますか？</AlertDialogTitle>
+                    <AlertDialogDescription>
+                      この{MEAL_TYPE_LABELS[mealType]}
+                      の内容を献立カレンダーに追加します。
+                    </AlertDialogDescription>
+                  </AlertDialogHeader>
+                  <AlertDialogFooter>
+                    <AlertDialogCancel>キャンセル</AlertDialogCancel>
+                    <AlertDialogAction onClick={handleTransferToPlan}>
+                      反映する
+                    </AlertDialogAction>
+                  </AlertDialogFooter>
+                </AlertDialogContent>
+              </AlertDialog>
             </div>
           )}
         </div>

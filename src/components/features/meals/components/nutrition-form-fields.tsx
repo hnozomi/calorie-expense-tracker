@@ -47,8 +47,14 @@ const NutritionFormFields = ({
             type="number"
             inputMode="decimal"
             step="any"
+            placeholder="0"
             {...register("calories")}
           />
+          {errors.calories && (
+            <p className="text-xs text-destructive">
+              {errors.calories.message}
+            </p>
+          )}
         </div>
         <div className="space-y-1">
           <Label htmlFor={id("cost")} className="text-xs">
@@ -58,8 +64,13 @@ const NutritionFormFields = ({
             id={id("cost")}
             type="number"
             inputMode="decimal"
+            step="any"
+            placeholder="0"
             {...register("cost")}
           />
+          {errors.cost && (
+            <p className="text-xs text-destructive">{errors.cost.message}</p>
+          )}
         </div>
       </div>
 
@@ -78,8 +89,12 @@ const NutritionFormFields = ({
             inputMode="decimal"
             step="any"
             className="border-blue-200 bg-blue-50/50 focus-visible:ring-blue-400 dark:border-blue-800 dark:bg-blue-950/30"
+            placeholder="0"
             {...register("protein")}
           />
+          {errors.protein && (
+            <p className="text-xs text-destructive">{errors.protein.message}</p>
+          )}
         </div>
         <div className="space-y-1">
           <Label
@@ -94,8 +109,12 @@ const NutritionFormFields = ({
             inputMode="decimal"
             step="any"
             className="border-amber-200 bg-amber-50/50 focus-visible:ring-amber-400 dark:border-amber-800 dark:bg-amber-950/30"
+            placeholder="0"
             {...register("fat")}
           />
+          {errors.fat && (
+            <p className="text-xs text-destructive">{errors.fat.message}</p>
+          )}
         </div>
         <div className="space-y-1">
           <Label
@@ -110,8 +129,12 @@ const NutritionFormFields = ({
             inputMode="decimal"
             step="any"
             className="border-green-200 bg-green-50/50 focus-visible:ring-green-400 dark:border-green-800 dark:bg-green-950/30"
+            placeholder="0"
             {...register("carbs")}
           />
+          {errors.carbs && (
+            <p className="text-xs text-destructive">{errors.carbs.message}</p>
+          )}
         </div>
       </div>
     </>

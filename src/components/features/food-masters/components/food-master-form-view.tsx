@@ -30,6 +30,8 @@ import {
 } from "@/components/ui/select";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Textarea } from "@/components/ui/textarea";
+import { UnsavedChangesDialog } from "@/components/ui/unsaved-changes-dialog";
+import { useUnsavedChangesGuard } from "@/hooks";
 import { FOOD_CATEGORIES, FOOD_CATEGORY_LABELS } from "@/types";
 import { useFoodMasterFormController } from "../hooks/use-food-master-form-controller";
 import type { FoodMasterFormValues } from "../types/food-master";
@@ -49,6 +51,7 @@ const FoodMasterFormView = ({ id }: FoodMasterFormViewProps) => {
       formState: { errors },
     },
     existing,
+    hasUnsavedChanges,
     isDeleteConfirmOpen,
     isLoading,
     isNew,
@@ -61,6 +64,10 @@ const FoodMasterFormView = ({ id }: FoodMasterFormViewProps) => {
     handleOcrResult,
     handleSave,
   } = useFoodMasterFormController(id);
+
+  const backGuard = useUnsavedChangesGuard(hasUnsavedChanges, () =>
+    router.push("/other/food-masters"),
+  );
 
   const categoryValue = watch("category");
 
@@ -125,11 +132,7 @@ const FoodMasterFormView = ({ id }: FoodMasterFormViewProps) => {
   return (
     <>
       <Header title={isNew ? "食品を登録" : "食品を編集"}>
-        <Button
-          variant="ghost"
-          size="icon-sm"
-          onClick={() => router.push("/other/food-masters")}
-        >
+        <Button variant="ghost" size="icon-sm" onClick={backGuard.requestExit}>
           <ArrowLeft className="h-5 w-5" />
         </Button>
       </Header>
@@ -262,6 +265,11 @@ const FoodMasterFormView = ({ id }: FoodMasterFormViewProps) => {
                     placeholder="0"
                     {...register("protein")}
                   />
+                  {errors.protein && (
+                    <p className="text-xs text-destructive">
+                      {errors.protein.message}
+                    </p>
+                  )}
                 </div>
                 <div className="space-y-1.5 rounded-lg border border-amber-200/60 bg-amber-50/50 p-2.5 dark:border-amber-900/40 dark:bg-amber-950/20">
                   <Label
@@ -282,6 +290,11 @@ const FoodMasterFormView = ({ id }: FoodMasterFormViewProps) => {
                     placeholder="0"
                     {...register("fat")}
                   />
+                  {errors.fat && (
+                    <p className="text-xs text-destructive">
+                      {errors.fat.message}
+                    </p>
+                  )}
                 </div>
                 <div className="space-y-1.5 rounded-lg border border-green-200/60 bg-green-50/50 p-2.5 dark:border-green-900/40 dark:bg-green-950/20">
                   <Label
@@ -302,6 +315,11 @@ const FoodMasterFormView = ({ id }: FoodMasterFormViewProps) => {
                     placeholder="0"
                     {...register("carbs")}
                   />
+                  {errors.carbs && (
+                    <p className="text-xs text-destructive">
+                      {errors.carbs.message}
+                    </p>
+                  )}
                 </div>
               </div>
             </div>
@@ -326,6 +344,11 @@ const FoodMasterFormView = ({ id }: FoodMasterFormViewProps) => {
                   placeholder="0"
                   {...register("defaultPrice")}
                 />
+                {errors.defaultPrice && (
+                  <p className="text-xs text-destructive">
+                    {errors.defaultPrice.message}
+                  </p>
+                )}
               </div>
               <div className="space-y-1.5">
                 <Label htmlFor="fm-notes" className="text-xs">
@@ -421,6 +444,12 @@ const FoodMasterFormView = ({ id }: FoodMasterFormViewProps) => {
         isOpen={isOcrOpen}
         onClose={() => setIsOcrOpen(false)}
         onResult={handleOcrResult}
+      />
+
+      <UnsavedChangesDialog
+        isOpen={backGuard.isConfirmOpen}
+        onOpenChange={backGuard.setIsConfirmOpen}
+        onDiscard={backGuard.confirmExit}
       />
     </>
   );

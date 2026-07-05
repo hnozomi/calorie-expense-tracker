@@ -23,7 +23,8 @@ const ManualInputForm = ({ onAdd }: ManualInputFormProps) => {
     formState: { errors },
   } = useForm<MealItemFormInput, undefined, MealItemFormValues>({
     resolver: zodResolver(mealItemFormSchema),
-    defaultValues: { calories: 0, protein: 0, fat: 0, carbs: 0 },
+    // Empty defaults so the user can type immediately without clearing a "0"
+    defaultValues: { name: "", calories: "", protein: "", fat: "", carbs: "" },
   });
 
   const handleAdd = (values: MealItemFormValues) => {

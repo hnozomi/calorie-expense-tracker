@@ -23,6 +23,8 @@ import { PfcDot } from "@/components/ui/pfc-display";
 import { SectionHeader } from "@/components/ui/section-header";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { UnsavedChangesDialog } from "@/components/ui/unsaved-changes-dialog";
+import { useUnsavedChangesGuard } from "@/hooks";
 import { useSetMenuFormController } from "../hooks/use-set-menu-form-controller";
 
 type SetMenuFormViewProps = {
@@ -40,6 +42,7 @@ const SetMenuFormView = ({ id }: SetMenuFormViewProps) => {
     existing,
     foodMasters,
     fmSearch,
+    hasUnsavedChanges,
     isDeleteConfirmOpen,
     isLoading,
     isNew,
@@ -59,6 +62,10 @@ const SetMenuFormView = ({ id }: SetMenuFormViewProps) => {
     handleRemoveItem,
     handleSave,
   } = useSetMenuFormController(id);
+
+  const backGuard = useUnsavedChangesGuard(hasUnsavedChanges, () =>
+    router.push("/other/set-menus"),
+  );
 
   if (!isNew && isLoading) {
     return (
@@ -110,11 +117,7 @@ const SetMenuFormView = ({ id }: SetMenuFormViewProps) => {
   return (
     <>
       <Header title={isNew ? "セットメニューを登録" : "セットメニューを編集"}>
-        <Button
-          variant="ghost"
-          size="icon-sm"
-          onClick={() => router.push("/other/set-menus")}
-        >
+        <Button variant="ghost" size="icon-sm" onClick={backGuard.requestExit}>
           <ArrowLeft className="h-5 w-5" />
         </Button>
       </Header>
@@ -420,6 +423,12 @@ const SetMenuFormView = ({ id }: SetMenuFormViewProps) => {
           )}
         </form>
       </PageContainer>
+
+      <UnsavedChangesDialog
+        isOpen={backGuard.isConfirmOpen}
+        onOpenChange={backGuard.setIsConfirmOpen}
+        onDiscard={backGuard.confirmExit}
+      />
     </>
   );
 };

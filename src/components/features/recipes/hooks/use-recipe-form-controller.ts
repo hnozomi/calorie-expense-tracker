@@ -71,6 +71,7 @@ export const useRecipeFormController = ({
   const deleteMutation = useDeleteRecipe();
   const [isDeleteConfirmOpen, setIsDeleteConfirmOpen] = useState(false);
   const [ingredients, setIngredients] = useState<EditableIngredient[]>([]);
+  const [hasIngredientEdits, setHasIngredientEdits] = useState(false);
 
   const form = useForm<RecipeFormInput, undefined, RecipeFormValues>({
     resolver: zodResolver(recipeFormSchema),
@@ -81,21 +82,25 @@ export const useRecipeFormController = ({
     if (!existing) {
       form.reset(EMPTY_RECIPE_FORM_VALUES);
       setIngredients([]);
+      setHasIngredientEdits(false);
       return;
     }
 
     form.reset(toRecipeFormValues(existing));
     setIngredients(existing.ingredients.map(toIngredientDraft));
+    setHasIngredientEdits(false);
   }, [existing, form]);
 
   const handleAddIngredient = useCallback(() => {
     setIngredients((prev) => [...prev, createEmptyIngredient()]);
+    setHasIngredientEdits(true);
   }, []);
 
   const handleRemoveIngredient = useCallback((tempId: string) => {
     setIngredients((prev) =>
       prev.filter((ingredient) => ingredient.tempId !== tempId),
     );
+    setHasIngredientEdits(true);
   }, []);
 
   const handleIngredientChange = useCallback(
@@ -109,6 +114,7 @@ export const useRecipeFormController = ({
           return { ...ingredient, [field]: Number(value) || 0 };
         }),
       );
+      setHasIngredientEdits(true);
     },
     [],
   );
@@ -151,6 +157,7 @@ export const useRecipeFormController = ({
   return {
     form,
     existing,
+    hasUnsavedChanges: form.formState.isDirty || hasIngredientEdits,
     ingredients,
     isDeleteConfirmOpen,
     isLoading,

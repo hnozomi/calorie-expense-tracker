@@ -61,10 +61,11 @@ const PlanWeeklySummary = ({ plans, weekStart }: PlanWeeklySummaryProps) => {
     }
   };
 
-  /** Calculate weekly calorie target vs actual */
+  /** Compare against planned days only, so a half-planned week doesn't read as "under target" */
+  const plannedDayCount = new Set(plans.map((plan) => plan.date)).size;
   const dailyTarget = target?.targetCalories ?? 0;
-  const weeklyTarget = dailyTarget * 7;
-  const hasTarget = weeklyTarget > 0;
+  const weeklyTarget = dailyTarget * plannedDayCount;
+  const hasTarget = dailyTarget > 0 && plannedDayCount > 0;
   const calorieDiff = Math.round(totals.calories - weeklyTarget);
 
   /** Check if today has any plans */
@@ -123,9 +124,10 @@ const PlanWeeklySummary = ({ plans, weekStart }: PlanWeeklySummaryProps) => {
           <div className="rounded-lg bg-muted/40 px-3 py-2">
             <div className="flex items-center justify-between text-xs">
               <span className="text-muted-foreground">
-                週間目標: {weeklyTarget.toLocaleString()} kcal
+                目標: {weeklyTarget.toLocaleString()} kcal
                 <span className="ml-1 text-[10px]">
-                  ({dailyTarget.toLocaleString()} × 7日)
+                  ({dailyTarget.toLocaleString()} × 計画済み{plannedDayCount}
+                  日分)
                 </span>
               </span>
               <span
@@ -154,6 +156,11 @@ const PlanWeeklySummary = ({ plans, weekStart }: PlanWeeklySummaryProps) => {
                 }}
               />
             </div>
+            {plannedDayCount < 7 && (
+              <p className="mt-1 text-[10px] text-muted-foreground">
+                7日中{plannedDayCount}日計画済み
+              </p>
+            )}
           </div>
         )}
 

@@ -16,6 +16,8 @@ import { PlanWeeklySummary } from "./plan-weekly-summary";
 const PlanCalendarView = () => {
   const {
     value: weekStart,
+    isDefaultValue: isCurrentWeek,
+    setDate: setWeekStart,
     shiftBackward,
     shiftForward,
   } = useWeekStartNavigation(planWeekStartAtom, getThisMonday());
@@ -32,7 +34,7 @@ const PlanCalendarView = () => {
       <Header title="献立カレンダー" />
       <PageContainer>
         {/* Week navigation */}
-        <div className="flex items-center justify-center gap-2 py-4">
+        <div className="relative flex items-center justify-center gap-2 py-4">
           <Button
             variant="ghost"
             size="icon-sm"
@@ -43,6 +45,11 @@ const PlanCalendarView = () => {
             <ChevronLeft className="h-4 w-4" />
           </Button>
           <span className="min-w-[140px] rounded-full bg-muted/60 px-4 py-1.5 text-center text-sm font-semibold tracking-wide">
+            {isCurrentWeek && (
+              <span className="mr-1.5 text-xs font-bold text-primary">
+                今週
+              </span>
+            )}
             {weekLabel}
           </span>
           <Button
@@ -54,6 +61,16 @@ const PlanCalendarView = () => {
           >
             <ChevronRight className="h-4 w-4" />
           </Button>
+          {!isCurrentWeek && (
+            <Button
+              variant="outline"
+              size="sm"
+              className="absolute right-3 h-7 rounded-full px-2.5 text-xs"
+              onClick={() => setWeekStart(getThisMonday())}
+            >
+              今週へ
+            </Button>
+          )}
         </div>
 
         <PlanCalendarGrid weekStart={weekStart} plans={plans} />

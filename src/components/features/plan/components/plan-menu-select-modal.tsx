@@ -1,5 +1,16 @@
 "use client";
 
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -126,6 +137,7 @@ const PlanMenuSelectModal = ({
                   type="number"
                   inputMode="decimal"
                   step="any"
+                  placeholder="0"
                   value={manualCalories}
                   onChange={(e) => setManualCalories(e.target.value)}
                 />
@@ -141,6 +153,7 @@ const PlanMenuSelectModal = ({
                   id="plan-manual-cost"
                   type="number"
                   inputMode="decimal"
+                  placeholder="0"
                   value={manualCost}
                   onChange={(e) => setManualCost(e.target.value)}
                 />
@@ -159,6 +172,7 @@ const PlanMenuSelectModal = ({
                   type="number"
                   inputMode="decimal"
                   step="any"
+                  placeholder="0"
                   value={manualProtein}
                   onChange={(e) => setManualProtein(e.target.value)}
                 />
@@ -175,6 +189,7 @@ const PlanMenuSelectModal = ({
                   type="number"
                   inputMode="decimal"
                   step="any"
+                  placeholder="0"
                   value={manualFat}
                   onChange={(e) => setManualFat(e.target.value)}
                 />
@@ -191,6 +206,7 @@ const PlanMenuSelectModal = ({
                   type="number"
                   inputMode="decimal"
                   step="any"
+                  placeholder="0"
                   value={manualCarbs}
                   onChange={(e) => setManualCarbs(e.target.value)}
                 />
@@ -219,8 +235,9 @@ const PlanMenuSelectModal = ({
                   <button
                     key={recipe.id}
                     type="button"
-                    className="flex w-full items-center justify-between px-3 py-2.5 text-left text-sm transition-colors hover:bg-muted/60"
+                    className="flex w-full items-center justify-between px-3 py-2.5 text-left text-sm transition-colors hover:bg-muted/60 disabled:pointer-events-none disabled:opacity-50"
                     onClick={() => handleSelectRecipe(recipe)}
+                    disabled={saveMutation.isPending}
                   >
                     <span className="truncate font-medium">{recipe.name}</span>
                     <span className="ml-2 whitespace-nowrap rounded-full bg-muted px-2 py-0.5 text-[10px] font-medium text-muted-foreground">
@@ -252,8 +269,9 @@ const PlanMenuSelectModal = ({
                   <button
                     key={fm.id}
                     type="button"
-                    className="flex w-full items-center justify-between px-3 py-2.5 text-left text-sm transition-colors hover:bg-muted/60"
+                    className="flex w-full items-center justify-between px-3 py-2.5 text-left text-sm transition-colors hover:bg-muted/60 disabled:pointer-events-none disabled:opacity-50"
                     onClick={() => handleSelectFoodMaster(fm)}
+                    disabled={saveMutation.isPending}
                   >
                     <span className="truncate font-medium">{fm.name}</span>
                     <span className="ml-2 whitespace-nowrap rounded-full bg-muted px-2 py-0.5 text-[10px] font-medium text-muted-foreground">
@@ -279,8 +297,9 @@ const PlanMenuSelectModal = ({
                   <button
                     key={sm.id}
                     type="button"
-                    className="flex w-full items-center justify-between px-3 py-2.5 text-left text-sm transition-colors hover:bg-muted/60"
+                    className="flex w-full items-center justify-between px-3 py-2.5 text-left text-sm transition-colors hover:bg-muted/60 disabled:pointer-events-none disabled:opacity-50"
                     onClick={() => handleSelectSetMenu(sm)}
+                    disabled={saveMutation.isPending}
                   >
                     <span className="truncate font-medium">{sm.name}</span>
                     <span className="ml-2 whitespace-nowrap rounded-full bg-muted px-2 py-0.5 text-[10px] font-medium text-muted-foreground">
@@ -300,14 +319,37 @@ const PlanMenuSelectModal = ({
         {/* Delete button for existing plans */}
         {existingPlan && (
           <div className="mt-3 border-t border-border/40 pt-3">
-            <button
-              type="button"
-              className="w-full rounded-md py-2 text-center text-sm font-medium text-destructive transition-colors hover:bg-destructive/10"
-              onClick={handleDelete}
-              disabled={deleteMutation.isPending}
-            >
-              {deleteMutation.isPending ? "削除中..." : "この献立を削除する"}
-            </button>
+            <AlertDialog>
+              <AlertDialogTrigger asChild>
+                <button
+                  type="button"
+                  className="w-full rounded-md py-2 text-center text-sm font-medium text-destructive transition-colors hover:bg-destructive/10"
+                  disabled={deleteMutation.isPending}
+                >
+                  {deleteMutation.isPending
+                    ? "削除中..."
+                    : "この献立を削除する"}
+                </button>
+              </AlertDialogTrigger>
+              <AlertDialogContent>
+                <AlertDialogHeader>
+                  <AlertDialogTitle>献立を削除しますか？</AlertDialogTitle>
+                  <AlertDialogDescription>
+                    「{existingPlan.plannedName}
+                    」を削除します。この操作は取り消せません。
+                  </AlertDialogDescription>
+                </AlertDialogHeader>
+                <AlertDialogFooter>
+                  <AlertDialogCancel>キャンセル</AlertDialogCancel>
+                  <AlertDialogAction
+                    onClick={handleDelete}
+                    className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                  >
+                    削除する
+                  </AlertDialogAction>
+                </AlertDialogFooter>
+              </AlertDialogContent>
+            </AlertDialog>
           </div>
         )}
       </DialogContent>

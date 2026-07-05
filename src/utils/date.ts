@@ -38,12 +38,17 @@ export const formatDisplayDate = (dateStr: string): string => {
   return `${date.getMonth() + 1}/${date.getDate()}（${"日月火水木金土"[date.getDay()]}）`;
 };
 
-/** Format a week range label like 3/23 - 3/29 */
+/** Format a week range label like 2026/3/23 - 3/29 (end year shown only across a year boundary) */
 export const formatWeekLabel = (weekStart: string): string => {
   const weekEnd = shiftDate(weekStart, 6);
   const start = new Date(`${weekStart}T00:00:00`);
   const end = new Date(`${weekEnd}T00:00:00`);
-  return `${start.getMonth() + 1}/${start.getDate()} - ${end.getMonth() + 1}/${end.getDate()}`;
+  const startLabel = `${start.getFullYear()}/${start.getMonth() + 1}/${start.getDate()}`;
+  const endLabel =
+    start.getFullYear() === end.getFullYear()
+      ? `${end.getMonth() + 1}/${end.getDate()}`
+      : `${end.getFullYear()}/${end.getMonth() + 1}/${end.getDate()}`;
+  return `${startLabel} - ${endLabel}`;
 };
 
 export type WeekDay = {

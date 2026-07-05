@@ -9,3 +9,4 @@ export {
   useSaveNutritionTarget,
 } from "./use-nutrition-target";
 export { useSupabase } from "./use-supabase";
+export { useUnsavedChangesGuard } from "./use-unsaved-changes-guard";

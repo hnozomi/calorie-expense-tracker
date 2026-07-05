@@ -19,6 +19,8 @@ import { PfcDot } from "@/components/ui/pfc-display";
 import { SectionHeader } from "@/components/ui/section-header";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Textarea } from "@/components/ui/textarea";
+import { UnsavedChangesDialog } from "@/components/ui/unsaved-changes-dialog";
+import { useUnsavedChangesGuard } from "@/hooks";
 import { useRecipeFormController } from "../hooks/use-recipe-form-controller";
 import { RecipeIngredientsEditor } from "./recipe-ingredients-editor";
 
@@ -35,6 +37,7 @@ const RecipeFormView = ({ id }: RecipeFormViewProps) => {
       formState: { errors },
     },
     existing,
+    hasUnsavedChanges,
     ingredients,
     isDeleteConfirmOpen,
     isLoading,
@@ -49,6 +52,10 @@ const RecipeFormView = ({ id }: RecipeFormViewProps) => {
     handleRemoveIngredient,
     handleSave,
   } = useRecipeFormController({ id });
+
+  const backGuard = useUnsavedChangesGuard(hasUnsavedChanges, () =>
+    router.push("/recipes"),
+  );
 
   if (!isNew && isLoading) {
     return (
@@ -105,11 +112,7 @@ const RecipeFormView = ({ id }: RecipeFormViewProps) => {
   return (
     <>
       <Header title={isNew ? "レシピを登録" : "レシピを編集"}>
-        <Button
-          variant="ghost"
-          size="icon-sm"
-          onClick={() => router.push("/recipes")}
-        >
+        <Button variant="ghost" size="icon-sm" onClick={backGuard.requestExit}>
           <ArrowLeft className="h-5 w-5" />
         </Button>
       </Header>
@@ -176,6 +179,11 @@ const RecipeFormView = ({ id }: RecipeFormViewProps) => {
                   placeholder="0"
                   {...register("calories")}
                 />
+                {errors.calories && (
+                  <p className="text-xs text-destructive">
+                    {errors.calories.message}
+                  </p>
+                )}
               </div>
 
               {/* PFC color-coded cards */}
@@ -199,6 +207,11 @@ const RecipeFormView = ({ id }: RecipeFormViewProps) => {
                     placeholder="0"
                     {...register("protein")}
                   />
+                  {errors.protein && (
+                    <p className="text-xs text-destructive">
+                      {errors.protein.message}
+                    </p>
+                  )}
                 </div>
                 <div className="space-y-1.5 rounded-lg border border-amber-200/60 bg-amber-50/50 p-2.5 dark:border-amber-900/40 dark:bg-amber-950/20">
                   <Label
@@ -219,6 +232,11 @@ const RecipeFormView = ({ id }: RecipeFormViewProps) => {
                     placeholder="0"
                     {...register("fat")}
                   />
+                  {errors.fat && (
+                    <p className="text-xs text-destructive">
+                      {errors.fat.message}
+                    </p>
+                  )}
                 </div>
                 <div className="space-y-1.5 rounded-lg border border-green-200/60 bg-green-50/50 p-2.5 dark:border-green-900/40 dark:bg-green-950/20">
                   <Label
@@ -239,6 +257,11 @@ const RecipeFormView = ({ id }: RecipeFormViewProps) => {
                     placeholder="0"
                     {...register("carbs")}
                   />
+                  {errors.carbs && (
+                    <p className="text-xs text-destructive">
+                      {errors.carbs.message}
+                    </p>
+                  )}
                 </div>
               </div>
             </div>
@@ -340,6 +363,12 @@ const RecipeFormView = ({ id }: RecipeFormViewProps) => {
           )}
         </form>
       </PageContainer>
+
+      <UnsavedChangesDialog
+        isOpen={backGuard.isConfirmOpen}
+        onOpenChange={backGuard.setIsConfirmOpen}
+        onDiscard={backGuard.confirmExit}
+      />
     </>
   );
 };

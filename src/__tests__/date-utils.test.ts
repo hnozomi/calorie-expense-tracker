@@ -118,8 +118,12 @@ describe("formatDisplayDate", () => {
 });
 
 describe("formatWeekLabel", () => {
-  it("formats a week range label", () => {
-    expect(formatWeekLabel("2026-03-16")).toBe("3/16 - 3/22");
+  it("formats a week range label with the year", () => {
+    expect(formatWeekLabel("2026-03-16")).toBe("2026/3/16 - 3/22");
+  });
+
+  it("shows both years across a year boundary", () => {
+    expect(formatWeekLabel("2026-12-28")).toBe("2026/12/28 - 2027/1/3");
   });
 });
 

@@ -76,7 +76,7 @@ const PlanCalendarGrid = ({ weekStart, plans }: PlanCalendarGridProps) => {
       <div className="min-w-[640px]">
         {/* Header row: day labels */}
         <div className="grid grid-cols-[60px_repeat(7,1fr)] border-b border-border/60 bg-muted/30">
-          <div className="p-2" />
+          <div className="sticky left-0 z-10 border-r border-border/40 bg-background p-2" />
           {days.map((day) => {
             const isToday = day.date === todayStr;
             return (
@@ -111,7 +111,8 @@ const PlanCalendarGrid = ({ weekStart, plans }: PlanCalendarGridProps) => {
             key={mealType}
             className="grid grid-cols-[60px_repeat(7,1fr)] border-b border-border/40"
           >
-            <div className="flex items-center justify-center border-r border-border/40 bg-muted/20 p-1">
+            {/* Sticky label so meal rows stay identifiable while scrolling horizontally */}
+            <div className="sticky left-0 z-10 flex items-center justify-center border-r border-border/40 bg-background p-1">
               <span className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
                 {MEAL_TYPE_LABELS[mealType]}
               </span>
@@ -123,7 +124,7 @@ const PlanCalendarGrid = ({ weekStart, plans }: PlanCalendarGridProps) => {
                   key={`${day.date}-${mealType}`}
                   className={cn(
                     "min-w-0 overflow-hidden border-r border-border/30 last:border-r-0",
-                    isToday && "bg-primary/[0.02]",
+                    isToday && "bg-primary/5",
                   )}
                 >
                   <PlanCell
@@ -139,7 +140,7 @@ const PlanCalendarGrid = ({ weekStart, plans }: PlanCalendarGridProps) => {
 
         {/* Daily calorie totals row */}
         <div className="grid grid-cols-[60px_repeat(7,1fr)] border-b border-border/60 bg-muted/20">
-          <div className="flex items-center justify-center border-r border-border/40 p-1">
+          <div className="sticky left-0 z-10 flex items-center justify-center border-r border-border/40 bg-background p-1">
             <span className="text-[10px] font-semibold tracking-wider text-muted-foreground">
               合計
             </span>
@@ -159,7 +160,7 @@ const PlanCalendarGrid = ({ weekStart, plans }: PlanCalendarGridProps) => {
                 key={`total-${day.date}`}
                 className={cn(
                   "flex flex-col items-center justify-center gap-0.5 border-r border-border/30 py-2 last:border-r-0",
-                  isToday && "bg-primary/[0.02]",
+                  isToday && "bg-primary/5",
                 )}
               >
                 {cal > 0 ? (

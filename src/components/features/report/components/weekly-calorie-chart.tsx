@@ -57,9 +57,10 @@ const WeeklyCalorieChart = ({
               type="button"
               className="group flex flex-1 flex-col items-center gap-1"
               onClick={() => handleBarClick(entry.date)}
+              aria-label={`${DAY_LABELS[i]}曜日 ${Math.round(entry.calories)}kcal（タップで日別画面へ）`}
             >
-              {/* Hover value tooltip */}
-              <span className="min-h-[16px] text-[11px] font-semibold text-primary/80 opacity-0 transition-opacity group-hover:opacity-100">
+              {/* Always-visible value (hover is unavailable on touch devices) */}
+              <span className="min-h-[16px] text-[11px] font-semibold tabular-nums text-primary/80">
                 {entry.calories > 0 ? Math.round(entry.calories) : ""}
               </span>
               <div className="flex w-full flex-1 items-end justify-center">
