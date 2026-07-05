@@ -1,6 +1,9 @@
-import { BottomNavigation } from "@/components/features/layout";
+import {
+  BottomNavigation,
+  TabDataPrefetcher,
+} from "@/components/features/layout";
 
-/** Authenticated pages layout: bottom navigation */
+/** Authenticated pages layout: bottom navigation + sibling-tab data prefetch */
 export default function MainLayout({
   children,
 }: {
@@ -10,6 +13,7 @@ export default function MainLayout({
     <div className="flex min-h-dvh flex-col">
       {children}
       <BottomNavigation />
+      <TabDataPrefetcher />
     </div>
   );
 }

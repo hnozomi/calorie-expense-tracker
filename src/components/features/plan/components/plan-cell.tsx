@@ -1,7 +1,7 @@
 "use client";
 
 import { Plus } from "lucide-react";
-import { useState } from "react";
+import { Suspense, useState } from "react";
 import type { MealType } from "@/types";
 import type { MealPlan } from "../types/meal-plan";
 import { PlanMenuSelectModal } from "./plan-menu-select-modal";
@@ -15,15 +15,20 @@ type PlanCellProps = {
 /** A single cell in the plan calendar grid (one date + one meal type) */
 const PlanCell = ({ date, mealType, plans }: PlanCellProps) => {
   const [isModalOpen, setIsModalOpen] = useState(false);
+  // Mount the modal (and its selector queries) only after the first open;
+  // 28 always-mounted modals made the page suspend on their set-menu query
+  const [hasOpenedModal, setHasOpenedModal] = useState(false);
   const [selectedPlan, setSelectedPlan] = useState<MealPlan | undefined>();
 
   const handleOpenNew = () => {
     setSelectedPlan(undefined);
+    setHasOpenedModal(true);
     setIsModalOpen(true);
   };
 
   const handleOpenEdit = (plan: MealPlan) => {
     setSelectedPlan(plan);
+    setHasOpenedModal(true);
     setIsModalOpen(true);
   };
 
@@ -51,13 +56,19 @@ const PlanCell = ({ date, mealType, plans }: PlanCellProps) => {
         </button>
       </div>
 
-      <PlanMenuSelectModal
-        isOpen={isModalOpen}
-        onClose={() => setIsModalOpen(false)}
-        date={date}
-        mealType={mealType}
-        existingPlan={selectedPlan}
-      />
+      {hasOpenedModal && (
+        // Local boundary so the modal's suspense queries never bubble up
+        // and swap the whole page back to its skeleton
+        <Suspense fallback={null}>
+          <PlanMenuSelectModal
+            isOpen={isModalOpen}
+            onClose={() => setIsModalOpen(false)}
+            date={date}
+            mealType={mealType}
+            existingPlan={selectedPlan}
+          />
+        </Suspense>
+      )}
     </>
   );
 };

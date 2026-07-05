@@ -9,11 +9,16 @@ export const proxy = async (request: NextRequest) => {
     return NextResponse.next();
   }
 
-  // Skip the Supabase auth round-trip for router prefetch requests; pages are
-  // static shells and the real navigation is still auth-checked below
+  // Skip the Supabase auth round-trip for router prefetch requests and
+  // client-side navigations (RSC payload fetches). Pages are static shells
+  // with no user data — actual data is fetched client-side under RLS — and
+  // the getUser() round-trip here would otherwise block tab switches for
+  // hundreds of ms whenever the router cache has expired. Document loads
+  // below still enforce the auth redirects.
   if (
     request.headers.get("next-router-prefetch") ||
-    request.headers.get("purpose") === "prefetch"
+    request.headers.get("purpose") === "prefetch" ||
+    request.headers.get("RSC") === "1"
   ) {
     return NextResponse.next();
   }
