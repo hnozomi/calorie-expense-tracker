@@ -25,12 +25,16 @@ const ManualInputForm = ({ onAdd, pendingItemRef }: ManualInputFormProps) => {
     handleSubmit,
     getValues,
     reset,
+    watch,
     formState: { errors },
   } = useForm<MealItemFormInput, undefined, MealItemFormValues>({
     resolver: zodResolver(mealItemFormSchema),
     // Empty defaults so the user can type immediately without clearing a "0"
     defaultValues: { name: "", calories: "", protein: "", fat: "", carbs: "" },
   });
+
+  const nameValue = watch("name");
+  const canAdd = typeof nameValue === "string" && nameValue.trim().length > 0;
 
   useEffect(() => {
     if (!pendingItemRef) return;
@@ -47,13 +51,17 @@ const ManualInputForm = ({ onAdd, pendingItemRef }: ManualInputFormProps) => {
   const handleAdd = (values: MealItemFormValues) => {
     onAdd(values);
     reset();
+    // Close the soft keyboard so the updated draft card becomes visible
+    if (document.activeElement instanceof HTMLElement) {
+      document.activeElement.blur();
+    }
   };
 
   return (
     <form onSubmit={handleSubmit(handleAdd)} className="space-y-3">
       <NutritionFormFields register={register} errors={errors} />
 
-      <Button type="submit" variant="secondary" className="w-full">
+      <Button type="submit" className="w-full" disabled={!canAdd}>
         カードに追加
       </Button>
     </form>

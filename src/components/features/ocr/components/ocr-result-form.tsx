@@ -32,6 +32,7 @@ const OcrResultForm = ({
     register,
     handleSubmit,
     getValues,
+    watch,
     formState: { errors },
   } = useForm<MealItemFormInput, undefined, MealItemFormValues>({
     resolver: zodResolver(mealItemFormSchema),
@@ -56,20 +57,31 @@ const OcrResultForm = ({
     };
   }, [pendingItemRef, getValues]);
 
+  const nameValue = watch("name");
+  const canAdd = typeof nameValue === "string" && nameValue.trim().length > 0;
+
+  /** Add the corrected values and close the soft keyboard so the card is visible */
+  const handleAdd = (values: MealItemFormValues) => {
+    onAdd(values);
+    if (document.activeElement instanceof HTMLElement) {
+      document.activeElement.blur();
+    }
+  };
+
   return (
     <div className="space-y-3">
       <p className="text-sm font-medium text-muted-foreground">
         OCR結果を確認・修正してください
       </p>
 
-      <form onSubmit={handleSubmit(onAdd)} className="space-y-3">
+      <form onSubmit={handleSubmit(handleAdd)} className="space-y-3">
         <NutritionFormFields
           register={register}
           errors={errors}
           idPrefix="ocr"
         />
 
-        <Button type="submit" variant="secondary" className="w-full">
+        <Button type="submit" className="w-full" disabled={!canAdd}>
           カードに追加
         </Button>
       </form>

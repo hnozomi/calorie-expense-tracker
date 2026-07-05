@@ -77,11 +77,13 @@ const MealRegisterDrawer = () => {
     (sum, item) => sum + item.calories,
     0,
   );
+  const lastDraftItem = draftItems[draftItems.length - 1];
 
   return (
     <>
       <Drawer open={isOpen} onOpenChange={handleOpenChange}>
-        <DrawerContent className="h-[85dvh]">
+        {/* max-h override needed: the base DrawerContent caps at max-h-[80vh] */}
+        <DrawerContent className="h-[85dvh] max-h-[85dvh]">
           <DrawerHeader className="shrink-0 pb-2">
             <DrawerTitle className="text-base">
               {MEAL_TYPE_LABELS[mealType]}を登録
@@ -210,15 +212,18 @@ const MealRegisterDrawer = () => {
           {/* Sticky footer with an always-visible summary and register button */}
           {draftItems.length > 0 && (
             <div className="shrink-0 border-t bg-background px-4 pt-2.5 pb-[calc(1rem+env(safe-area-inset-bottom))]">
-              <div className="mb-2 flex items-center justify-between text-xs text-muted-foreground">
-                <span>
+              <div className="mb-2 flex items-center justify-between gap-2 text-xs text-muted-foreground">
+                <span className="min-w-0 truncate">
                   登録予定{" "}
                   <span className="font-semibold text-foreground">
                     {draftItems.length}
                   </span>{" "}
                   件
+                  {lastDraftItem && (
+                    <span className="ml-1">（直前: {lastDraftItem.name}）</span>
+                  )}
                 </span>
-                <span>
+                <span className="shrink-0">
                   合計{" "}
                   <span className="font-semibold tabular-nums text-foreground">
                     {Math.round(totalDraftCalories)}
