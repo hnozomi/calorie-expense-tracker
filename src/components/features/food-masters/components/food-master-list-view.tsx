@@ -1,7 +1,7 @@
 "use client";
 
 import { Plus, Search, UtensilsCrossed } from "lucide-react";
-import { useRouter } from "next/navigation";
+import Link from "next/link";
 import { useState } from "react";
 import { Header, PageContainer } from "@/components/features/layout";
 import { Button } from "@/components/ui/button";
@@ -13,7 +13,6 @@ import { FoodMasterCard } from "./food-master-card";
 
 /** Food master list with search and add button */
 const FoodMasterListView = () => {
-  const router = useRouter();
   const [search, setSearch] = useState("");
   const debouncedSearch = useDebounce(search);
   const { data: foodMasters, isLoading } = useFoodMasters(debouncedSearch);
@@ -21,12 +20,11 @@ const FoodMasterListView = () => {
   return (
     <>
       <Header title="食品マスタ">
-        <Button
-          size="icon-sm"
-          variant="ghost"
-          onClick={() => router.push("/other/food-masters/new")}
-        >
-          <Plus className="h-5 w-5" />
+        {/* prefetch: the new-food route is fully prefetched so the tap is instant */}
+        <Button size="icon-sm" variant="ghost" asChild>
+          <Link href="/other/food-masters/new" prefetch aria-label="食品を登録">
+            <Plus className="h-5 w-5" />
+          </Link>
         </Button>
       </Header>
       <PageContainer>
@@ -52,7 +50,7 @@ const FoodMasterListView = () => {
               <FoodMasterCard
                 key={fm.id}
                 foodMaster={fm}
-                onClick={() => router.push(`/other/food-masters/${fm.id}`)}
+                href={`/other/food-masters/${fm.id}`}
               />
             ))
           ) : (
@@ -71,13 +69,11 @@ const FoodMasterListView = () => {
                 </p>
               )}
               {!search && (
-                <Button
-                  variant="outline"
-                  className="mt-4 rounded-full"
-                  onClick={() => router.push("/other/food-masters/new")}
-                >
-                  <Plus className="mr-1.5 h-4 w-4" />
-                  最初の食品を登録する
+                <Button variant="outline" className="mt-4 rounded-full" asChild>
+                  <Link href="/other/food-masters/new" prefetch>
+                    <Plus className="mr-1.5 h-4 w-4" />
+                    最初の食品を登録する
+                  </Link>
                 </Button>
               )}
             </div>

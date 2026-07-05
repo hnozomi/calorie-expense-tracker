@@ -1,6 +1,5 @@
 import { cleanup, render, screen } from "@testing-library/react";
-import userEvent from "@testing-library/user-event";
-import { afterEach, describe, expect, it, vi } from "vitest";
+import { afterEach, describe, expect, it } from "vitest";
 import { SetMenuCard } from "@/components/features/set-menus/components/set-menu-card";
 import type { SetMenu } from "@/components/features/set-menus/types/set-menu";
 
@@ -56,24 +55,32 @@ const createSetMenu = (overrides: Partial<SetMenu> = {}): SetMenu => ({
 
 describe("SetMenuCard", () => {
   it("displays the set menu name", () => {
-    render(<SetMenuCard setMenu={createSetMenu()} onClick={vi.fn()} />);
+    render(
+      <SetMenuCard setMenu={createSetMenu()} href="/other/set-menus/sm-1" />,
+    );
     expect(screen.getByText("朝定食セット")).toBeInTheDocument();
   });
 
   it("displays item names as badges", () => {
-    render(<SetMenuCard setMenu={createSetMenu()} onClick={vi.fn()} />);
+    render(
+      <SetMenuCard setMenu={createSetMenu()} href="/other/set-menus/sm-1" />,
+    );
     expect(screen.getByText("ご飯")).toBeInTheDocument();
     expect(screen.getByText("味噌汁")).toBeInTheDocument();
   });
 
   it("displays total calories", () => {
-    render(<SetMenuCard setMenu={createSetMenu()} onClick={vi.fn()} />);
+    render(
+      <SetMenuCard setMenu={createSetMenu()} href="/other/set-menus/sm-1" />,
+    );
     expect(screen.getByText("650")).toBeInTheDocument();
     expect(screen.getByText("kcal")).toBeInTheDocument();
   });
 
   it("displays total cost when greater than zero", () => {
-    render(<SetMenuCard setMenu={createSetMenu()} onClick={vi.fn()} />);
+    render(
+      <SetMenuCard setMenu={createSetMenu()} href="/other/set-menus/sm-1" />,
+    );
     expect(screen.getByText("450")).toBeInTheDocument();
     expect(screen.getByText("¥")).toBeInTheDocument();
   });
@@ -82,31 +89,36 @@ describe("SetMenuCard", () => {
     render(
       <SetMenuCard
         setMenu={createSetMenu({ totalCost: 0 })}
-        onClick={vi.fn()}
+        href="/other/set-menus/sm-1"
       />,
     );
     expect(screen.queryByText(/¥/)).not.toBeInTheDocument();
   });
 
   it("displays PFC totals", () => {
-    render(<SetMenuCard setMenu={createSetMenu()} onClick={vi.fn()} />);
+    render(
+      <SetMenuCard setMenu={createSetMenu()} href="/other/set-menus/sm-1" />,
+    );
     expect(screen.getByText(/P 35\.5/)).toBeInTheDocument();
     expect(screen.getByText(/F 15\.2/)).toBeInTheDocument();
     expect(screen.getByText(/C 80\.3/)).toBeInTheDocument();
   });
 
-  it("calls onClick when card is clicked", async () => {
-    const user = userEvent.setup();
-    const onClick = vi.fn();
-    render(<SetMenuCard setMenu={createSetMenu()} onClick={onClick} />);
+  it("renders a link to the detail page", () => {
+    render(
+      <SetMenuCard setMenu={createSetMenu()} href="/other/set-menus/sm-1" />,
+    );
 
-    await user.click(screen.getByText("朝定食セット"));
-    expect(onClick).toHaveBeenCalledOnce();
+    const link = screen.getByRole("link");
+    expect(link).toHaveAttribute("href", "/other/set-menus/sm-1");
   });
 
   it("renders with no items", () => {
     render(
-      <SetMenuCard setMenu={createSetMenu({ items: [] })} onClick={vi.fn()} />,
+      <SetMenuCard
+        setMenu={createSetMenu({ items: [] })}
+        href="/other/set-menus/sm-1"
+      />,
     );
     expect(screen.getByText("朝定食セット")).toBeInTheDocument();
     // No badges rendered
@@ -117,7 +129,7 @@ describe("SetMenuCard", () => {
     render(
       <SetMenuCard
         setMenu={createSetMenu({ totalCalories: 649.7 })}
-        onClick={vi.fn()}
+        href="/other/set-menus/sm-1"
       />,
     );
     expect(screen.getByText("650")).toBeInTheDocument();

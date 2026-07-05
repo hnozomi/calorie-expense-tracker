@@ -1,6 +1,5 @@
 import { cleanup, render, screen } from "@testing-library/react";
-import userEvent from "@testing-library/user-event";
-import { afterEach, describe, expect, it, vi } from "vitest";
+import { afterEach, describe, expect, it } from "vitest";
 import { FoodMasterCard } from "@/components/features/food-masters/components/food-master-card";
 import type { FoodMaster } from "@/components/features/food-masters/types/food-master";
 
@@ -30,7 +29,10 @@ const createFoodMaster = (overrides: Partial<FoodMaster> = {}): FoodMaster => ({
 describe("FoodMasterCard", () => {
   it("displays the food master name", () => {
     render(
-      <FoodMasterCard foodMaster={createFoodMaster()} onClick={vi.fn()} />,
+      <FoodMasterCard
+        foodMaster={createFoodMaster()}
+        href="/other/food-masters/fm-1"
+      />,
     );
     expect(screen.getByText("サラダチキン")).toBeInTheDocument();
   });
@@ -39,7 +41,7 @@ describe("FoodMasterCard", () => {
     render(
       <FoodMasterCard
         foodMaster={createFoodMaster({ calories: 250 })}
-        onClick={vi.fn()}
+        href="/other/food-masters/fm-1"
       />,
     );
     expect(screen.getByText("250")).toBeInTheDocument();
@@ -54,7 +56,7 @@ describe("FoodMasterCard", () => {
           fat: 8.3,
           carbs: 15.0,
         })}
-        onClick={vi.fn()}
+        href="/other/food-masters/fm-1"
       />,
     );
     expect(screen.getByText(/P 20\.5/)).toBeInTheDocument();
@@ -66,7 +68,7 @@ describe("FoodMasterCard", () => {
     render(
       <FoodMasterCard
         foodMaster={createFoodMaster({ brand: "セブンイレブン" })}
-        onClick={vi.fn()}
+        href="/other/food-masters/fm-1"
       />,
     );
     expect(screen.getByText("セブンイレブン")).toBeInTheDocument();
@@ -76,7 +78,7 @@ describe("FoodMasterCard", () => {
     render(
       <FoodMasterCard
         foodMaster={createFoodMaster({ brand: null })}
-        onClick={vi.fn()}
+        href="/other/food-masters/fm-1"
       />,
     );
     expect(screen.queryByText("セブンイレブン")).not.toBeInTheDocument();
@@ -86,7 +88,7 @@ describe("FoodMasterCard", () => {
     render(
       <FoodMasterCard
         foodMaster={createFoodMaster({ category: "bento" })}
-        onClick={vi.fn()}
+        href="/other/food-masters/fm-1"
       />,
     );
     expect(screen.getByText("弁当")).toBeInTheDocument();
@@ -96,7 +98,7 @@ describe("FoodMasterCard", () => {
     render(
       <FoodMasterCard
         foodMaster={createFoodMaster({ category: null })}
-        onClick={vi.fn()}
+        href="/other/food-masters/fm-1"
       />,
     );
     // No badge should exist
@@ -107,7 +109,7 @@ describe("FoodMasterCard", () => {
     render(
       <FoodMasterCard
         foodMaster={createFoodMaster({ defaultPrice: 298 })}
-        onClick={vi.fn()}
+        href="/other/food-masters/fm-1"
       />,
     );
     expect(screen.getByText("298")).toBeInTheDocument();
@@ -118,28 +120,29 @@ describe("FoodMasterCard", () => {
     render(
       <FoodMasterCard
         foodMaster={createFoodMaster({ defaultPrice: null })}
-        onClick={vi.fn()}
+        href="/other/food-masters/fm-1"
       />,
     );
     expect(screen.queryByText(/¥/)).not.toBeInTheDocument();
   });
 
-  it("calls onClick when card is clicked", async () => {
-    const user = userEvent.setup();
-    const onClick = vi.fn();
+  it("renders a link to the detail page", () => {
     render(
-      <FoodMasterCard foodMaster={createFoodMaster()} onClick={onClick} />,
+      <FoodMasterCard
+        foodMaster={createFoodMaster()}
+        href="/other/food-masters/fm-1"
+      />,
     );
 
-    await user.click(screen.getByText("サラダチキン"));
-    expect(onClick).toHaveBeenCalledOnce();
+    const link = screen.getByRole("link");
+    expect(link).toHaveAttribute("href", "/other/food-masters/fm-1");
   });
 
   it("rounds calories to nearest integer", () => {
     render(
       <FoodMasterCard
         foodMaster={createFoodMaster({ calories: 99.7 })}
-        onClick={vi.fn()}
+        href="/other/food-masters/fm-1"
       />,
     );
     expect(screen.getByText("100")).toBeInTheDocument();

@@ -1,7 +1,7 @@
 "use client";
 
 import { ClipboardList, Plus, Search } from "lucide-react";
-import { useRouter } from "next/navigation";
+import Link from "next/link";
 import { useState } from "react";
 import { Header, PageContainer } from "@/components/features/layout";
 import { Button } from "@/components/ui/button";
@@ -11,7 +11,6 @@ import { SetMenuCard } from "./set-menu-card";
 
 /** Set menu list with search and add button */
 const SetMenuListView = () => {
-  const router = useRouter();
   const [search, setSearch] = useState("");
   const { data: setMenus } = useSetMenus();
 
@@ -25,12 +24,15 @@ const SetMenuListView = () => {
   return (
     <>
       <Header title="セットメニュー">
-        <Button
-          size="icon-sm"
-          variant="ghost"
-          onClick={() => router.push("/other/set-menus/new")}
-        >
-          <Plus className="h-5 w-5" />
+        {/* prefetch: the new-set-menu route is fully prefetched so the tap is instant */}
+        <Button size="icon-sm" variant="ghost" asChild>
+          <Link
+            href="/other/set-menus/new"
+            prefetch
+            aria-label="セットメニューを登録"
+          >
+            <Plus className="h-5 w-5" />
+          </Link>
         </Button>
       </Header>
       <PageContainer>
@@ -52,7 +54,7 @@ const SetMenuListView = () => {
               <SetMenuCard
                 key={sm.id}
                 setMenu={sm}
-                onClick={() => router.push(`/other/set-menus/${sm.id}`)}
+                href={`/other/set-menus/${sm.id}`}
               />
             ))
           ) : (
@@ -70,13 +72,11 @@ const SetMenuListView = () => {
                   別のキーワードで検索してみてください
                 </p>
               ) : (
-                <Button
-                  variant="outline"
-                  className="mt-4 rounded-full"
-                  onClick={() => router.push("/other/set-menus/new")}
-                >
-                  <Plus className="mr-1.5 h-4 w-4" />
-                  最初のセットメニューを登録する
+                <Button variant="outline" className="mt-4 rounded-full" asChild>
+                  <Link href="/other/set-menus/new" prefetch>
+                    <Plus className="mr-1.5 h-4 w-4" />
+                    最初のセットメニューを登録する
+                  </Link>
                 </Button>
               )}
             </div>

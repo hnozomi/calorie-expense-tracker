@@ -1,7 +1,7 @@
 "use client";
 
 import { BookOpen, Plus, Search } from "lucide-react";
-import { useRouter } from "next/navigation";
+import Link from "next/link";
 import { useState } from "react";
 import { Header, PageContainer } from "@/components/features/layout";
 import { Button } from "@/components/ui/button";
@@ -13,7 +13,6 @@ import { RecipeCard } from "./recipe-card";
 
 /** Recipe list with search and add button */
 const RecipeListView = () => {
-  const router = useRouter();
   const [search, setSearch] = useState("");
   const debouncedSearch = useDebounce(search);
   const { data: recipes, isLoading } = useRecipes(debouncedSearch);
@@ -21,12 +20,11 @@ const RecipeListView = () => {
   return (
     <>
       <Header title="レシピ">
-        <Button
-          size="icon-sm"
-          variant="ghost"
-          onClick={() => router.push("/recipes/new")}
-        >
-          <Plus className="h-5 w-5" />
+        {/* prefetch: the new-recipe route is fully prefetched so the tap is instant */}
+        <Button size="icon-sm" variant="ghost" asChild>
+          <Link href="/recipes/new" prefetch aria-label="レシピを登録">
+            <Plus className="h-5 w-5" />
+          </Link>
         </Button>
       </Header>
       <PageContainer>
@@ -52,7 +50,7 @@ const RecipeListView = () => {
               <RecipeCard
                 key={recipe.id}
                 recipe={recipe}
-                onClick={() => router.push(`/recipes/${recipe.id}`)}
+                href={`/recipes/${recipe.id}`}
               />
             ))
           ) : (
@@ -71,13 +69,11 @@ const RecipeListView = () => {
                 </p>
               )}
               {!search && (
-                <Button
-                  variant="outline"
-                  className="mt-4 rounded-full"
-                  onClick={() => router.push("/recipes/new")}
-                >
-                  <Plus className="mr-1.5 h-4 w-4" />
-                  最初のレシピを登録する
+                <Button variant="outline" className="mt-4 rounded-full" asChild>
+                  <Link href="/recipes/new" prefetch>
+                    <Plus className="mr-1.5 h-4 w-4" />
+                    最初のレシピを登録する
+                  </Link>
                 </Button>
               )}
             </div>

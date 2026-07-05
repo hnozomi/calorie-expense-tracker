@@ -2,6 +2,7 @@ import { cleanup, render, screen } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { PlanWeeklySummary } from "@/components/features/plan/components/plan-weekly-summary";
 import type { MealPlan } from "@/components/features/plan/types/meal-plan";
+import { getTodayString } from "@/utils";
 
 /** Mock useTransferPlan */
 const mockMutateAsync = vi.fn();
@@ -107,7 +108,9 @@ describe("PlanWeeklySummary", () => {
   });
 
   it("shows transfer button when today has plans", () => {
-    const todayStr = new Date().toISOString().split("T")[0];
+    // Local date, matching the component's getTodayString(); toISOString()
+    // is UTC and disagrees with local time between 00:00 and 09:00 JST
+    const todayStr = getTodayString();
     const plans = [createPlan({ date: todayStr })];
     render(<PlanWeeklySummary plans={plans} weekStart="2026-03-16" />);
     expect(screen.getByText("今日の献立を転記")).toBeInTheDocument();

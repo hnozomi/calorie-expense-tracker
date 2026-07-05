@@ -1,6 +1,5 @@
 import { cleanup, render, screen } from "@testing-library/react";
-import userEvent from "@testing-library/user-event";
-import { afterEach, describe, expect, it, vi } from "vitest";
+import { afterEach, describe, expect, it } from "vitest";
 import { RecipeCard } from "@/components/features/recipes/components/recipe-card";
 import type { Recipe } from "@/components/features/recipes/types/recipe";
 
@@ -45,17 +44,17 @@ const createRecipe = (overrides: Partial<Recipe> = {}): Recipe => ({
 
 describe("RecipeCard", () => {
   it("displays the recipe name", () => {
-    render(<RecipeCard recipe={createRecipe()} onClick={vi.fn()} />);
+    render(<RecipeCard recipe={createRecipe()} href="/recipes/recipe-1" />);
     expect(screen.getByText("鶏むね肉のサラダ")).toBeInTheDocument();
   });
 
   it("displays servings badge", () => {
-    render(<RecipeCard recipe={createRecipe()} onClick={vi.fn()} />);
+    render(<RecipeCard recipe={createRecipe()} href="/recipes/recipe-1" />);
     expect(screen.getByText("2人分")).toBeInTheDocument();
   });
 
   it("displays ingredient count", () => {
-    render(<RecipeCard recipe={createRecipe()} onClick={vi.fn()} />);
+    render(<RecipeCard recipe={createRecipe()} href="/recipes/recipe-1" />);
     expect(screen.getByText("材料2品")).toBeInTheDocument();
   });
 
@@ -63,21 +62,21 @@ describe("RecipeCard", () => {
     render(
       <RecipeCard
         recipe={createRecipe({ ingredients: [] })}
-        onClick={vi.fn()}
+        href="/recipes/recipe-1"
       />,
     );
     expect(screen.queryByText(/材料/)).not.toBeInTheDocument();
   });
 
   it("displays per-person calories", () => {
-    render(<RecipeCard recipe={createRecipe()} onClick={vi.fn()} />);
+    render(<RecipeCard recipe={createRecipe()} href="/recipes/recipe-1" />);
     // 400 kcal / 2 servings = 200 kcal/人
     expect(screen.getByText("200")).toBeInTheDocument();
     expect(screen.getByText("kcal/人")).toBeInTheDocument();
   });
 
   it("displays per-person cost when ingredients have cost", () => {
-    render(<RecipeCard recipe={createRecipe()} onClick={vi.fn()} />);
+    render(<RecipeCard recipe={createRecipe()} href="/recipes/recipe-1" />);
     // (200*1.5 + 1*150) / 2 = 225
     expect(screen.getByText("225/人")).toBeInTheDocument();
     expect(screen.getByText("¥")).toBeInTheDocument();
@@ -98,34 +97,32 @@ describe("RecipeCard", () => {
             },
           ],
         })}
-        onClick={vi.fn()}
+        href="/recipes/recipe-1"
       />,
     );
     expect(screen.queryByText(/¥/)).not.toBeInTheDocument();
   });
 
   it("displays per-person PFC values", () => {
-    render(<RecipeCard recipe={createRecipe()} onClick={vi.fn()} />);
+    render(<RecipeCard recipe={createRecipe()} href="/recipes/recipe-1" />);
     // P:50/2=25.0 F:10/2=5.0 C:20/2=10.0
     expect(screen.getByText(/P 25\.0/)).toBeInTheDocument();
     expect(screen.getByText(/F 5\.0/)).toBeInTheDocument();
     expect(screen.getByText(/C 10\.0/)).toBeInTheDocument();
   });
 
-  it("calls onClick when card is clicked", async () => {
-    const user = userEvent.setup();
-    const onClick = vi.fn();
-    render(<RecipeCard recipe={createRecipe()} onClick={onClick} />);
+  it("renders a link to the detail page", () => {
+    render(<RecipeCard recipe={createRecipe()} href="/recipes/recipe-1" />);
 
-    await user.click(screen.getByText("鶏むね肉のサラダ"));
-    expect(onClick).toHaveBeenCalledOnce();
+    const link = screen.getByRole("link");
+    expect(link).toHaveAttribute("href", "/recipes/recipe-1");
   });
 
   it("rounds per-person calories to nearest integer", () => {
     render(
       <RecipeCard
         recipe={createRecipe({ calories: 333, servings: 2 })}
-        onClick={vi.fn()}
+        href="/recipes/recipe-1"
       />,
     );
     // 333/2 = 166.5 → rounds to 167
