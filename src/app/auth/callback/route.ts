@@ -14,5 +14,6 @@ export async function GET(request: Request) {
     }
   }
 
-  return NextResponse.redirect(`${origin}/login`);
+  // Missing/expired/used code: surface the failure on the login screen
+  return NextResponse.redirect(`${origin}/login?error=confirmation_failed`);
 }

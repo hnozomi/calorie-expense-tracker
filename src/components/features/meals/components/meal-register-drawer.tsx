@@ -47,6 +47,7 @@ const MealRegisterDrawer = () => {
     isOpen,
     libraryInputRef,
     mealType,
+    ocrError,
     ocrResult,
     registerMutation,
     setActiveTab,
@@ -169,6 +170,11 @@ const MealRegisterDrawer = () => {
                         ライブラリから選択
                       </Button>
                     </div>
+                    {ocrError && (
+                      <p className="mt-3 px-4 text-sm text-destructive">
+                        {ocrError}
+                      </p>
+                    )}
                   </div>
                 ))}
             </div>

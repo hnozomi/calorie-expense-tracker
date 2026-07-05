@@ -1,10 +1,10 @@
 "use client";
 
 import { Camera, ImageIcon, X } from "lucide-react";
-import { useRef } from "react";
+import { useRef, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { useOcr } from "../hooks/use-ocr";
-import type { OcrNutritionResult } from "../utils/ocr-parser";
+import { hasOcrValues, type OcrNutritionResult } from "../utils/ocr-parser";
 
 type OcrCameraOverlayProps = {
   isOpen: boolean;
@@ -20,6 +20,7 @@ const OcrCameraOverlay = ({
 }: OcrCameraOverlayProps) => {
   const cameraInputRef = useRef<HTMLInputElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const [noValueError, setNoValueError] = useState<string | null>(null);
   const { isProcessing, error, processImage } = useOcr();
 
   /** Handle file selection from either input and process via OCR */
@@ -29,10 +30,16 @@ const OcrCameraOverlay = ({
     const file = event.target.files?.[0];
     if (!file) return;
 
+    setNoValueError(null);
     const result = await processImage(file);
-    if (result) {
+    if (result && hasOcrValues(result)) {
       onResult(result);
       onClose();
+    } else if (result) {
+      // Parsed but every field came back empty — keep the overlay open with guidance
+      setNoValueError(
+        "栄養成分を読み取れませんでした。ラベル全体が写るように撮影し直してください",
+      );
     }
     // Reset input so the same file can be selected again
     event.target.value = "";
@@ -99,7 +106,11 @@ const OcrCameraOverlay = ({
               ライブラリから選択
             </Button>
 
-            {error && <p className="text-sm text-destructive">{error}</p>}
+            {(error || noValueError) && (
+              <p className="text-sm text-destructive">
+                {error ?? noValueError}
+              </p>
+            )}
           </>
         )}
       </div>

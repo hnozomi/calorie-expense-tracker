@@ -8,7 +8,7 @@ import { useForm } from "react-hook-form";
 import { z } from "zod/v4";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
+import { Input, PasswordInput } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { cn } from "@/utils";
 import { useAuth } from "../hooks/use-auth";
@@ -39,10 +39,15 @@ const SignupForm = () => {
     setServerError(null);
     const { error } = await signUp(values.email, values.password);
     if (error) {
-      if (error.message.includes("already registered")) {
+      if (
+        error.code === "user_already_exists" ||
+        error.message.includes("already registered")
+      ) {
         setServerError("このメールアドレスは既に登録されています");
       } else {
-        setServerError("通信エラーが発生しました");
+        setServerError(
+          "登録に失敗しました。通信環境を確認して再度お試しください",
+        );
       }
     } else {
       setIsSuccess(true);
@@ -67,6 +72,11 @@ const SignupForm = () => {
               <CheckCircle2 className="h-10 w-10 text-green-500" />
               <p className="text-sm leading-relaxed text-muted-foreground">
                 確認メールを送信しました。メール内のリンクをクリックして登録を完了してください。
+              </p>
+              {/* Supabase returns success for existing emails (anti-enumeration),
+                  so guide already-registered users toward login */}
+              <p className="rounded-lg bg-muted/60 p-3 text-xs leading-relaxed text-muted-foreground">
+                このメールアドレスが登録済みの場合、確認メールは届きません。その場合はログインをお試しください。
               </p>
             </div>
             <Link href="/login">
@@ -131,9 +141,8 @@ const SignupForm = () => {
 
             <div className="space-y-2">
               <Label htmlFor="password">パスワード</Label>
-              <Input
+              <PasswordInput
                 id="password"
-                type="password"
                 autoComplete="new-password"
                 aria-invalid={!!errors.password}
                 className={cn(
@@ -143,10 +152,12 @@ const SignupForm = () => {
                 )}
                 {...register("password")}
               />
-              {errors.password && (
+              {errors.password ? (
                 <p className="text-sm text-destructive">
                   {errors.password.message}
                 </p>
+              ) : (
+                <p className="text-xs text-muted-foreground">8文字以上</p>
               )}
             </div>
 

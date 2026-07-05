@@ -6,6 +6,7 @@ import { AppInfoSection } from "./app-info-section";
 import { CsvExportSection } from "./csv-export-section";
 import { DangerZoneSection } from "./danger-zone-section";
 import { NutritionTargetSection } from "./nutrition-target-section";
+import { ThemeSection } from "./theme-section";
 
 /** Main view for the settings screen (S-10) */
 const SettingsView = () => {
@@ -15,6 +16,7 @@ const SettingsView = () => {
       <PageContainer>
         <div className="space-y-6 p-4">
           <NutritionTargetSection />
+          <ThemeSection />
           <AccountSection />
           <CsvExportSection />
           <AppInfoSection />

@@ -1,14 +1,16 @@
 "use client";
 
 import { zodResolver } from "@hookform/resolvers/zod";
-import { AlertCircle, Utensils } from "lucide-react";
+import type { AuthError } from "@supabase/supabase-js";
+import { AlertCircle, MailWarning, Utensils } from "lucide-react";
 import Link from "next/link";
+import { useSearchParams } from "next/navigation";
 import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { z } from "zod/v4";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
+import { Input, PasswordInput } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { cn } from "@/utils";
 import { useAuth } from "../hooks/use-auth";
@@ -20,10 +22,41 @@ const loginSchema = z.object({
 
 type LoginFormValues = z.infer<typeof loginSchema>;
 
+/** User-facing messages for known Supabase auth error codes */
+const AUTH_ERROR_MESSAGES: Record<string, string> = {
+  invalid_credentials: "メールアドレスまたはパスワードが正しくありません",
+  email_not_confirmed:
+    "メールアドレスの確認が完了していません。登録時に届いた確認メールのリンクをクリックしてください",
+  over_request_rate_limit:
+    "試行回数が多すぎます。しばらく時間をおいてから再度お試しください",
+};
+
+/** Messages for errors passed back from the auth callback route */
+const CALLBACK_ERROR_MESSAGES: Record<string, string> = {
+  confirmation_failed:
+    "確認リンクが無効か期限切れです。ログインするか、新規登録をやり直してください",
+};
+
+/** Resolve a sign-in failure to a specific Japanese message */
+const resolveLoginErrorMessage = (error: AuthError): string => {
+  if (error.code && AUTH_ERROR_MESSAGES[error.code]) {
+    return AUTH_ERROR_MESSAGES[error.code];
+  }
+  if (error.status === 400) {
+    return AUTH_ERROR_MESSAGES.invalid_credentials;
+  }
+  return "ログインに失敗しました。通信環境を確認して再度お試しください";
+};
+
 /** Email/password login form with branded header and validation */
 const LoginForm = () => {
   const { signIn } = useAuth();
   const [serverError, setServerError] = useState<string | null>(null);
+  const searchParams = useSearchParams();
+  const callbackErrorKey = searchParams.get("error");
+  const callbackError = callbackErrorKey
+    ? (CALLBACK_ERROR_MESSAGES[callbackErrorKey] ?? null)
+    : null;
 
   const {
     register,
@@ -38,7 +71,7 @@ const LoginForm = () => {
     setServerError(null);
     const { error } = await signIn(values.email, values.password);
     if (error) {
-      setServerError("メールアドレスまたはパスワードが正しくありません");
+      setServerError(resolveLoginErrorMessage(error));
     }
   };
 
@@ -59,6 +92,14 @@ const LoginForm = () => {
       <Card className="w-full rounded-2xl border-0 shadow-lg shadow-black/5">
         <CardContent className="pt-6">
           <form onSubmit={handleSubmit(handleLogin)} className="space-y-5">
+            {callbackError && !serverError && (
+              <div className="flex items-start gap-2 rounded-lg bg-amber-500/10 p-3">
+                <MailWarning className="mt-0.5 h-4 w-4 shrink-0 text-amber-600 dark:text-amber-400" />
+                <p className="text-sm text-amber-700 dark:text-amber-300">
+                  {callbackError}
+                </p>
+              </div>
+            )}
             {serverError && (
               <div className="flex items-start gap-2 rounded-lg bg-destructive/10 p-3">
                 <AlertCircle className="mt-0.5 h-4 w-4 shrink-0 text-destructive" />
@@ -90,9 +131,8 @@ const LoginForm = () => {
 
             <div className="space-y-2">
               <Label htmlFor="password">パスワード</Label>
-              <Input
+              <PasswordInput
                 id="password"
-                type="password"
                 autoComplete="current-password"
                 aria-invalid={!!errors.password}
                 className={cn(

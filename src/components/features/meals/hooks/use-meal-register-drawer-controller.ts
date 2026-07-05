@@ -4,7 +4,11 @@ import { useAtom, useAtomValue } from "jotai";
 import { useRouter } from "next/navigation";
 import { useCallback, useRef, useState } from "react";
 import { toast } from "sonner";
-import { type OcrNutritionResult, useOcr } from "@/components/features/ocr";
+import {
+  hasOcrValues,
+  type OcrNutritionResult,
+  useOcr,
+} from "@/components/features/ocr";
 import type { SourceType } from "@/types";
 import { selectedDateAtom } from "../stores/date-atom";
 import {
@@ -27,15 +31,21 @@ export const useMealRegisterDrawerController = () => {
   >("manual");
   const [isOcrOpen, setIsOcrOpen] = useState(false);
   const [ocrResult, setOcrResult] = useState<OcrNutritionResult | null>(null);
+  const [ocrNoValueError, setOcrNoValueError] = useState<string | null>(null);
   const [isDiscardConfirmOpen, setIsDiscardConfirmOpen] = useState(false);
   const libraryInputRef = useRef<HTMLInputElement>(null);
-  const { isProcessing: isOcrProcessing, processImage } = useOcr();
+  const {
+    isProcessing: isOcrProcessing,
+    error: ocrProcessError,
+    processImage,
+  } = useOcr();
 
   /** Close the drawer and reset all transient state so drafts never leak into another meal slot */
   const closeDrawer = useCallback(() => {
     setIsOpen(false);
     setDraftItems([]);
     setOcrResult(null);
+    setOcrNoValueError(null);
     setActiveTab("manual");
   }, [setIsOpen, setDraftItems]);
 
@@ -133,6 +143,7 @@ export const useMealRegisterDrawerController = () => {
   );
 
   const handleOcrResult = useCallback((result: OcrNutritionResult) => {
+    setOcrNoValueError(null);
     setOcrResult(result);
   }, []);
 
@@ -140,17 +151,36 @@ export const useMealRegisterDrawerController = () => {
     async (event: React.ChangeEvent<HTMLInputElement>) => {
       const file = event.target.files?.[0];
       if (!file) return;
+      setOcrNoValueError(null);
       const result = await processImage(file);
-      if (result) setOcrResult(result);
+      if (result && hasOcrValues(result)) {
+        setOcrResult(result);
+      } else if (result) {
+        // Parsed but every field came back empty
+        setOcrNoValueError(
+          "栄養成分を読み取れませんでした。ラベル全体が写る画像を選ぶか、手動タブで入力してください",
+        );
+      }
       event.target.value = "";
     },
     [processImage],
   );
 
   const handleSaveToMaster = useCallback(
-    (_values: MealItemFormValues) => {
+    (values: MealItemFormValues) => {
+      // Carry the scanned/corrected values into the new food master form
+      const prefillParams = new URLSearchParams({
+        name: values.name,
+        calories: String(values.calories),
+        protein: String(values.protein),
+        fat: String(values.fat),
+        carbs: String(values.carbs),
+      });
+      if (values.cost != null) {
+        prefillParams.set("defaultPrice", String(values.cost));
+      }
       closeDrawer();
-      router.push("/other/food-masters/new");
+      router.push(`/other/food-masters/new?${prefillParams.toString()}`);
     },
     [router, closeDrawer],
   );
@@ -187,6 +217,7 @@ export const useMealRegisterDrawerController = () => {
     isOpen,
     libraryInputRef,
     mealType,
+    ocrError: ocrProcessError ?? ocrNoValueError,
     ocrResult,
     registerMutation,
     setActiveTab,

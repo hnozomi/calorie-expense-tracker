@@ -7,6 +7,14 @@ export type OcrNutritionResult = {
   carbs: number | null;
 };
 
+/** Whether the OCR parse extracted at least one usable field */
+export const hasOcrValues = (result: OcrNutritionResult): boolean =>
+  result.name !== null ||
+  result.calories !== null ||
+  result.protein !== null ||
+  result.fat !== null ||
+  result.carbs !== null;
+
 /** Fix common OCR misreads in numeric contexts (O→0, l→1, etc.) */
 const fixOcrDigits = (s: string): string =>
   s
