@@ -1,16 +1,24 @@
 "use client";
 
 import { useQuery } from "@tanstack/react-query";
-import { queryKeys, useSupabase } from "@/hooks";
+import { queryKeys, useListCacheSeed, useSupabase } from "@/hooks";
 import type { Recipe, RecipeIngredient } from "../types/recipe";
+
+/** Stable prefix matching every cached recipes list query */
+const RECIPES_LIST_KEY_PREFIX = ["recipes", "list"] as const;
 
 /** Fetch a single recipe by ID with ingredients */
 export const useRecipeDetail = (id: string | undefined) => {
   const supabase = useSupabase();
+  // The list already fetched full rows (ingredients included), so seed from it
+  // and skip the loading skeleton when arriving from the list
+  const seed = useListCacheSeed<Recipe>(RECIPES_LIST_KEY_PREFIX, id);
 
   return useQuery({
     queryKey: queryKeys.recipes.detail(id ?? ""),
     enabled: !!id && id !== "new",
+    initialData: seed?.data,
+    initialDataUpdatedAt: seed?.updatedAt,
     queryFn: async () => {
       const { data, error } = await supabase
         .from("recipes")

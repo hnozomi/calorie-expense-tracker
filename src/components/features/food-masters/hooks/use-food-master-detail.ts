@@ -1,16 +1,24 @@
 "use client";
 
 import { useQuery } from "@tanstack/react-query";
-import { queryKeys, useSupabase } from "@/hooks";
+import { queryKeys, useListCacheSeed, useSupabase } from "@/hooks";
 import type { FoodMaster } from "../types/food-master";
+
+/** Stable prefix matching every cached food-masters list query */
+const FOOD_MASTERS_LIST_KEY_PREFIX = ["food-masters", "list"] as const;
 
 /** Fetch a single food master by ID */
 export const useFoodMasterDetail = (id: string | undefined) => {
   const supabase = useSupabase();
+  // The list already fetched full rows, so seed from it and skip the
+  // loading skeleton when arriving from the list
+  const seed = useListCacheSeed<FoodMaster>(FOOD_MASTERS_LIST_KEY_PREFIX, id);
 
   return useQuery({
     queryKey: queryKeys.foodMasters.detail(id ?? ""),
     enabled: !!id && id !== "new",
+    initialData: seed?.data,
+    initialDataUpdatedAt: seed?.updatedAt,
     queryFn: async () => {
       const { data, error } = await supabase
         .from("food_masters")

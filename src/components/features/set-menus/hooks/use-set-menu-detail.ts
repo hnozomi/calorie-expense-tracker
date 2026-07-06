@@ -1,16 +1,24 @@
 "use client";
 
 import { useQuery } from "@tanstack/react-query";
-import { queryKeys, useSupabase } from "@/hooks";
+import { queryKeys, useListCacheSeed, useSupabase } from "@/hooks";
 import type { SetMenu, SetMenuItem } from "../types/set-menu";
+
+/** Stable prefix matching every cached set-menus list query */
+const SET_MENUS_LIST_KEY_PREFIX = ["set-menus", "list"] as const;
 
 /** Fetch a single set menu by ID with items */
 export const useSetMenuDetail = (id: string | undefined) => {
   const supabase = useSupabase();
+  // The list already fetched full rows (items included), so seed from it
+  // and skip the loading skeleton when arriving from the list
+  const seed = useListCacheSeed<SetMenu>(SET_MENUS_LIST_KEY_PREFIX, id);
 
   return useQuery({
     queryKey: queryKeys.setMenus.detail(id ?? ""),
     enabled: !!id && id !== "new",
+    initialData: seed?.data,
+    initialDataUpdatedAt: seed?.updatedAt,
     queryFn: async () => {
       const { data, error } = await supabase
         .from("set_menus")

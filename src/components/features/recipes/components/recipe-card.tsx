@@ -20,8 +20,9 @@ const RecipeCard = ({ recipe, href }: RecipeCardProps) => {
   );
 
   return (
-    // Link (not router.push) so the route is prefetched and the tap transitions instantly
-    <Link href={href} className="block">
+    // Full prefetch: dynamic detail routes only prefetch their loading
+    // boundary by default, which still costs a server round-trip on tap
+    <Link href={href} prefetch className="block">
       <Card className="cursor-pointer border-muted-foreground/10 transition-all duration-200 hover:scale-[1.01] hover:shadow-md active:scale-[0.99]">
         <CardContent className="py-3">
           <div className="flex items-start justify-between gap-3">
