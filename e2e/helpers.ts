@@ -17,6 +17,21 @@ export const clickToReveal = async (trigger: Locator, target: Locator) => {
   }).toPass({ timeout: 20_000 });
 };
 
+/** Open the register drawer for a specific meal slot by its label.
+ *  Slot-scoped (via the slot's aria-label region), so it works whether the
+ *  slot is empty (登録する) or already has items (追加する) — which also
+ *  keeps tests idempotent under retry. */
+export const openSlotDrawer = async (
+  page: Page,
+  slotLabel: "朝食" | "昼食" | "夕食" | "間食",
+) => {
+  const slot = page.getByRole("region", { name: `${slotLabel}の記録` });
+  await clickToReveal(
+    slot.getByRole("button", { name: /登録する|追加する/ }),
+    page.getByRole("dialog", { name: `${slotLabel}を登録` }),
+  );
+};
+
 /** Fill an input and retry until the value sticks — React hydration can
  *  wipe values typed before the page becomes interactive */
 export const fillStable = async (

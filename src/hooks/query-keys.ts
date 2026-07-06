@@ -4,6 +4,7 @@ export const queryKeys = {
     all: ["meals"] as const,
     daily: (date: string) => ["meals", "daily", date] as const,
     summary: (date: string) => ["meals", "summary", date] as const,
+    recentItems: () => ["meals", "recent-items"] as const,
   },
   recipes: {
     all: ["recipes"] as const,

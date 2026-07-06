@@ -63,6 +63,9 @@ export const useRegisterMealItems = () => {
       queryClient.invalidateQueries({
         queryKey: queryKeys.meals.summary(variables.date),
       });
+      queryClient.invalidateQueries({
+        queryKey: queryKeys.meals.recentItems(),
+      });
     },
   });
 };

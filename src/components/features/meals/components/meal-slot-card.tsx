@@ -1,7 +1,7 @@
 "use client";
 
 import { useAtomValue, useSetAtom } from "jotai";
-import { CalendarPlus, ChevronRight, Plus } from "lucide-react";
+import { CalendarPlus, ChevronRight, CopyPlus, Plus } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
 import {
@@ -18,6 +18,7 @@ import {
 import { PfcDisplay } from "@/components/ui/pfc-display";
 import { MEAL_TYPE_LABELS, type MealType } from "@/types";
 import { cn, MEAL_TYPE_META } from "@/utils";
+import { useCopyPreviousDayMeal } from "../hooks/use-copy-previous-day-meal";
 import { useTransferMealToPlan } from "../hooks/use-transfer-meal-to-plan";
 import { selectedDateAtom } from "../stores/date-atom";
 import {
@@ -39,10 +40,30 @@ const MealSlotCard = ({ mealType, items }: MealSlotCardProps) => {
   const selectedDate = useAtomValue(selectedDateAtom);
   const [editingItem, setEditingItem] = useState<MealItem | null>(null);
   const transferToPlan = useTransferMealToPlan();
+  const copyPreviousDay = useCopyPreviousDayMeal();
 
   const openDrawer = () => {
     setDrawerMealType(mealType);
     setIsDrawerOpen(true);
+  };
+
+  /** Copy the previous day's items in this slot into the selected date */
+  const handleCopyPreviousDay = async () => {
+    try {
+      const copiedCount = await copyPreviousDay.mutateAsync({
+        date: selectedDate,
+        mealType,
+      });
+      if (copiedCount === 0) {
+        toast.info(`前日の${MEAL_TYPE_LABELS[mealType]}の記録がありません`);
+      } else {
+        toast.success(
+          `前日の${MEAL_TYPE_LABELS[mealType]}(${copiedCount}件)をコピーしました`,
+        );
+      }
+    } catch {
+      toast.error("コピーに失敗しました");
+    }
   };
 
   const handleTransferToPlan = async () => {
@@ -63,7 +84,10 @@ const MealSlotCard = ({ mealType, items }: MealSlotCardProps) => {
 
   return (
     <>
-      <div className="overflow-hidden rounded-xl border bg-card shadow-sm">
+      <section
+        aria-label={`${MEAL_TYPE_LABELS[mealType]}の記録`}
+        className="overflow-hidden rounded-xl border bg-card shadow-sm"
+      >
         {/* Header row */}
         <div className="flex items-center justify-between px-3.5 pt-3 pb-2">
           <div className="flex items-center gap-2">
@@ -119,14 +143,25 @@ const MealSlotCard = ({ mealType, items }: MealSlotCardProps) => {
         {/* Items list */}
         <div className="px-1.5 pb-1.5">
           {items.length === 0 ? (
-            <button
-              type="button"
-              className="flex w-full items-center justify-center gap-1.5 rounded-lg border border-dashed border-muted-foreground/20 py-4 text-sm text-muted-foreground transition-colors active:bg-muted/60"
-              onClick={openDrawer}
-            >
-              <Plus className="h-4 w-4" />
-              登録する
-            </button>
+            <>
+              <button
+                type="button"
+                className="flex w-full items-center justify-center gap-1.5 rounded-lg border border-dashed border-muted-foreground/20 py-4 text-sm text-muted-foreground transition-colors active:bg-muted/60"
+                onClick={openDrawer}
+              >
+                <Plus className="h-4 w-4" />
+                登録する
+              </button>
+              <button
+                type="button"
+                className="mt-1 flex w-full items-center justify-center gap-1.5 rounded-lg py-2 text-xs text-muted-foreground/80 transition-colors active:bg-muted/60 disabled:opacity-50"
+                onClick={handleCopyPreviousDay}
+                disabled={copyPreviousDay.isPending}
+              >
+                <CopyPlus className="h-3.5 w-3.5" />
+                {copyPreviousDay.isPending ? "コピー中..." : "前日をコピー"}
+              </button>
+            </>
           ) : (
             <>
               {items.map((item) => (
@@ -166,7 +201,7 @@ const MealSlotCard = ({ mealType, items }: MealSlotCardProps) => {
             </>
           )}
         </div>
-      </div>
+      </section>
 
       <MealItemEditModal
         key={editingItem?.id}

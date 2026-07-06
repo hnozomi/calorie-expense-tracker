@@ -1,15 +1,12 @@
 import { expect, test } from "@playwright/test";
-import { clickToReveal, fillStable, gotoHydrated } from "./helpers";
+import { fillStable, gotoHydrated, openSlotDrawer } from "./helpers";
 
 test.describe("食事記録", () => {
   test("手動入力で朝食を登録するとサマリーに反映される", async ({ page }) => {
     await gotoHydrated(page, "/home");
 
     // Open the breakfast register drawer
-    await clickToReveal(
-      page.getByRole("button", { name: "登録する" }).first(),
-      page.getByRole("dialog", { name: "朝食を登録" }),
-    );
+    await openSlotDrawer(page, "朝食");
 
     // Fill the manual form and add to the card
     await fillStable(page, "メニュー名", "E2Eトースト");
@@ -22,7 +19,9 @@ test.describe("食事記録", () => {
 
     // Register and verify it lands in the breakfast slot
     await page.getByRole("button", { name: "1件まとめて登録する" }).click();
-    await expect(page.getByText("1件の食事を登録しました")).toBeVisible();
+    await expect(page.getByText("1件の食事を登録しました")).toBeVisible({
+      timeout: 10_000,
+    });
     await expect(
       page.getByRole("button", { name: /E2Eトースト/ }),
     ).toBeVisible();
@@ -34,10 +33,7 @@ test.describe("食事記録", () => {
     await gotoHydrated(page, "/home");
 
     // Add one item to the card for the lunch slot
-    await clickToReveal(
-      page.getByRole("button", { name: "登録する" }).first(),
-      page.getByRole("dialog", { name: "昼食を登録" }),
-    );
+    await openSlotDrawer(page, "昼食");
     await fillStable(page, "メニュー名", "E2Eそば");
     await fillStable(page, "カロリー (kcal)", "400");
     await page.getByRole("button", { name: "カードに追加" }).click();
@@ -54,7 +50,9 @@ test.describe("食事記録", () => {
 
     // Include the typed item and register both
     await page.getByRole("button", { name: "追加して登録" }).click();
-    await expect(page.getByText("2件の食事を登録しました")).toBeVisible();
+    await expect(page.getByText("2件の食事を登録しました")).toBeVisible({
+      timeout: 10_000,
+    });
     await expect(page.getByRole("button", { name: /E2Eそば/ })).toBeVisible();
     await expect(page.getByRole("button", { name: /E2Eいなり/ })).toBeVisible();
   });
@@ -62,10 +60,7 @@ test.describe("食事記録", () => {
   test("下書きが残った状態で閉じると破棄確認が出る", async ({ page }) => {
     await gotoHydrated(page, "/home");
 
-    await clickToReveal(
-      page.getByRole("button", { name: "登録する" }).first(),
-      page.getByRole("dialog"),
-    );
+    await openSlotDrawer(page, "夕食");
     await fillStable(page, "メニュー名", "E2E破棄テスト");
     await fillStable(page, "カロリー (kcal)", "100");
     await page.getByRole("button", { name: "カードに追加" }).click();

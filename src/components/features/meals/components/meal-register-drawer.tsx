@@ -4,6 +4,7 @@ import {
   BookOpen,
   Camera,
   Database,
+  History,
   ImageIcon,
   ListChecks,
   PenLine,
@@ -33,6 +34,7 @@ import { useMealRegisterDrawerController } from "../hooks/use-meal-register-draw
 import { FoodMasterSelector } from "./food-master-selector";
 import { ManualInputForm } from "./manual-input-form";
 import { MealRegisterCard } from "./meal-register-card";
+import { RecentItemsSelector } from "./recent-items-selector";
 import { RecipeSelector } from "./recipe-selector";
 import { SetMenuSelector } from "./set-menu-selector";
 
@@ -64,6 +66,7 @@ const MealRegisterDrawer = () => {
     handleOcrAdd,
     handleOcrResult,
     handleOpenChange,
+    handleRecentAdd,
     handleRecipeAdd,
     handleRegister,
     handleRegisterWithoutPending,
@@ -99,6 +102,7 @@ const MealRegisterDrawer = () => {
               {(
                 [
                   { value: "manual", icon: PenLine, label: "手動" },
+                  { value: "recent", icon: History, label: "履歴" },
                   { value: "recipe", icon: BookOpen, label: "レシピ" },
                   { value: "food_master", icon: Database, label: "マスタ" },
                   { value: "set_menu", icon: ListChecks, label: "セット" },
@@ -136,6 +140,9 @@ const MealRegisterDrawer = () => {
                   pendingItemRef={manualPendingRef}
                 />
               </div>
+              {activeTab === "recent" && (
+                <RecentItemsSelector onSelect={handleRecentAdd} />
+              )}
               {activeTab === "recipe" && (
                 <RecipeSelector onSelect={handleRecipeAdd} />
               )}

@@ -21,6 +21,7 @@ import type {
   MealItemFormValues,
   PendingMealItemCollector,
 } from "../types/meal";
+import type { RecentMealItem } from "../utils/recent-meal-items";
 import { useRegisterMealItems } from "./use-register-meal-items";
 
 /** A valid form entry that was typed but never added to the card */
@@ -37,7 +38,7 @@ export const useMealRegisterDrawerController = () => {
   const selectedDate = useAtomValue(selectedDateAtom);
   const registerMutation = useRegisterMealItems();
   const [activeTab, setActiveTab] = useState<
-    "manual" | "recipe" | "food_master" | "set_menu" | "ocr"
+    "manual" | "recent" | "recipe" | "food_master" | "set_menu" | "ocr"
   >("manual");
   const [isOcrOpen, setIsOcrOpen] = useState(false);
   const [ocrResult, setOcrResult] = useState<OcrNutritionResult | null>(null);
@@ -126,6 +127,28 @@ export const useMealRegisterDrawerController = () => {
 
   const handleManualAdd = useCallback(
     (values: MealItemFormValues) => addDraftItem(values, "manual"),
+    [addDraftItem],
+  );
+
+  const handleRecentAdd = useCallback(
+    (item: RecentMealItem) =>
+      addDraftItem(
+        {
+          name: item.name,
+          calories: item.calories,
+          protein: item.protein,
+          fat: item.fat,
+          carbs: item.carbs,
+          cost: item.cost ?? undefined,
+        },
+        // Preserve the original source and master links
+        item.sourceType,
+        {
+          foodMasterId: item.foodMasterId ?? undefined,
+          recipeId: item.recipeId ?? undefined,
+          setMenuId: item.setMenuId ?? undefined,
+        },
+      ),
     [addDraftItem],
   );
 
@@ -297,6 +320,7 @@ export const useMealRegisterDrawerController = () => {
     handleOcrAdd,
     handleOcrResult,
     handleOpenChange,
+    handleRecentAdd,
     handleRecipeAdd,
     handleRegister,
     handleRegisterWithoutPending,

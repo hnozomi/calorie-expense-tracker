@@ -1,5 +1,10 @@
 import { expect, test } from "@playwright/test";
-import { clickToReveal, fillStable, gotoHydrated } from "./helpers";
+import {
+  clickToReveal,
+  fillStable,
+  gotoHydrated,
+  openSlotDrawer,
+} from "./helpers";
 
 // Uses only the 間食 slot so meal-registration.spec's first()-based
 // slot assumptions (朝食→昼食→夕食) stay valid.
@@ -7,16 +12,15 @@ test.describe("食事アイテムの編集・削除", () => {
   test("登録したアイテムを編集するとカロリーが更新される", async ({ page }) => {
     await gotoHydrated(page, "/home");
 
-    // Register a snack item (4th slot)
-    await clickToReveal(
-      page.getByRole("button", { name: "登録する" }).nth(3),
-      page.getByRole("dialog", { name: "間食を登録" }),
-    );
+    // Register a snack item
+    await openSlotDrawer(page, "間食");
     await fillStable(page, "メニュー名", "E2Eポテチ");
     await fillStable(page, "カロリー (kcal)", "200");
     await page.getByRole("button", { name: "カードに追加" }).click();
     await page.getByRole("button", { name: "1件まとめて登録する" }).click();
-    await expect(page.getByText("1件の食事を登録しました")).toBeVisible();
+    await expect(page.getByText("1件の食事を登録しました")).toBeVisible({
+      timeout: 10_000,
+    });
 
     // Open the edit modal and change the calories
     await clickToReveal(

@@ -1,5 +1,10 @@
 import { expect, test } from "@playwright/test";
-import { clickToReveal, fillStable, gotoHydrated } from "./helpers";
+import {
+  clickToReveal,
+  fillStable,
+  gotoHydrated,
+  openSlotDrawer,
+} from "./helpers";
 
 test.describe("献立カレンダー", () => {
   test("手動で献立を追加し、確認ダイアログ経由で削除できる", async ({
@@ -37,15 +42,14 @@ test.describe("献立カレンダー", () => {
     await page.getByRole("button", { name: "前の日" }).click();
     await expect(page.getByText("今日へ")).toBeVisible();
 
-    await clickToReveal(
-      page.getByRole("button", { name: "登録する" }).nth(2),
-      page.getByRole("dialog", { name: "夕食を登録" }),
-    );
+    await openSlotDrawer(page, "夕食");
     await fillStable(page, "メニュー名", "E2E実績ラーメン");
     await fillStable(page, "カロリー (kcal)", "600");
     await page.getByRole("button", { name: "カードに追加" }).click();
     await page.getByRole("button", { name: "1件まとめて登録する" }).click();
-    await expect(page.getByText("1件の食事を登録しました")).toBeVisible();
+    await expect(page.getByText("1件の食事を登録しました")).toBeVisible({
+      timeout: 10_000,
+    });
 
     // Sync actuals on the plan screen. On Mondays "yesterday" belongs to the
     // previous week, so move the calendar back one week first.

@@ -65,6 +65,31 @@ describe("useMealRegisterDrawerController", () => {
     });
   });
 
+  it("履歴からの追加は元のsourceTypeとマスタ参照を保持する", () => {
+    const { result } = renderController();
+    act(() =>
+      result.current.handleRecentAdd({
+        name: "ヨーグルト",
+        calories: 120,
+        protein: 8,
+        fat: 3,
+        carbs: 15,
+        cost: null,
+        sourceType: "food_master",
+        recipeId: null,
+        foodMasterId: "fm-1",
+        setMenuId: null,
+      }),
+    );
+
+    expect(result.current.draftItems[0]).toMatchObject({
+      name: "ヨーグルト",
+      sourceType: "food_master",
+      foodMasterId: "fm-1",
+      cost: undefined,
+    });
+  });
+
   it("下書きがある状態で閉じると破棄確認が開き、ドロワーは閉じない", () => {
     const { result } = renderController();
     act(() => result.current.handleOpenChange(true));
