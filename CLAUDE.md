@@ -50,6 +50,9 @@ src/
 - `generate_series(DATE, DATE, INTERVAL)` returns `timestamp with time zone`, not `DATE`. Always cast explicitly with `::DATE` when the function signature expects `DATE`.
 - Test RPC functions against the actual database schema before applying migrations. Type mismatches between SQL return types and function signatures cause runtime errors during SSG prerendering.
 
+## Testing Strategy
+- Which layer (UT / IT / E2E) a test belongs to, coverage criteria, and the new-feature checklist are defined in `docs/testing/frontend-testing-strategy.md`, with per-layer guides in `docs/testing/`. This repo's concrete E2E cases live in `docs/e2e-test-design.md`.
+
 ## Performance
 - Navigation must be instant: use `<Link>` (with explicit `prefetch` for dynamic routes), never `router.push` for user-initiated navigation. Do not add blocking work (e.g. auth round-trips) to the middleware path for RSC requests. Seed detail queries from cached list data (`useListCacheSeed`) instead of refetching. See `docs/performance-issues-and-fixes.md` for past incidents and the pre-merge checklist.
 
