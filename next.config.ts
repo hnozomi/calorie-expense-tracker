@@ -2,6 +2,8 @@ import type { NextConfig } from "next";
 import packageJson from "./package.json";
 
 const nextConfig: NextConfig = {
+  // The dev indicator overlays the bottom nav and intercepts taps in E2E runs
+  devIndicators: process.env.NEXT_PUBLIC_E2E === "1" ? false : undefined,
   env: {
     // Surfaced in the settings screen so the displayed version tracks package.json
     NEXT_PUBLIC_APP_VERSION: packageJson.version,

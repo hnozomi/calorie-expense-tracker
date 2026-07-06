@@ -33,7 +33,10 @@ const Providers = ({ children }: { children: React.ReactNode }) => {
       <JotaiProvider>
         <QueryClientProvider client={queryClient}>
           {children}
-          <ReactQueryDevtools initialIsOpen={false} />
+          {/* Hidden during E2E runs: the floating button overlaps the bottom nav */}
+          {process.env.NEXT_PUBLIC_E2E !== "1" && (
+            <ReactQueryDevtools initialIsOpen={false} />
+          )}
         </QueryClientProvider>
       </JotaiProvider>
     </ThemeProvider>

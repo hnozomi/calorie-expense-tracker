@@ -35,6 +35,12 @@ src/
 - `pnpm format` — Format with Biome
 - `pnpm test` — Run tests in watch mode
 - `pnpm test:run` — Run tests once
+- `pnpm test:e2e` — Run Playwright E2E tests (starts its own dev server with `NEXT_PUBLIC_E2E=1`)
+
+## E2E Tests
+- Specs live in `e2e/`. They use a dedicated account (`E2E_EMAIL` / `E2E_PASSWORD` in `.env.local`, user exists in Supabase auth) whose data is wiped at the start of every run — never point them at a real account.
+- Always use the helpers in `e2e/helpers.ts` (`gotoHydrated`, `fillStable`, `clickToReveal`, `loginViaUi`): input and clicks before React hydration are silently lost on the dev server.
+- `NEXT_PUBLIC_E2E=1` hides the TanStack Query devtools button and the Next.js dev indicator, both of which overlap the bottom nav and intercept taps.
 
 ## Deploy Checklist
 - **Before `git push`**: Always run `pnpm build` and confirm it succeeds. Turbopack dev server skips TypeScript type checking and does not prerender pages, so errors only caught by production build will silently break Vercel deployments.

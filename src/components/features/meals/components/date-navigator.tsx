@@ -33,6 +33,7 @@ const DateNavigator = () => {
       <Button
         variant="ghost"
         size="icon-sm"
+        aria-label="前の日"
         className="rounded-full transition-colors hover:bg-muted"
         onClick={shiftBackward}
       >
@@ -59,6 +60,7 @@ const DateNavigator = () => {
       <Button
         variant="ghost"
         size="icon-sm"
+        aria-label="次の日"
         className="rounded-full transition-colors hover:bg-muted"
         onClick={shiftForward}
       >
