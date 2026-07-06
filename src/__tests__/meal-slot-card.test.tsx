@@ -4,6 +4,7 @@ import { createStore, Provider } from "jotai";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { MealSlotCard } from "@/components/features/meals/components/meal-slot-card";
 import type { MealItem } from "@/components/features/meals/types/meal";
+import { getTodayString } from "@/utils";
 
 // Mock hooks that depend on Supabase
 vi.mock("@/components/features/meals/hooks/use-delete-meal-item", () => ({
@@ -15,12 +16,19 @@ vi.mock("@/components/features/meals/hooks/use-update-meal-item", () => ({
 vi.mock("@/components/features/meals/hooks/use-transfer-meal-to-plan", () => ({
   useTransferMealToPlan: () => ({ mutateAsync: vi.fn(), isPending: false }),
 }));
+const mockCopyMutateAsync = vi.fn();
+let mockCopyIsPending = false;
 vi.mock("@/components/features/meals/hooks/use-copy-previous-day-meal", () => ({
-  useCopyPreviousDayMeal: () => ({ mutateAsync: vi.fn(), isPending: false }),
+  useCopyPreviousDayMeal: () => ({
+    mutateAsync: mockCopyMutateAsync,
+    isPending: mockCopyIsPending,
+  }),
 }));
 
 afterEach(() => {
   cleanup();
+  vi.clearAllMocks();
+  mockCopyIsPending = false;
 });
 
 /** Create a mock MealItem */
@@ -112,5 +120,41 @@ describe("MealSlotCard", () => {
     await user.click(screen.getByText("テストアイテム"));
 
     expect(screen.getByText("アイテム編集")).toBeInTheDocument();
+  });
+
+  it("空のスロットには「前日をコピー」ボタンが表示される", () => {
+    renderWithStore(<MealSlotCard mealType="dinner" items={[]} />);
+    expect(
+      screen.getByRole("button", { name: /前日をコピー/ }),
+    ).toBeInTheDocument();
+  });
+
+  it("アイテムがあるスロットには「前日をコピー」ボタンが表示されない", () => {
+    renderWithStore(
+      <MealSlotCard mealType="dinner" items={[createMealItem()]} />,
+    );
+    expect(
+      screen.queryByRole("button", { name: /前日をコピー/ }),
+    ).not.toBeInTheDocument();
+  });
+
+  it("「前日をコピー」をタップすると選択中の日付とスロットでコピーが実行される", async () => {
+    const user = userEvent.setup();
+    mockCopyMutateAsync.mockResolvedValue(2);
+    renderWithStore(<MealSlotCard mealType="snack" items={[]} />);
+
+    await user.click(screen.getByRole("button", { name: /前日をコピー/ }));
+
+    expect(mockCopyMutateAsync).toHaveBeenCalledWith({
+      date: getTodayString(),
+      mealType: "snack",
+    });
+  });
+
+  it("コピー実行中はボタンが無効化されラベルが変わる", () => {
+    mockCopyIsPending = true;
+    renderWithStore(<MealSlotCard mealType="dinner" items={[]} />);
+    const copyButton = screen.getByRole("button", { name: /コピー中/ });
+    expect(copyButton).toBeDisabled();
   });
 });
