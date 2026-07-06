@@ -49,6 +49,7 @@ src/
 ## Supabase Migrations
 - `generate_series(DATE, DATE, INTERVAL)` returns `timestamp with time zone`, not `DATE`. Always cast explicitly with `::DATE` when the function signature expects `DATE`.
 - Test RPC functions against the actual database schema before applying migrations. Type mismatches between SQL return types and function signatures cause runtime errors during SSG prerendering.
+- **Vercel SSG prerenders pages with the anon key at build time** (/home and /other/report call the summary RPCs during `next build`). Revoking anon EXECUTE on an RPC used by a prerendered page breaks the Vercel build with 42501. Keep anon EXECUTE on read-only SECURITY INVOKER functions used during prerender — RLS makes them return empty rows for anon. Local `pnpm build` (Turbopack) did NOT catch this while Vercel (`next build --webpack`) failed, so always verify the Vercel deployment after RPC permission changes.
 
 ## Testing Strategy
 - Which layer (UT / IT / E2E) a test belongs to, coverage criteria, and the new-feature checklist are defined in `docs/testing/frontend-testing-strategy.md`, with per-layer guides in `docs/testing/`. This repo's concrete E2E cases live in `docs/e2e-test-design.md`.

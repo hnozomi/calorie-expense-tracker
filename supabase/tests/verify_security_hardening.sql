@@ -142,6 +142,10 @@ CREATE INDEX IF NOT EXISTS idx_set_menu_items_recipe_id ON public.set_menu_items
 CREATE POLICY "Users can delete own settings" ON public.user_settings
   FOR DELETE USING ((select auth.uid()) = user_id);
 
+-- Follow-up migration: restore anon EXECUTE on the read-only summary RPCs
+GRANT EXECUTE ON FUNCTION public.get_daily_summary(DATE) TO anon;
+GRANT EXECUTE ON FUNCTION public.get_weekly_summary(DATE) TO anon;
+
 -- Functional + structural assertions (impersonating the e2e user)
 DO $test$
 DECLARE
@@ -168,9 +172,15 @@ BEGIN
       SELECT 1 FROM unnest(p.proconfig) c WHERE c LIKE 'search_path=%'));
   IF v_cnt <> 0 THEN RAISE EXCEPTION 'still % functions with mutable search_path', v_cnt; END IF;
 
-  -- Structural: anon cannot execute, authenticated can
-  IF has_function_privilege('anon', 'public.get_daily_summary(date)', 'EXECUTE') THEN
-    RAISE EXCEPTION 'anon can still execute get_daily_summary';
+  -- Structural: write RPCs are authenticated-only; the read-only summary
+  -- RPCs stay executable by anon (restore_anon_execute_on_summary_rpcs) —
+  -- Vercel SSG prerenders /other/report with the anon key at build time,
+  -- and under INVOKER+RLS anon only ever receives empty rows.
+  IF has_function_privilege('anon', 'public.register_meal_items(uuid, jsonb)', 'EXECUTE') THEN
+    RAISE EXCEPTION 'anon can still execute register_meal_items';
+  END IF;
+  IF NOT has_function_privilege('anon', 'public.get_weekly_summary(date)', 'EXECUTE') THEN
+    RAISE EXCEPTION 'anon lost execute on get_weekly_summary (breaks Vercel SSG)';
   END IF;
   IF NOT has_function_privilege('authenticated', 'public.register_meal_items(uuid, jsonb)', 'EXECUTE') THEN
     RAISE EXCEPTION 'authenticated lost execute on register_meal_items';
