@@ -53,6 +53,16 @@ src/
 ## Testing Strategy
 - Which layer (UT / IT / E2E) a test belongs to, coverage criteria, and the new-feature checklist are defined in `docs/testing/frontend-testing-strategy.md`, with per-layer guides in `docs/testing/`. This repo's concrete E2E cases live in `docs/e2e-test-design.md`.
 
+## Test Integrity — making tests pass is a means, never the goal
+Tests are statements of the spec. Rationale for these rules: `docs/testing/test-integrity-rationale.md`.
+
+1. **Classify before touching**: when a test fails, first declare — with evidence — which of these it is: (a) implementation bug, (b) spec change requiring a test update, (c) defect in the test itself. If you cannot decide, change nothing and ask the user.
+2. **Changing an expected value requires evidence other than the implementation**: "make it match the actual output" is forbidden. Only change expectations when you can cite a spec, a user instruction, or a design doc.
+3. **Never do the following without the user's explicit approval**: disabling tests (`it.skip` / `test.todo` / commenting out / deletion), weakening assertions (`toBe(x)` → `toBeTruthy()`, exact → partial match, removing count checks), raising timeouts/retries to hide flakes without a root cause, blind snapshot updates, adding test-only branches to product code, or mocking the unit under test.
+4. **Every relaxation needs an in-code comment stating why** (e.g. rate limiting changes an error message). `scripts/check-test-integrity.sh` (runs as part of `pnpm test:run`) flags banned patterns; legitimate exceptions carry `// integrity-allow: <reason>`.
+5. **A previously passing test that fails after your change is presumed correct**: the default is "the code broke", and the burden of proof is on editing the test.
+6. **If you cannot fix it, report it as failing** — never green it by weakening.
+
 ## Performance
 - Navigation must be instant: use `<Link>` (with explicit `prefetch` for dynamic routes), never `router.push` for user-initiated navigation. Do not add blocking work (e.g. auth round-trips) to the middleware path for RSC requests. Seed detail queries from cached list data (`useListCacheSeed`) instead of refetching. See `docs/performance-issues-and-fixes.md` for past incidents and the pre-merge checklist.
 

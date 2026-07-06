@@ -10,9 +10,10 @@
     "lint:fix": "biome check --write .",
     "format": "biome format --write .",
     "test": "vitest",
-    "test:run": "vitest run",
+    "test:run": "sh scripts/check-test-integrity.sh && vitest run",
     "test:e2e": "playwright test",
-    "test:e2e:ui": "playwright test --ui"
+    "test:e2e:ui": "playwright test --ui",
+    "check:test-integrity": "sh scripts/check-test-integrity.sh"
   },
   "dependencies": {
     "@hookform/resolvers": "^5.2.2",
