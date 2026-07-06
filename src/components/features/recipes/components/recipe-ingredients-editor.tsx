@@ -63,6 +63,7 @@ const RecipeIngredientsEditor = ({
                 <div className="space-y-2 pr-7">
                   <Input
                     placeholder="材料名"
+                    aria-label="材料名"
                     value={ingredient.ingredientName}
                     onChange={(event) =>
                       onChange(
@@ -74,10 +75,14 @@ const RecipeIngredientsEditor = ({
                   />
                   <div className="grid grid-cols-3 gap-2">
                     <div className="space-y-1">
-                      <Label className="text-[10px] text-muted-foreground">
+                      <Label
+                        htmlFor={`ingredient-quantity-${ingredient.tempId}`}
+                        className="text-[10px] text-muted-foreground"
+                      >
                         数量
                       </Label>
                       <Input
+                        id={`ingredient-quantity-${ingredient.tempId}`}
                         type="number"
                         inputMode="decimal"
                         step="any"
@@ -92,10 +97,14 @@ const RecipeIngredientsEditor = ({
                       />
                     </div>
                     <div className="space-y-1">
-                      <Label className="text-[10px] text-muted-foreground">
+                      <Label
+                        htmlFor={`ingredient-unit-${ingredient.tempId}`}
+                        className="text-[10px] text-muted-foreground"
+                      >
                         単位
                       </Label>
                       <Input
+                        id={`ingredient-unit-${ingredient.tempId}`}
                         placeholder="g, ml..."
                         value={ingredient.unit}
                         onChange={(event) =>
@@ -108,10 +117,14 @@ const RecipeIngredientsEditor = ({
                       />
                     </div>
                     <div className="space-y-1">
-                      <Label className="text-[10px] text-muted-foreground">
+                      <Label
+                        htmlFor={`ingredient-unit-price-${ingredient.tempId}`}
+                        className="text-[10px] text-muted-foreground"
+                      >
                         単価(円)
                       </Label>
                       <Input
+                        id={`ingredient-unit-price-${ingredient.tempId}`}
                         type="number"
                         inputMode="decimal"
                         value={ingredient.unitPrice || ""}

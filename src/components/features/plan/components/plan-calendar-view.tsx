@@ -1,7 +1,8 @@
 "use client";
 
 import { usePrefetchQuery } from "@tanstack/react-query";
-import { ChevronLeft, ChevronRight } from "lucide-react";
+import { ChevronLeft, ChevronRight, ShoppingCart } from "lucide-react";
+import { useState } from "react";
 import { Header, PageContainer } from "@/components/features/layout";
 import { getNutritionTargetQueryOptions } from "@/components/features/settings/queries";
 import { Button } from "@/components/ui/button";
@@ -11,6 +12,7 @@ import { useMealPlans } from "../hooks/use-meal-plans";
 import { planWeekStartAtom } from "../stores/plan-week-atom";
 import { PlanCalendarGrid } from "./plan-calendar-grid";
 import { PlanWeeklySummary } from "./plan-weekly-summary";
+import { ShoppingListDialog } from "./shopping-list-dialog";
 
 /** Main view for the meal planning calendar */
 const PlanCalendarView = () => {
@@ -29,6 +31,7 @@ const PlanCalendarView = () => {
 
   const { data: plans } = useMealPlans(weekStart);
   const weekLabel = formatWeekLabel(weekStart);
+  const [isShoppingListOpen, setIsShoppingListOpen] = useState(false);
   return (
     <>
       <Header title="献立カレンダー" />
@@ -74,9 +77,27 @@ const PlanCalendarView = () => {
         </div>
 
         <PlanCalendarGrid weekStart={weekStart} plans={plans} />
+        <div className="flex justify-end px-4 pt-3">
+          <Button
+            variant="outline"
+            size="sm"
+            className="h-8 rounded-full px-3 text-xs"
+            onClick={() => setIsShoppingListOpen(true)}
+          >
+            <ShoppingCart className="mr-1 h-3.5 w-3.5" />
+            買い物リスト
+          </Button>
+        </div>
         <div className="px-4 pb-4 pt-3">
           <PlanWeeklySummary plans={plans} weekStart={weekStart} />
         </div>
+        {isShoppingListOpen && (
+          <ShoppingListDialog
+            weekStart={weekStart}
+            isOpen={isShoppingListOpen}
+            onClose={() => setIsShoppingListOpen(false)}
+          />
+        )}
       </PageContainer>
     </>
   );
