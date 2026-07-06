@@ -18,14 +18,15 @@ const wipeTestUserData = async () => {
 
   const userId = data.user.id;
   // Parent tables only — children are CASCADE-deleted.
-  // user_settings is intentionally absent: it has no DELETE RLS policy, so a
-  // delete silently affects 0 rows. Tests must not assume its default value.
+  // user_settings is deletable since the security_hardening migration added
+  // its DELETE RLS policy; the count check below guards against regressions.
   for (const table of [
     "meals",
     "meal_plans",
     "set_menus",
     "recipes",
     "food_masters",
+    "user_settings",
   ] as const) {
     const { error: deleteError } = await supabase
       .from(table)
