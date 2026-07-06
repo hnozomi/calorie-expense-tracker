@@ -17,14 +17,15 @@ const wipeTestUserData = async () => {
   }
 
   const userId = data.user.id;
-  // Parent tables only — children are CASCADE-deleted
+  // Parent tables only — children are CASCADE-deleted.
+  // user_settings is intentionally absent: it has no DELETE RLS policy, so a
+  // delete silently affects 0 rows. Tests must not assume its default value.
   for (const table of [
     "meals",
     "meal_plans",
     "set_menus",
     "recipes",
     "food_masters",
-    "user_settings",
   ] as const) {
     const { error: deleteError } = await supabase
       .from(table)
@@ -32,6 +33,23 @@ const wipeTestUserData = async () => {
       .eq("user_id", userId);
     if (deleteError) {
       throw new Error(`Failed to wipe ${table}: ${deleteError.message}`);
+    }
+
+    // RLS can turn a delete into a silent no-op (missing DELETE policy).
+    // Fail loudly here instead of flaking later in unrelated tests.
+    const { count, error: countError } = await supabase
+      .from(table)
+      .select("*", { count: "exact", head: true })
+      .eq("user_id", userId);
+    if (countError) {
+      throw new Error(
+        `Failed to verify wipe of ${table}: ${countError.message}`,
+      );
+    }
+    if ((count ?? 0) > 0) {
+      throw new Error(
+        `Wipe of ${table} left ${count} rows — check its DELETE RLS policy`,
+      );
     }
   }
   await supabase.auth.signOut();
