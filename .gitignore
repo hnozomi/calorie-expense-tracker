@@ -23,7 +23,6 @@
 # misc
 .DS_Store
 *.pem
-.mcp.json
 
 # debug
 npm-debug.log*
@@ -52,7 +51,3 @@ next-env.d.ts
 /test-results/
 /playwright-report/
 /e2e/.auth/
-
-# local MCP setup (contains personal access tokens)
-docs/setup-mcp.sh
-docs/mcp-template.json
