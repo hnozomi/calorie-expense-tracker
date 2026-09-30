@@ -61,8 +61,14 @@
 | RPC | register_meal_items(meal_id, items[]) | カードの複数アイテムを1リクエストで一括登録（トランザクション保証） |
 | RPC | register_set_menu_to_meal(set_menu_id, meal_id) | セットメニューの全アイテムを食事記録に一括登録 |
 | RPC | transfer_plan_to_meal(target_date, meal_type) | 献立のメニューをmeal_itemsとして一括作成し、is_transferredをtrueに更新 |
+| RPC | transfer_meal_to_plan(target_date, meal_type) | 食事記録を献立側にコピーし直す（transfer_plan_to_mealの逆方向） |
+| RPC | sync_meals_to_plans(start_date, end_date) | 期間内の食事記録で献立を上書き（実際に食べたものを計画側に反映） |
+| RPC | save_recipe_with_ingredients(...) | レシピと材料一覧をトランザクションで一括保存（新規作成/更新の両対応） |
+| RPC | save_set_menu_with_items(...) | セットメニューとアイテム一覧をトランザクションで一括保存 |
 | RPC | get_daily_summary(target_date) | 日次集計（合計カロリー・PFC・食費） |
 | RPC | get_weekly_summary(start_date) | 週次集計（日別推移データ） |
+
+RPCの権限（SECURITY INVOKER/DEFINER、anon EXECUTEの可否）は `docs/security-model.md` を正とする。
 
 ### RPC関数 SQL定義
 
@@ -77,7 +83,8 @@ CREATE OR REPLACE FUNCTION register_meal_items(
 )
 RETURNS SETOF meal_items
 LANGUAGE plpgsql
-SECURITY DEFINER
+SECURITY INVOKER
+SET search_path = public
 AS $$
 DECLARE
   item JSONB;
@@ -130,7 +137,8 @@ CREATE OR REPLACE FUNCTION register_set_menu_to_meal(
 )
 RETURNS SETOF meal_items
 LANGUAGE plpgsql
-SECURITY DEFINER
+SECURITY INVOKER
+SET search_path = public
 AS $$
 DECLARE
   rec set_menu_items;
@@ -190,7 +198,8 @@ CREATE OR REPLACE FUNCTION transfer_plan_to_meal(
 )
 RETURNS SETOF meal_items
 LANGUAGE plpgsql
-SECURITY DEFINER
+SECURITY INVOKER
+SET search_path = public
 AS $$
 DECLARE
   v_meal_id UUID;
@@ -269,7 +278,8 @@ RETURNS TABLE (
   item_count BIGINT
 )
 LANGUAGE plpgsql
-SECURITY DEFINER
+SECURITY INVOKER
+SET search_path = public
 AS $$
 BEGIN
   RETURN QUERY
@@ -306,7 +316,8 @@ RETURNS TABLE (
   total_cost NUMERIC
 )
 LANGUAGE plpgsql
-SECURITY DEFINER
+SECURITY INVOKER
+SET search_path = public
 AS $$
 BEGIN
   RETURN QUERY
