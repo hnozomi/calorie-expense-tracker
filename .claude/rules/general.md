@@ -1,143 +1,40 @@
-# General Rules
+# このアプリの規約
 
-## Linting & Formatting
-<!-- Biome でリント・フォーマットを統一する -->
-- Follow Biome rules. Run `pnpm lint` before committing.
-- Auto-fix with `pnpm lint:fix` or `pnpm format`.
+書き方の規約は全アプリ共通の `~/base/apps/.claude/rules/`(general / components / workflow / reports)にある。ここには、このアプリの構成と、共通規約と違う点だけを書く。
 
-## Import
-<!-- @/ パスエイリアスを使う。相対パスは使わない -->
-- Use `@/` path alias for all imports. Do not use relative paths.
-- Example: `import { cn } from "@/utils"` (not `../../utils`)
+## ファイル配置
 
-## File Placement
-<!-- 各ファイルの配置ルール -->
-- Atoms → `src/stores/`
-- Shared types → `src/types/`
-- Reusable hooks → `src/hooks/`
-- Utility functions → `src/utils/`
-- Project docs → `docs/`
-
-## Styling
-<!-- クラス結合には cn() を使う -->
-- Use `cn()` from `@/utils` for conditional class merging.
-- Example: `cn("base-class", isActive && "active-class")`
-- Use Tailwind CSS utility classes. Avoid inline styles and CSS modules.
-
-## Comments
-<!-- 関数にはコメントを書く。自明なコードには不要 -->
-- Add a brief comment above every function explaining its purpose.
-- Do not comment obvious code (e.g., `// increment counter` above `count++`).
-
-```tsx
-// Good
-/** Fetch the current user and format display name */
-const useCurrentUser = () => { ... };
-
-/** Calculate the total price including tax */
-const calculateTotalPrice = (items: CartItem[], taxRate: number): number => { ... };
+```
+src/
+  app/                        ルーティング。features のページ部品を呼ぶ
+  components/
+    features/<feature>/       機能ごと
+      components/             描画する部品
+      hooks/                  その機能のロジック(state、イベント処理、TanStack Query)
+      api/ または queries.ts  データの取得・更新
+      types/                  その機能の型
+      stores/                 その機能の Jotai の atom
+      utils/                  その機能の純粋な関数
+      <feature>-page.tsx      ページ部品
+      index.ts                公開するものの再 export
+    ui/<component>/           汎用部品(shadcn/ui とその派生)
+  hooks/                      複数の機能で使う hooks(TanStack Query のキーは query-keys.ts)
+  types/                      複数の機能で使う型(Supabase の型は database.ts)
+  utils/                      機能に依存しない純粋な関数(`cn()` は utils/cn.ts)
+  lib/supabase/               Supabase のクライアント
+  __tests__/                  テスト
 ```
 
-## TypeScript
-<!-- type を使う。any は原則禁止 -->
-- Use `type` for all type definitions. Do not use `interface`.
-- Never use `any`. Use `unknown` if the type is truly uncertain, then narrow it.
+- 中身のないフォルダは作らない
+- shadcn/ui の部品は `pnpm dlx shadcn@latest add <component>` で足し、`ui/<component>/` に置く
 
-```tsx
-// Good
-type User = {
-  id: string;
-  name: string;
-};
+## 共通規約と違う点
 
-// Bad
-interface User { ... }
-const data: any = ...;
-```
+- **テストの置き場所**:共通規約は「対象の隣」だが、このアプリは `src/__tests__/` にまとめている。新しいテストもここに置く
 
-## Exports
-<!-- バレルエクスポートを使う。import 時の別名（as）は避ける -->
-- Use barrel exports (`index.ts`) to re-export from directories.
-- Avoid renaming imports with `as`. If a name conflicts, make the export name more specific instead.
+既存のコードには、共通規約より前の書き方も残っている。それだけを理由に書き換えず、触ったファイルから共通規約に寄せる。
 
-```tsx
-// src/hooks/index.ts — barrel export
-export { useAuth } from "./use-auth";
-export { useUser } from "./use-user";
-
-// Good: import from barrel
-import { useAuth, useUser } from "@/hooks";
-
-// Bad: renaming on import
-import { useUser as useCurrentUser } from "@/hooks/use-user";
-```
-
-## Coding Style
-<!-- 関数コンポーネント + アロー関数を使う。クラスコンポーネントは使わない -->
-- Use function components only. Never use class components.
-- Use arrow functions for components, hooks, and handlers.
-- Exception: Next.js file conventions (`page.tsx`, `layout.tsx`, `loading.tsx`, `error.tsx`, `not-found.tsx`) use `function` with `export default`.
-
-```tsx
-// Good: arrow function component
-const UserProfile = () => {
-  return <div>...</div>;
-};
-
-// Bad: class component
-class UserProfile extends React.Component { ... }
-```
-
-## Naming
-<!-- 命名は具体的に。曖昧な名前を避ける -->
-- Be specific with names. Avoid generic names like `data`, `info`, `item`, `handle`, `temp`.
-- Components: describe what it renders — `UserAvatar`, `PaymentForm`, `NotificationBell`
-- Hooks: describe what it does — `useAuth`, `useInfiniteScroll`, `useDebounce`
-- Handlers: describe the action — `handleSubmitPayment`, `handleDeleteComment`
-- Booleans: use `is`/`has`/`should` prefix — `isLoading`, `hasPermission`, `shouldRedirect`
-
-```tsx
-// Good: specific names
-const TaskDueDatePicker = () => { ... };
-const handleMarkTaskComplete = () => { ... };
-const isTaskOverdue = dueDate < now;
-
-// Bad: vague names
-const Picker = () => { ... };
-const handleClick = () => { ... };
-const flag = dueDate < now;
-```
-
-## Separation of Concerns
-<!-- UI とロジックを分離する -->
-- **Components** handle rendering only. Keep business logic out of JSX.
-- **Hooks** (`src/hooks/`) encapsulate logic: data fetching, state management, event handling.
-- **Utils** (`src/utils/`) holds pure utility functions with no React dependency.
-
-### Pattern
-<!-- コンポーネントはシンプルに保ち、ロジックは hooks に切り出す -->
-- Extract complex logic into custom hooks. Components should call hooks and render the result.
-- If a component has more than ~10 lines of logic before the return statement, extract a hook.
-
-```tsx
-// Good: logic in hook, component only renders
-const UserProfile = () => {
-  const { user, isLoading } = useUser();
-  if (isLoading) return <Skeleton />;
-  return <ProfileCard user={user} />;
-};
-
-// Bad: logic mixed into component
-const UserProfile = () => {
-  const [user, setUser] = useState(null);
-  useEffect(() => { /* fetch logic */ }, []);
-  const formatted = useMemo(() => { /* transform */ }, [user]);
-  // ... more logic
-  return <div>...</div>;
-};
-```
-
-## Language
-<!-- コード・コメントは英語。ユーザー向けテキスト（UI ラベル等）は日本語 -->
-- Code and comments in English.
-- User-facing text (UI labels, messages) in Japanese.
+- コンポーネントを `export { X }` でファイル末尾から export し、props の型を `XxxProps` にしている(共通規約は `export const X` と `type Props`)
+- ページ・レイアウトを `export default function` で書いている(共通規約はアロー関数)
+- 関数ごとに説明コメントを付けている(共通規約は「なぜ」だけ)
+- 「ロジックが10行を超えたらフックに出す」としていた(共通規約はロジックをすべてフックに置く)
