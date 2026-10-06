@@ -32,10 +32,10 @@ const AccountSection = () => {
     });
   }, [supabase]);
 
-  /** Sign out, clear cached server data, and redirect to login */
+  /** Sign out this device only (Auth is shared with other apps), clear cached server data, and redirect to login */
   const handleSignOut = useCallback(async () => {
     setIsSigningOut(true);
-    const { error } = await supabase.auth.signOut();
+    const { error } = await supabase.auth.signOut({ scope: "local" });
     if (error) {
       console.error("Failed to sign out:", error);
       toast.error("ログアウトに失敗しました");
