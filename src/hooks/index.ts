@@ -4,6 +4,7 @@ export {
   useWeekStartNavigation,
 } from "./use-date-navigation";
 export { useDebounce } from "./use-debounce";
+export { useHasHydrated } from "./use-has-hydrated";
 export { useListCacheSeed } from "./use-list-cache-seed";
 export {
   useNutritionTarget,
