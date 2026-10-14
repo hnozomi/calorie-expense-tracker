@@ -1,4 +1,5 @@
 import { Suspense } from "react";
+import { HydratedOnly } from "@/components/features/layout";
 import {
   SetMenuListSkeleton,
   SetMenuListView,
@@ -7,8 +8,10 @@ import {
 /** Set menus list page */
 export default function SetMenusPage() {
   return (
-    <Suspense fallback={<SetMenuListSkeleton />}>
-      <SetMenuListView />
-    </Suspense>
+    <HydratedOnly fallback={<SetMenuListSkeleton />}>
+      <Suspense fallback={<SetMenuListSkeleton />}>
+        <SetMenuListView />
+      </Suspense>
+    </HydratedOnly>
   );
 }
