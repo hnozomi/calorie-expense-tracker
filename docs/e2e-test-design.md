@@ -15,10 +15,10 @@ Playwright による本アプリのE2Eテストの設計・実装状況・カバ
 |------|------|
 | ランナー | Playwright(`playwright.config.ts`) |
 | ブラウザ | Chromium / Pixel 7 エミュレーション(モバイルファーストのため) |
-| 実行 | `pnpm test:e2e`。`NEXT_PUBLIC_E2E=1 pnpm dev` を自動起動(既存サーバーは再利用しない) |
+| 実行 | 先に `supabase start`。`pnpm test:e2e` がローカルの Supabase につないだ `next dev` をポート 3101 で自動起動(既存サーバーは再利用しない) |
 | 並列性 | **直列実行**(`workers: 1`)。全テストが同一ユーザーのデータを変更するため |
-| 認証 | `global.setup.ts` がUIログインし `e2e/.auth/user.json`(gitignore)に storageState を保存。各テストはこれを再利用 |
-| テストデータ | 専用ユーザー `E2E_EMAIL` / `E2E_PASSWORD`(`.env.local`、gitignore)。**毎回のsetupで全テーブルのデータを削除**してから開始 |
+| 認証 | `auth.setup.ts` がUIログインし `e2e/.auth/user.json`(gitignore)に storageState を保存。各テストはこれを再利用 |
+| テストデータ | ローカルの Supabase だけを使う(`e2e/local-supabase.ts` がローカル以外なら止める)。`global.setup.ts` が毎回 `supabase db reset --local` してから E2E 用の利用者(`e2e@example.com`)を作る |
 | リトライ | `retries: 1`(devサーバー起因のフレーク対策) |
 
 ### データライフサイクル
@@ -118,9 +118,8 @@ setup: サインイン(supabase-js) → 全データ削除 → UIログイン �
   - SL-1は**翌週**のカレンダーを使う(今週のセルは他specの状態に依存するため。翌週は毎回wipe後に必ず空)
   - ドロワーを開く操作は `openSlotDrawer(page, スロット名)` を使う(スロット単位で特定するためリトライ時も冪等)
   - ケース追加時は専用スロット・専用データ名(`E2E`プレフィックス)を使うこと
-- **実DB(本番Supabase)を使用**: テストユーザーのデータのみ操作する。他ユーザーへの影響はRLSで遮断されるが、`E2E_EMAIL` を実ユーザーに向けないこと(setupが全データを消す)
-- **レート制限**: 短時間に何度も全実行するとSupabase認証のレート制限に当たることがある(A-2は両文言を許容済み。setupのログインが429になった場合は時間を置く)
-- `user_settings` は `security_hardening` マイグレーションでDELETEポリシーが追加され、**setupのwipeでリセット可能になった**(wipeは削除後の残存件数を検証し、ポリシー退行を即エラー化する)。設定系テストは引き続き初期値を仮定しない書き方を維持する(ST-1/ST-2)
+- **ローカルの Supabase を使用**(2026-10 まで本番の DB の専用アカウントで流していた)。DB はマイグレーションだけから毎回作り直すので、前回の実行のデータは残らない
+- 設定系テストは引き続き初期値を仮定しない書き方を維持する(ST-1/ST-2)
 
 ## 6. 運用ルール
 
