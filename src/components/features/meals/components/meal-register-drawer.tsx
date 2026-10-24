@@ -84,7 +84,14 @@ const MealRegisterDrawer = () => {
 
   return (
     <>
-      <Drawer open={isOpen} onOpenChange={handleOpenChange}>
+      {/* On iOS, repositionInputs lifted the drawer when the keyboard opened, and dragging it
+          back down from the form counted as a close, so the discard dialog kept appearing */}
+      <Drawer
+        open={isOpen}
+        onOpenChange={handleOpenChange}
+        repositionInputs={false}
+        handleOnly
+      >
         {/* max-h override needed: the base DrawerContent caps at max-h-[80vh] */}
         <DrawerContent className="h-[85dvh] max-h-[85dvh]">
           <DrawerHeader className="shrink-0 pb-2">

@@ -61,7 +61,8 @@ function DrawerContent({
         )}
         {...props}
       >
-        <div className="mx-auto mt-3 h-1 w-10 shrink-0 rounded-full bg-muted-foreground/30" />
+        {/* vaul's Handle, not a plain div: drawers with handleOnly can only be dragged from it */}
+        <DrawerPrimitive.Handle className="mx-auto mt-3 h-1 w-10 shrink-0 rounded-full bg-muted-foreground/30" />
         {children}
       </DrawerPrimitive.Content>
     </DrawerPortal>
