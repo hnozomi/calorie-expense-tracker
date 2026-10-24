@@ -36,7 +36,7 @@ const RecentItemsSelector = ({ onSelect }: RecentItemsSelectorProps) => {
   }
 
   return (
-    <div className="max-h-64 space-y-1 overflow-y-auto">
+    <div className="space-y-1">
       {recentItems.map((item) => (
         <button
           key={item.name}
