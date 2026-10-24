@@ -1,4 +1,5 @@
 import { expect, type Locator, type Page } from "@playwright/test";
+import { e2eUser } from "./local-supabase";
 
 /** Navigate and wait for the network to go idle, which on this app means the
  *  JS chunks have loaded and React has hydrated — clicks and fills before
@@ -53,8 +54,8 @@ export const fillStable = async (
 export const loginViaUi = async (page: Page) => {
   await gotoHydrated(page, "/login");
   await expect(async () => {
-    await fillStable(page, "メールアドレス", process.env.E2E_EMAIL!);
-    await fillStable(page, "パスワード", process.env.E2E_PASSWORD!, {
+    await fillStable(page, "メールアドレス", e2eUser.email);
+    await fillStable(page, "パスワード", e2eUser.password, {
       exact: true,
     });
     await page.getByRole("button", { name: "ログイン" }).click();

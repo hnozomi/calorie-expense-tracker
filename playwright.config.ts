@@ -1,22 +1,13 @@
-import fs from "node:fs";
-import path from "node:path";
 import { defineConfig, devices } from "@playwright/test";
+import { localSupabase } from "./e2e/local-supabase";
 
-/** Load .env.local so E2E credentials are available to the test process */
-const loadEnvLocal = () => {
-  const envPath = path.join(__dirname, ".env.local");
-  if (!fs.existsSync(envPath)) return;
-  for (const line of fs.readFileSync(envPath, "utf8").split("\n")) {
-    const match = line.match(/^([A-Z0-9_]+)=(.*)$/);
-    if (match && process.env[match[1]] === undefined) {
-      process.env[match[1]] = match[2];
-    }
-  }
-};
-loadEnvLocal();
+const { API_URL, ANON_KEY } = localSupabase();
+// A port of its own so a dev server on 3000 never answers for the E2E run
+const port = 3101;
 
 export default defineConfig({
   testDir: "./e2e",
+  globalSetup: "./e2e/global.setup.ts",
   // Tests share one user account and mutate its data, so run serially
   fullyParallel: false,
   workers: 1,
@@ -24,7 +15,7 @@ export default defineConfig({
   timeout: 60_000,
   reporter: [["list"]],
   use: {
-    baseURL: "http://localhost:3000",
+    baseURL: `http://localhost:${port}`,
     trace: "retain-on-failure",
     ...devices["Pixel 7"],
     // headless shell has no branded browser; keep defaults otherwise
@@ -32,7 +23,7 @@ export default defineConfig({
   projects: [
     {
       name: "setup",
-      testMatch: /global\.setup\.ts/,
+      testMatch: /auth\.setup\.ts/,
     },
     {
       name: "e2e",
@@ -44,10 +35,16 @@ export default defineConfig({
     },
   ],
   webServer: {
-    command: "NEXT_PUBLIC_E2E=1 pnpm dev",
-    url: "http://localhost:3000/login",
-    // Never reuse: a manually started server won't have NEXT_PUBLIC_E2E set
+    command: `pnpm next dev --turbopack --port ${port}`,
+    url: `http://localhost:${port}/login`,
+    // Never reuse: a manually started server won't have the E2E env below
     reuseExistingServer: false,
     timeout: 60_000,
+    // process env wins over .env.local, so the app talks to local Supabase
+    env: {
+      NEXT_PUBLIC_E2E: "1",
+      NEXT_PUBLIC_SUPABASE_URL: API_URL,
+      NEXT_PUBLIC_SUPABASE_ANON_KEY: ANON_KEY,
+    },
   },
 });

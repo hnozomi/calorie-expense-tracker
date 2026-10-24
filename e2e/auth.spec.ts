@@ -1,5 +1,6 @@
 import { expect, test } from "@playwright/test";
 import { fillStable, gotoHydrated } from "./helpers";
+import { e2eUser } from "./local-supabase";
 
 // Auth failure paths need a signed-out context
 test.use({ storageState: { cookies: [], origins: [] } });
@@ -16,7 +17,7 @@ test.describe("認証", () => {
     await gotoHydrated(page, "/login");
     // Retried as a unit: pre-hydration input never reaches react-hook-form
     await expect(async () => {
-      await fillStable(page, "メールアドレス", process.env.E2E_EMAIL!);
+      await fillStable(page, "メールアドレス", e2eUser.email);
       await fillStable(page, "パスワード", "wrong-password-123", {
         exact: true,
       });
