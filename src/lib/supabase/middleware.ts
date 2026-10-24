@@ -1,7 +1,7 @@
 import { createServerClient } from "@supabase/ssr";
 import { type NextRequest, NextResponse } from "next/server";
 
-/** Refresh Supabase auth session, sync cookies, and return user + response */
+/** Refresh Supabase auth session, sync cookies, and return whether signed in + response */
 export const updateSession = async (request: NextRequest) => {
   let supabaseResponse = NextResponse.next({
     request,
@@ -30,10 +30,9 @@ export const updateSession = async (request: NextRequest) => {
     },
   );
 
-  // Use getUser() instead of getSession() for security
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  // getClaims() verifies the JWT locally against the project's ES256 keys, so
+  // unlike getUser() it adds no auth-server round-trip to every request
+  const { data } = await supabase.auth.getClaims();
 
-  return { response: supabaseResponse, user };
+  return { response: supabaseResponse, isSignedIn: data?.claims != null };
 };
