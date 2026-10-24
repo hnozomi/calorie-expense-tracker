@@ -51,13 +51,15 @@ const SetMenuSelectorInner = ({ onSelect }: SetMenuSelectorProps) => {
 
   return (
     <div className="space-y-2">
-      <Input
-        placeholder="セットメニュー名で検索..."
-        value={search}
-        onChange={(e) => setSearch(e.target.value)}
-        className="h-9"
-      />
-      <div className="max-h-48 space-y-1 overflow-y-auto">
+      <div className="sticky -top-0.5 z-10 bg-background py-2">
+        <Input
+          placeholder="セットメニュー名で検索..."
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
+          className="h-9"
+        />
+      </div>
+      <div className="space-y-1">
         {filteredSetMenus.length > 0 ? (
           filteredSetMenus.map((menu) => (
             <button

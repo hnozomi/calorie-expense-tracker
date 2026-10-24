@@ -42,7 +42,7 @@ const RecipeSelector = ({ onSelect }: RecipeSelectorProps) => {
 
   return (
     <div className="space-y-3">
-      <div className="relative">
+      <div className="sticky -top-0.5 z-10 bg-background py-2">
         <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
         <Input
           placeholder="レシピ名で検索..."
@@ -52,7 +52,7 @@ const RecipeSelector = ({ onSelect }: RecipeSelectorProps) => {
         />
       </div>
 
-      <div className="max-h-48 space-y-1 overflow-y-auto">
+      <div className="space-y-1">
         {isLoading ? (
           ["rs1", "rs2", "rs3"].map((key) => (
             <Skeleton key={key} className="h-14 rounded-lg" />
