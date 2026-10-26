@@ -53,7 +53,7 @@ const confirmLogout = async () => {
 };
 
 describe("AccountSection logout", () => {
-  it("フェーズ1 確かめる流れ2: after logging out the page is loaded again at /login instead of a client-side move", async () => {
+  it("AC-R-9: after logging out the page is loaded again at /login instead of a client-side move", async () => {
     signOut.mockResolvedValue({ error: null });
     await confirmLogout();
 
@@ -61,7 +61,7 @@ describe("AccountSection logout", () => {
     expect(signOut).toHaveBeenCalledTimes(1);
   });
 
-  it("フェーズ1 確かめる流れ2: logging out asks the service worker to drop the cached pages that hold the user's data", async () => {
+  it("AC-R-9: logging out asks the service worker to drop the cached pages that hold the user's data", async () => {
     signOut.mockResolvedValue({ error: null });
     await confirmLogout();
 
@@ -70,7 +70,7 @@ describe("AccountSection logout", () => {
     );
   });
 
-  it("フェーズ1 確かめる流れ2: without a service worker the logout still reloads at /login", async () => {
+  it("AC-R-9: without a service worker the logout still reloads at /login", async () => {
     Object.defineProperty(navigator, "serviceWorker", {
       configurable: true,
       value: undefined,
@@ -81,7 +81,7 @@ describe("AccountSection logout", () => {
     await waitFor(() => expect(assign).toHaveBeenCalledWith("/login"));
   });
 
-  it("フェーズ1 確かめる流れ2: when signing out fails the page stays, the cache is kept, and an error is shown", async () => {
+  it("AC-R-9: when signing out fails the page stays, the cache is kept, and an error is shown", async () => {
     vi.spyOn(console, "error").mockImplementation(() => {});
     signOut.mockResolvedValue({ error: new Error("network") });
     await confirmLogout();

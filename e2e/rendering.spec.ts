@@ -70,7 +70,7 @@ test.describe("フェーズ1: 隠れて残る画面", () => {
     await deleteMealItemsNamed(e2eUser.email, recordedName);
   });
 
-  test("確かめる流れ1 (AC-R-4): ホームで記録してから献立タブに移り、ホームに戻ると記録した食事がスケルトンを挟まずに出る", async ({
+  test("AC-R-4: ホームで記録してから献立タブに移り、ホームに戻ると記録した食事がスケルトンを挟まずに出る", async ({
     page,
   }) => {
     await gotoHydrated(page, "/home");
@@ -143,7 +143,7 @@ test.describe("フェーズ1: ログアウト", () => {
     }
   });
 
-  test("確かめる流れ2: ログアウトして別の利用者でログインし直すと、ホームに前の利用者の表示が出ない", async ({
+  test("AC-R-9: ログアウトして別の利用者でログインし直すと、ホームに前の利用者の表示が出ない", async ({
     page,
   }) => {
     await loginViaUi(page, e2eSwitchUsers.previous);
