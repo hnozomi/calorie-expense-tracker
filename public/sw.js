@@ -1,4 +1,4 @@
-const CACHE_VERSION = "meshilog-v3";
+const CACHE_VERSION = "meshilog-v4";
 // Only public, non-redirecting pages are precached; auth-gated routes would
 // cache the login redirect HTML under the wrong key
 const STATIC_ASSETS = ["/offline", "/login"];
@@ -37,6 +37,11 @@ self.addEventListener("activate", (event) => {
 self.addEventListener("message", (event) => {
   if (event.data?.type === "SKIP_WAITING") {
     self.skipWaiting();
+  }
+  // Cached pages carry the signed-in user's data now that screens render on the server,
+  // so signing out drops them (the public pages are cached again on the next visit)
+  if (event.data?.type === "CLEAR_CACHE") {
+    event.waitUntil(caches.delete(CACHE_VERSION));
   }
 });
 
