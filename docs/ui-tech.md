@@ -18,6 +18,7 @@
 | AC-R-6 | ある画面で変えたものが、別のタブに移ったときに反映されている(献立から転記した食事がホームに出る、マスタを直すとホームの値が変わる など) |
 | AC-R-7 | 詳細画面で、無い id・消した id を開くと 404 になる |
 | AC-R-8 | 速さ: `pnpm build && pnpm start` を Playwright で測り、タブの切り替えが今(0.2 秒未満)より遅くならず、開いた直後に本物のデータが出るまでが今(0.6〜1.4 秒)より短い |
+| AC-R-9 | ログアウトしてから別の利用者でログインしても、前の利用者の食事・献立が、隠れて残る画面にも Service Worker のキャッシュにも残っていない(画面の HTML に利用者のデータが入るようになるため) |
 
 ## 0. スタック
 
@@ -69,7 +70,7 @@ src/components/features/<feature>/
 | ファイル | 中身 |
 | --- | --- |
 | `src/lib/supabase/server.ts` | 今のまま(cookie を読むサーバー用クライアント) |
-| `src/utils/date.ts` | `getTodayInTokyo()`・`getThisMondayInTokyo()` を足す(サーバーで「今日」を決める) |
+| `src/utils/date.ts` | `getTodayInTokyo()`・`getThisMondayInTokyo()`・`getMondayOf()`(その日の週の月曜)を足す(サーバーで「今日」を決める) |
 | `src/utils/search-params.ts` | `parseDateParam`・`parseWeekParam`(形を確かめ、週は月曜に直す) |
 | `src/lib/revalidate.ts` | `revalidateApp()`(`revalidatePath("/", "layout")`)。全 Server Action が最後に呼ぶ |
 | `src/lib/legacy-bridge.ts` | 移行中だけ。`revalidateAfterLegacyMutation()`。まだ TanStack Query の画面と、移した画面の読み直しをつなぐ(下の「移行中のつなぎ」)。最後のフェーズで消す |
@@ -185,12 +186,12 @@ app/(main)/home/page.tsx                    Server。searchParams を受けて <
 - `src/utils/date.ts`(`getTodayInTokyo` など)・`src/utils/search-params.ts`・`src/lib/revalidate.ts`・`src/lib/legacy-bridge.ts`
 - `providers.tsx` の `MutationCache` に `revalidateAfterLegacyMutation` をつなぐ
 - E2E: 隠れて残る画面に当たらないよう、`getByText` を見えている要素に絞る(`e2e/helpers.ts` に `visible` の絞り込みを足す)
-- `public/sw.js`: `CLEAR_CACHE` と `CACHE_VERSION` を上げる。ログアウトで呼ぶ(`account-section.tsx`)
+- `public/sw.js`: `CLEAR_CACHE` と `CACHE_VERSION` を上げる。ログアウトで呼ぶ(`src/lib/service-worker.ts` の `clearServiceWorkerCache`)
 - ログアウトの後は `router.push` ではなく、ページを読み込み直して `/login` に移る(隠れて残る画面と TanStack Query のキャッシュを捨てるため)
 
 確かめる流れ:
 1. ホームで食事を記録し、献立タブに移ってからホームに戻ると、記録した食事がスケルトンを挟まずに出ている
-2. ログアウトしてもう一度ログインすると、ホームに前の利用者の古い表示が出ない
+2. ログアウトしてもう一度ログインすると、ホームに前の利用者の古い表示が出ない(AC-R-9)
 
 学ぶこと: Cache Components(App Shell と動的な部分の分かれ目)、Activity で画面が隠れて残ること
 
