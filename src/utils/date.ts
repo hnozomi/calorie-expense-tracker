@@ -74,3 +74,26 @@ export const buildWeekDays = (weekStart: string): WeekDay[] => {
 
   return days;
 };
+
+/** Monday of the week containing the given YYYY-MM-DD date */
+export const getMondayOf = (dateStr: string): string => {
+  const day = new Date(`${dateStr}T00:00:00`).getDay();
+  return shiftDate(dateStr, day === 0 ? -6 : 1 - day);
+};
+
+// en-CA formats as YYYY-MM-DD
+const tokyoDateFormatter = new Intl.DateTimeFormat("en-CA", {
+  timeZone: "Asia/Tokyo",
+  year: "numeric",
+  month: "2-digit",
+  day: "2-digit",
+});
+
+// The server runs in UTC, so "today" on the server is decided in the user's timezone, not the machine's
+/** Today in Asia/Tokyo as YYYY-MM-DD */
+export const getTodayInTokyo = (now: Date = new Date()): string =>
+  tokyoDateFormatter.format(now);
+
+/** Monday of the current week in Asia/Tokyo as YYYY-MM-DD */
+export const getThisMondayInTokyo = (now: Date = new Date()): string =>
+  getMondayOf(getTodayInTokyo(now));
