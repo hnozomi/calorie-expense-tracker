@@ -38,7 +38,7 @@ src/
 - `pnpm test:e2e` — Run Playwright E2E tests (starts its own dev server with `NEXT_PUBLIC_E2E=1`)
 
 ## E2E Tests
-- Specs live in `e2e/`. They use a dedicated account (`E2E_EMAIL` / `E2E_PASSWORD` in `.env.local`, user exists in Supabase auth) whose data is wiped at the start of every run — never point them at a real account.
+- Specs live in `e2e/` and run only against local Supabase: `supabase start` first (ports 593xx, see `supabase/config.toml`). `e2e/global.setup.ts` runs `supabase db reset --local` and creates the E2E user every run, and `e2e/local-supabase.ts` refuses a non-local URL. The app is started on port 3101 with the local URL and key.
 - Always use the helpers in `e2e/helpers.ts` (`gotoHydrated`, `fillStable`, `clickToReveal`, `loginViaUi`): input and clicks before React hydration are silently lost on the dev server.
 - `NEXT_PUBLIC_E2E=1` hides the TanStack Query devtools button and the Next.js dev indicator, both of which overlap the bottom nav and intercept taps.
 
@@ -48,7 +48,7 @@ src/
 
 ## Supabase Migrations
 - `generate_series(DATE, DATE, INTERVAL)` returns `timestamp with time zone`, not `DATE`. Always cast explicitly with `::DATE` when the function signature expects `DATE`.
-- Test RPC functions against the actual database schema before applying migrations. Type mismatches between SQL return types and function signatures cause runtime errors during SSG prerendering.
+- Migrations start from `supabase/migrations/20260706214029_baseline_public_schema.sql`, a dump of the production `public` schema. Test RPCs and RLS with pgTAP in `supabase/tests/*.test.sql` (`supabase test db` against local Supabase) before applying a migration. Type mismatches between SQL return types and function signatures cause runtime errors during SSG prerendering.
 - **Vercel SSG prerenders pages with the anon key at build time.** Until 2026-10, /home and /other/report called the summary RPCs during `next build` and baked the empty result into the HTML; the data views now render only after hydration (`HydratedOnly`), so the build no longer calls them. The anon grants below were kept for that build and have not been revisited yet. Revoking anon EXECUTE on an RPC used by a prerendered page breaks the Vercel build with 42501. Keep anon EXECUTE on read-only SECURITY INVOKER functions used during prerender — RLS makes them return empty rows for anon. Local `pnpm build` (Turbopack) did NOT catch this while Vercel (`next build --webpack`) failed, so always verify the Vercel deployment after RPC permission changes.
 - Full RLS policy patterns and the RPC permission matrix (which functions anon may call and why) are documented in `docs/security-model.md`. Update it whenever a table or RPC's permissions change.
 

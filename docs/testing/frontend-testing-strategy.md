@@ -52,7 +52,7 @@ UT(単体)/ IT(統合・コンポーネント)/ E2E をどう使い分け、何�
 | キャッシュ整合(削除後に他画面へ残らない等) | — | — | ✅ |
 | DB関数・ストアドプロシージャ | SQL単体※ | — | 結合1本 |
 
-※ DB関数のSQL単体テスト: 適用前に `BEGIN; 関数定義+テストユーザーになりすまし(set_config + SET ROLE)+DOブロックでアサーション; ROLLBACK;` を実DBスキーマに対して実行し、全アサーション通過を確認してからマイグレーションを適用する。検証SQLは `supabase/tests/` 等に保存して再実行可能にしておく。
+※ DB関数・RLSのテスト: pgTAP で `supabase/tests/*.test.sql` に書き、ローカルの Supabase に `supabase test db` で流す。全アサーションが通ってからマイグレーションを本番に当てる。
 
 ## 4. 網羅性の考え方
 
@@ -85,7 +85,7 @@ UT(単体)/ IT(統合・コンポーネント)/ E2E をどう使い分け、何�
 |---------|---------|------|
 | UT / IT | `src/__tests__/`(または対象ファイルへの併置。**プロジェクト開始時にどちらかへ統一**) | `対象名.test.ts` / `対象名.test.tsx` |
 | E2E | リポジトリ直下 `e2e/` | `機能名.spec.ts`、共通処理は `helpers.ts`、認証セットアップは `global.setup.ts` |
-| DB検証SQL | `supabase/tests/` 等 | マイグレーション名に対応させる |
+| DBテスト(pgTAP) | `supabase/tests/*.test.sql` | 確かめる内容ごとに1ファイル |
 
 `*.test.*` はVitest、`*.spec.*` はPlaywrightと拡張子で住み分けると、ランナーのinclude設定が単純になり誤実行を防げる。
 
