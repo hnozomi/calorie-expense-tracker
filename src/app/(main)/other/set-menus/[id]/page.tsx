@@ -4,15 +4,17 @@ import {
   SetMenuFormSkeleton,
 } from "@/components/features/set-menus";
 
-type SetMenuDetailPageProps = {
+type Props = {
   params: Promise<{ id: string }>;
 };
 
 /** Set menu create/edit page */
-export default function SetMenuDetailPage({ params }: SetMenuDetailPageProps) {
+const SetMenuDetailPage = ({ params }: Props) => {
   return (
     <Suspense fallback={<SetMenuFormSkeleton />}>
       <SetMenuFormSection params={params} />
     </Suspense>
   );
-}
+};
+
+export default SetMenuDetailPage;

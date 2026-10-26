@@ -4,17 +4,17 @@ import {
   FoodMasterFormSkeleton,
 } from "@/components/features/food-masters";
 
-type FoodMasterDetailPageProps = {
+type Props = {
   params: Promise<{ id: string }>;
 };
 
 /** Food master create/edit page */
-export default function FoodMasterDetailPage({
-  params,
-}: FoodMasterDetailPageProps) {
+const FoodMasterDetailPage = ({ params }: Props) => {
   return (
     <Suspense fallback={<FoodMasterFormSkeleton />}>
       <FoodMasterFormSection params={params} />
     </Suspense>
   );
-}
+};
+
+export default FoodMasterDetailPage;
