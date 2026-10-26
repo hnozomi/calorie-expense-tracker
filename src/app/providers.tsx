@@ -1,16 +1,24 @@
 "use client";
 
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import {
+  MutationCache,
+  QueryClient,
+  QueryClientProvider,
+} from "@tanstack/react-query";
 import { ReactQueryDevtools } from "@tanstack/react-query-devtools";
 import { Provider as JotaiProvider } from "jotai";
 import { ThemeProvider } from "next-themes";
 import { useState } from "react";
+import { revalidateAfterLegacyMutation } from "@/lib/legacy-bridge";
 
 /** Wraps the app with Jotai and TanStack Query providers */
 const Providers = ({ children }: { children: React.ReactNode }) => {
   const [queryClient] = useState(
     () =>
       new QueryClient({
+        mutationCache: new MutationCache({
+          onSuccess: revalidateAfterLegacyMutation,
+        }),
         defaultOptions: {
           queries: {
             staleTime: 60 * 1000,
