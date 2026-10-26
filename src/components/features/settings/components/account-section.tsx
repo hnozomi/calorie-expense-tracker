@@ -1,9 +1,9 @@
 "use client";
+// Client because it reads the session and signs out in the browser
 
 import { LogOut, User } from "lucide-react";
 import { useCallback, useEffect, useState } from "react";
 import { toast } from "sonner";
-import { clearServiceWorkerCache } from "@/components/features/pwa";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -18,6 +18,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { SectionHeader } from "@/components/ui/section-header";
 import { useSupabase } from "@/hooks";
+import { clearServiceWorkerCache } from "@/lib/service-worker";
 
 /** Section displaying account info and logout button */
 const AccountSection = () => {
