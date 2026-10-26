@@ -34,3 +34,51 @@ export const e2eUser = {
   email: "e2e@example.com",
   password: "e2e-password",
 };
+
+/** Two users of their own for the logout flow: signing out revokes every session of that user,
+ *  so the shared e2eUser must not be the one that logs out mid-run */
+export const e2eSwitchUsers = {
+  previous: { email: "e2e-previous@example.com", password: "e2e-password" },
+  next: { email: "e2e-next@example.com", password: "e2e-password" },
+};
+
+/** Call the local REST API as the service role, for test data that bypasses RLS */
+export const serviceRoleRest = async (
+  path: string,
+  init: RequestInit = {},
+): Promise<Response> => {
+  const { API_URL, SERVICE_ROLE_KEY } = localSupabase();
+  const response = await fetch(`${API_URL}/rest/v1/${path}`, {
+    ...init,
+    headers: {
+      apikey: SERVICE_ROLE_KEY,
+      Authorization: `Bearer ${SERVICE_ROLE_KEY}`,
+      "Content-Type": "application/json",
+      Prefer: "return=representation",
+      ...init.headers,
+    },
+  });
+  if (!response.ok) {
+    throw new Error(
+      `${init.method ?? "GET"} ${path}: ${await response.text()}`,
+    );
+  }
+  return response;
+};
+
+/** Look up a user's id by email through the admin API */
+export const userIdOf = async (email: string): Promise<string> => {
+  const { API_URL, SERVICE_ROLE_KEY } = localSupabase();
+  const response = await fetch(`${API_URL}/auth/v1/admin/users?per_page=100`, {
+    headers: {
+      apikey: SERVICE_ROLE_KEY,
+      Authorization: `Bearer ${SERVICE_ROLE_KEY}`,
+    },
+  });
+  const { users } = (await response.json()) as {
+    users: { id: string; email: string }[];
+  };
+  const user = users.find((candidate) => candidate.email === email);
+  if (!user) throw new Error(`No E2E user ${email}`);
+  return user.id;
+};

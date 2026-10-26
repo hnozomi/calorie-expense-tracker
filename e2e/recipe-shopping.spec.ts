@@ -1,5 +1,10 @@
 import { expect, test } from "@playwright/test";
-import { clickToReveal, fillStable, gotoHydrated } from "./helpers";
+import {
+  clickToReveal,
+  fillStable,
+  gotoHydrated,
+  visibleText,
+} from "./helpers";
 
 // SL-1: recipe with an ingredient -> plan it next week -> shopping list
 // aggregates the ingredient per serving. Uses NEXT week so the grid is
@@ -17,7 +22,7 @@ test.describe("買い物リスト", () => {
     await fillStable(page, "単位", "本");
     await fillStable(page, /単価/, "200");
     await page.getByRole("button", { name: /登録する/ }).click();
-    await expect(page.getByText("レシピを登録しました")).toBeVisible({
+    await expect(visibleText(page, "レシピを登録しました")).toBeVisible({
       timeout: 10_000,
     });
 
