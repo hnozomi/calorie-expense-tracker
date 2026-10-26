@@ -13,15 +13,17 @@ afterEach(() => {
   cleanup();
 });
 
-// Same signal the existing BottomNavigation test uses: the active tab gets the brand color
-const isHighlighted = (name: string) =>
-  screen
-    .getByRole("link", { name })
-    .className.split(/\s+/)
-    .includes("text-brand");
-
-const highlightedTabs = () =>
-  TABS.map(({ name }) => name).filter((name) => isHighlighted(name));
+// The selected tab is the one link marked aria-current="page"; every other tab has no aria-current
+const expectSelectedTab = (selected: string | null) => {
+  for (const { name } of TABS) {
+    const link = screen.getByRole("link", { name });
+    if (name === selected) {
+      expect(link).toHaveAttribute("aria-current", "page");
+    } else {
+      expect(link).not.toHaveAttribute("aria-current");
+    }
+  }
+};
 
 describe("BottomNavigationView", () => {
   it("AC-R-1: shows the four tabs as links to their screens", () => {
@@ -33,7 +35,7 @@ describe("BottomNavigationView", () => {
 
   it("AC-R-1: while the path is unknown (pathname omitted) no tab is selected", () => {
     render(<BottomNavigationView />);
-    expect(highlightedTabs()).toEqual([]);
+    expectSelectedTab(null);
     for (const { name } of TABS) {
       expect(screen.getByRole("link", { name })).toHaveAttribute("href");
     }
@@ -46,7 +48,7 @@ describe("BottomNavigationView", () => {
     ["/other", "その他"],
   ])("AC-R-1: on %s only the %s tab is selected", (pathname, name) => {
     render(<BottomNavigationView pathname={pathname} />);
-    expect(highlightedTabs()).toEqual([name]);
+    expectSelectedTab(name);
   });
 
   it.each([
@@ -55,16 +57,16 @@ describe("BottomNavigationView", () => {
     ["/other/settings", "その他"],
   ])("AC-R-1: on a screen under a tab (%s) the %s tab is selected", (pathname, name) => {
     render(<BottomNavigationView pathname={pathname} />);
-    expect(highlightedTabs()).toEqual([name]);
+    expectSelectedTab(name);
   });
 
   it("AC-R-1: a path that only starts with the same letters does not select the tab", () => {
     render(<BottomNavigationView pathname="/homepage" />);
-    expect(highlightedTabs()).toEqual([]);
+    expectSelectedTab(null);
   });
 
   it("AC-R-1: a screen outside the tabs (/login) selects no tab", () => {
     render(<BottomNavigationView pathname="/login" />);
-    expect(highlightedTabs()).toEqual([]);
+    expectSelectedTab(null);
   });
 });
