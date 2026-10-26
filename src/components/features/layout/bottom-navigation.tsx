@@ -42,6 +42,7 @@ const BottomNavigationView = ({ pathname }: BottomNavigationViewProps) => {
             <Link
               key={href}
               href={href}
+              aria-current={isActive ? "page" : undefined}
               className={cn(
                 "relative flex min-w-[64px] flex-col items-center gap-0.5 px-3 py-2 text-xs",
                 "transition-colors duration-150",
