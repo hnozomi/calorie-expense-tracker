@@ -17,10 +17,13 @@ const NAV_ITEMS = [
   { href: "/other", label: "その他", icon: MoreHorizontal },
 ] as const;
 
-/** Bottom tab navigation with glass background and active indicator pill */
-const BottomNavigation = () => {
-  const pathname = usePathname();
+type BottomNavigationViewProps = {
+  /** Omitted while the path is unknown (dynamic routes in the prerendered shell): no tab is highlighted */
+  pathname?: string;
+};
 
+/** Bottom tab navigation with glass background and active indicator pill */
+const BottomNavigationView = ({ pathname }: BottomNavigationViewProps) => {
   return (
     <nav
       className={cn(
@@ -32,7 +35,9 @@ const BottomNavigation = () => {
     >
       <div className="mx-auto flex h-16 max-w-lg items-center justify-around">
         {NAV_ITEMS.map(({ href, label, icon: Icon }) => {
-          const isActive = pathname === href || pathname.startsWith(`${href}/`);
+          const isActive =
+            pathname !== undefined &&
+            (pathname === href || pathname.startsWith(`${href}/`));
           return (
             <Link
               key={href}
@@ -65,4 +70,10 @@ const BottomNavigation = () => {
   );
 };
 
-export { BottomNavigation };
+/** Bottom navigation that highlights the tab of the current path */
+const BottomNavigation = () => {
+  const pathname = usePathname();
+  return <BottomNavigationView pathname={pathname} />;
+};
+
+export { BottomNavigation, BottomNavigationView };

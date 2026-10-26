@@ -2,6 +2,8 @@ import type { NextConfig } from "next";
 import packageJson from "./package.json";
 
 const nextConfig: NextConfig = {
+  cacheComponents: true,
+  partialPrefetching: true,
   // The dev indicator overlays the bottom nav and intercepts taps in E2E runs
   devIndicators: process.env.NEXT_PUBLIC_E2E === "1" ? false : undefined,
   env: {

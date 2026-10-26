@@ -1,7 +1,7 @@
 import { Suspense } from "react";
 import {
+  SetMenuFormSection,
   SetMenuFormSkeleton,
-  SetMenuFormView,
 } from "@/components/features/set-menus";
 
 type SetMenuDetailPageProps = {
@@ -9,14 +9,10 @@ type SetMenuDetailPageProps = {
 };
 
 /** Set menu create/edit page */
-export default async function SetMenuDetailPage({
-  params,
-}: SetMenuDetailPageProps) {
-  const { id } = await params;
-
+export default function SetMenuDetailPage({ params }: SetMenuDetailPageProps) {
   return (
     <Suspense fallback={<SetMenuFormSkeleton />}>
-      <SetMenuFormView id={id} />
+      <SetMenuFormSection params={params} />
     </Suspense>
   );
 }

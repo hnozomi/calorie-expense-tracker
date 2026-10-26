@@ -1,7 +1,7 @@
 import { Suspense } from "react";
 import {
+  RecipeFormSection,
   RecipeFormSkeleton,
-  RecipeFormView,
 } from "@/components/features/recipes";
 
 type RecipeDetailPageProps = {
@@ -9,14 +9,10 @@ type RecipeDetailPageProps = {
 };
 
 /** Recipe create/edit page */
-export default async function RecipeDetailPage({
-  params,
-}: RecipeDetailPageProps) {
-  const { id } = await params;
-
+export default function RecipeDetailPage({ params }: RecipeDetailPageProps) {
   return (
     <Suspense fallback={<RecipeFormSkeleton />}>
-      <RecipeFormView id={id} />
+      <RecipeFormSection params={params} />
     </Suspense>
   );
 }

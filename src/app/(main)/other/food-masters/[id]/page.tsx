@@ -1,7 +1,7 @@
 import { Suspense } from "react";
 import {
+  FoodMasterFormSection,
   FoodMasterFormSkeleton,
-  FoodMasterFormView,
 } from "@/components/features/food-masters";
 
 type FoodMasterDetailPageProps = {
@@ -9,14 +9,12 @@ type FoodMasterDetailPageProps = {
 };
 
 /** Food master create/edit page */
-export default async function FoodMasterDetailPage({
+export default function FoodMasterDetailPage({
   params,
 }: FoodMasterDetailPageProps) {
-  const { id } = await params;
-
   return (
     <Suspense fallback={<FoodMasterFormSkeleton />}>
-      <FoodMasterFormView id={id} />
+      <FoodMasterFormSection params={params} />
     </Suspense>
   );
 }
