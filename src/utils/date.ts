@@ -23,14 +23,7 @@ export const shiftDate = (dateStr: string, days: number): string => {
 };
 
 /** Get Monday of the current week as YYYY-MM-DD */
-export const getThisMonday = (): string => {
-  const now = new Date();
-  const day = now.getDay();
-  const diff = day === 0 ? -6 : 1 - day;
-  const monday = new Date(now);
-  monday.setDate(now.getDate() + diff);
-  return formatDateToString(monday);
-};
+export const getThisMonday = (): string => getMondayOf(getTodayString());
 
 /** Format a YYYY-MM-DD string for compact Japanese display */
 export const formatDisplayDate = (dateStr: string): string => {
