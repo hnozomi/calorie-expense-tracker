@@ -1,22 +1,20 @@
 import { Suspense } from "react";
 import {
+  RecipeFormSection,
   RecipeFormSkeleton,
-  RecipeFormView,
 } from "@/components/features/recipes";
 
-type RecipeDetailPageProps = {
+type Props = {
   params: Promise<{ id: string }>;
 };
 
 /** Recipe create/edit page */
-export default async function RecipeDetailPage({
-  params,
-}: RecipeDetailPageProps) {
-  const { id } = await params;
-
+const RecipeDetailPage = ({ params }: Props) => {
   return (
     <Suspense fallback={<RecipeFormSkeleton />}>
-      <RecipeFormView id={id} />
+      <RecipeFormSection params={params} />
     </Suspense>
   );
-}
+};
+
+export default RecipeDetailPage;

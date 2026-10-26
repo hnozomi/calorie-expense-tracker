@@ -18,7 +18,7 @@ Playwright による本アプリのE2Eテストの設計・実装状況・カバ
 | 実行 | 先に `supabase start`。`pnpm test:e2e` がローカルの Supabase につないだ `next dev` をポート 3101 で自動起動(既存サーバーは再利用しない) |
 | 並列性 | **直列実行**(`workers: 1`)。全テストが同一ユーザーのデータを変更するため |
 | 認証 | `auth.setup.ts` がUIログインし `e2e/.auth/user.json`(gitignore)に storageState を保存。各テストはこれを再利用 |
-| テストデータ | ローカルの Supabase だけを使う(`e2e/local-supabase.ts` がローカル以外なら止める)。`global.setup.ts` が毎回 `supabase db reset --local` してから E2E 用の利用者(`e2e@example.com`)を作る |
+| テストデータ | ローカルの Supabase だけを使う(`e2e/local-supabase.ts` がローカル以外なら止める)。`global.setup.ts` が毎回 `supabase db reset --local` してから E2E 用の利用者を3人作る: 共通の `e2e@example.com`(`e2eUser`)と、ログアウトを確かめる R-2 専用の `e2e-previous@example.com`・`e2e-next@example.com`(`e2eSwitchUsers`。ログアウトするとその利用者のセッションがすべて切れるため、共通の利用者を使わない) |
 | リトライ | `retries: 1`(devサーバー起因のフレーク対策) |
 
 ### データライフサイクル
@@ -37,6 +37,7 @@ setup: サインイン(supabase-js) → 全データ削除 → UIログイン �
 | ハイドレーション前のクリック | ドロワー/モーダルを開くクリックが無反応 | `clickToReveal`(結果が見えるまでクリックをリトライ) |
 | 開発ツールのオーバーレイ | TanStack Query devtools と Next.js devインジケータ(共に左下)がボトムナビ「ホーム」を遮る | `NEXT_PUBLIC_E2E=1` で両方無効化(`providers.tsx` / `next.config.ts`) |
 | 認証レート制限 | 失敗ログインの繰り返しでエラー文言が変わる | 「正しくありません/試行回数が多すぎます」の両方を許容 |
+| 隠れて残る画面 | `cacheComponents` で移動前の画面が `display: none` のまま DOM に残り、同じ文言・ラベルが2つ当たる(`getByRole` は数えないが `getByText`・`getByLabel` は数える) | `visibleText`・`visibleField` で見えている要素に絞る |
 | 曜日依存 | 月曜は「昨日」が前週になり「実績を反映」の対象週が変わる | テスト内で曜日判定して前週へ移動 |
 
 ## 3. 実装済みテストケース
@@ -65,6 +66,8 @@ setup: サインイン(supabase-js) → 全データ削除 → UIログイン �
 | ST-1 | settings | 目標のバリデーション | 負数→インラインエラー・保存されない(過去バグの防止) |
 | ST-2 | settings | 目標の保存 | 1800を保存→再読込後も維持 |
 | ST-3 | settings | ログアウト | 確認ダイアログ→/login→保護ページに戻れない |
+| R-1 | rendering | 戻ったときにスケルトンを挟まない(AC-R-4) | ホームで記録→献立タブ→ホームに戻る間、スケルトンが一度も見えず、記録した食事が出ている |
+| R-2 | rendering | ログアウトで前の利用者が残らない(AC-R-9) | 前の利用者でログインしてタブを回る→ログアウト→次の利用者でログイン→前の利用者の食事が DOM に1件も無い |
 
 ## 4. カバレッジ分析(機能 × テスト有無)
 
@@ -117,6 +120,7 @@ setup: サインイン(supabase-js) → 全データ削除 → UIログイン �
   - **QA-1はP-2が残した「昨日の夕食E2E実績ラーメン」と「今日の夕食が空」に、QA-2はM-2の「E2Eそば」に依存**する
   - SL-1は**翌週**のカレンダーを使う(今週のセルは他specの状態に依存するため。翌週は毎回wipe後に必ず空)
   - ドロワーを開く操作は `openSlotDrawer(page, スロット名)` を使う(スロット単位で特定するためリトライ時も冪等)
+  - R-1 は `e2eUser` の今日の間食を使い、後で自分のアイテムだけを消す(間食は MI と P-4 も使う)
   - ケース追加時は専用スロット・専用データ名(`E2E`プレフィックス)を使うこと
 - **ローカルの Supabase を使用**(2026-10 まで本番の DB の専用アカウントで流していた)。DB はマイグレーションだけから毎回作り直すので、前回の実行のデータは残らない
 - 設定系テストは引き続き初期値を仮定しない書き方を維持する(ST-1/ST-2)

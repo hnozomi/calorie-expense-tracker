@@ -18,6 +18,7 @@
 | AC-R-6 | ある画面で変えたものが、別のタブに移ったときに反映されている(献立から転記した食事がホームに出る、マスタを直すとホームの値が変わる など) |
 | AC-R-7 | 詳細画面で、無い id・消した id を開くと 404 になる |
 | AC-R-8 | 速さ: `pnpm build && pnpm start` を Playwright で測り、タブの切り替えが今(0.2 秒未満)より遅くならず、開いた直後に本物のデータが出るまでが今(0.6〜1.4 秒)より短い |
+| AC-R-9 | ログアウトしてから別の利用者でログインしても、前の利用者の食事・献立が、隠れて残る画面にも Service Worker のキャッシュにも残っていない(画面の HTML に利用者のデータが入るようになるため) |
 
 ## 0. スタック
 
@@ -26,6 +27,7 @@
 | もの | どうする | 理由 |
 | --- | --- | --- |
 | `cacheComponents`・`partialPrefetching`(next.config) | 入れる | 規約。App Shell をビルド時に作り、先読みで取る |
+| Next.js 16.1 → 16.4.3、React 19.2 → 19.3 | 上げる(フェーズ 1) | `partialPrefetching` は 16.3 から。ほかのアプリと同じ版にそろえる |
 | TanStack Query(`@tanstack/react-query`・devtools) | 最後のフェーズで外す | 初期データはサーバーで取り、更新は Server Action にするため、使う所が無くなる |
 | Jotai | 残す | Drawer の開閉と、登録前のカード(`meal-register-atom`)はブラウザだけの状態。日付の atom だけ消す |
 | tesseract.js・vaul・react-hook-form・zod | そのまま | ブラウザでしか動かない(OCR)か、作りに関わらない |
@@ -68,10 +70,10 @@ src/components/features/<feature>/
 | ファイル | 中身 |
 | --- | --- |
 | `src/lib/supabase/server.ts` | 今のまま(cookie を読むサーバー用クライアント) |
-| `src/utils/date.ts` | `getTodayInTokyo()`・`getThisMondayInTokyo()` を足す(サーバーで「今日」を決める) |
+| `src/utils/date.ts` | `getTodayInTokyo()`・`getThisMondayInTokyo()`・`getMondayOf()`(その日の週の月曜)を足す(サーバーで「今日」を決める) |
 | `src/utils/search-params.ts` | `parseDateParam`・`parseWeekParam`(形を確かめ、週は月曜に直す) |
 | `src/lib/revalidate.ts` | `revalidateApp()`(`revalidatePath("/", "layout")`)。全 Server Action が最後に呼ぶ |
-| `src/lib/legacy-bridge.ts` | 移行中だけ。まだ TanStack Query の画面と、移した画面の読み直しをつなぐ(下の「移行中のつなぎ」)。最後のフェーズで消す |
+| `src/lib/legacy-bridge.ts` | 移行中だけ。`revalidateAfterLegacyMutation()`。まだ TanStack Query の画面と、移した画面の読み直しをつなぐ(下の「移行中のつなぎ」)。最後のフェーズで消す |
 
 消すもの(最後のフェーズまでに): `src/app/(main)/loading.tsx`、`layout/hydrated-only.tsx`、`layout/tab-data-prefetcher.tsx`、`hooks/use-list-cache-seed.ts`、`hooks/use-has-hydrated.ts`、`hooks/use-supabase.ts`、`hooks/query-keys.ts`、`hooks/use-nutrition-target.ts`、`hooks/use-date-navigation.ts`、`lib/create-week-start-atom.ts`、各機能の `queries.ts`・`stores/*-atom.ts`(日・週のもの)・取得と更新の hooks(`use-daily-meals` `use-save-recipe` など)、`app/providers.tsx` の QueryClientProvider。
 
@@ -133,7 +135,7 @@ app/(main)/home/page.tsx                    Server。searchParams を受けて <
 
 | 変えた側 | 古くなる側 | つなぎ方 |
 | --- | --- | --- |
-| まだの画面(TanStack Query の mutation) | 移した画面 | mutation の `onSuccess` で `revalidateApp` を呼ぶ(`legacy-bridge.ts` の `useLegacyRevalidate`) |
+| まだの画面(TanStack Query の mutation) | 移した画面 | `providers.tsx` の `MutationCache` の `onSuccess` で、すべての mutation の成功後に `revalidateAfterLegacyMutation` を呼ぶ(mutation ごとに足さない)。`useMutation` でない全データ削除だけは直接呼ぶ |
 | 移した画面(Server Action) | まだの画面 | Action を呼ぶ Client のフックが、成功後に関係する queryKey を invalidate する |
 
 今も読み直していない組み合わせ(マスタを直してもホームの値が古い、食事を変えても週の集計が古い)は、`revalidateApp` で全部読み直すので直る(AC-R-6)。
@@ -179,14 +181,17 @@ app/(main)/home/page.tsx                    Server。searchParams を受けて <
 - `next.config.ts`: `cacheComponents: true`・`partialPrefetching: true`
 - `src/app/(main)/loading.tsx` を消す。各ページの Suspense で待つ
 - ビルドで止まる所を直す(Suspense の外で cookie・時刻を読んでいる所)
+- Next.js を 16.4.3 に上げる(`partialPrefetching` のため)
+- 詳細画面(`[id]`)の `params` を Suspense の中で読む(`<feature>-form-section.tsx`)。下のタブはパスを読むので Suspense で包み、パスが決まらない間は選択なしのタブ(`BottomNavigationView`)を出す
 - `src/utils/date.ts`(`getTodayInTokyo` など)・`src/utils/search-params.ts`・`src/lib/revalidate.ts`・`src/lib/legacy-bridge.ts`
-- 今の mutation の `onSuccess` すべてに `useLegacyRevalidate` を足す
+- `providers.tsx` の `MutationCache` に `revalidateAfterLegacyMutation` をつなぐ
 - E2E: 隠れて残る画面に当たらないよう、`getByText` を見えている要素に絞る(`e2e/helpers.ts` に `visible` の絞り込みを足す)
-- `public/sw.js`: `CLEAR_CACHE` と `CACHE_VERSION` を上げる。ログアウトで呼ぶ(`account-section.tsx`)
+- `public/sw.js`: `CLEAR_CACHE` と `CACHE_VERSION` を上げる。ログアウトで呼ぶ(`src/lib/service-worker.ts` の `clearServiceWorkerCache`)
+- ログアウトの後は `router.push` ではなく、ページを読み込み直して `/login` に移る(隠れて残る画面と TanStack Query のキャッシュを捨てるため)
 
 確かめる流れ:
 1. ホームで食事を記録し、献立タブに移ってからホームに戻ると、記録した食事がスケルトンを挟まずに出ている
-2. ログアウトしてもう一度ログインすると、ホームに前の利用者の古い表示が出ない
+2. ログアウトしてもう一度ログインすると、ホームに前の利用者の古い表示が出ない(AC-R-9)
 
 学ぶこと: Cache Components(App Shell と動的な部分の分かれ目)、Activity で画面が隠れて残ること
 

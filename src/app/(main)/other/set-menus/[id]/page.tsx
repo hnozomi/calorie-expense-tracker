@@ -1,22 +1,20 @@
 import { Suspense } from "react";
 import {
+  SetMenuFormSection,
   SetMenuFormSkeleton,
-  SetMenuFormView,
 } from "@/components/features/set-menus";
 
-type SetMenuDetailPageProps = {
+type Props = {
   params: Promise<{ id: string }>;
 };
 
 /** Set menu create/edit page */
-export default async function SetMenuDetailPage({
-  params,
-}: SetMenuDetailPageProps) {
-  const { id } = await params;
-
+const SetMenuDetailPage = ({ params }: Props) => {
   return (
     <Suspense fallback={<SetMenuFormSkeleton />}>
-      <SetMenuFormView id={id} />
+      <SetMenuFormSection params={params} />
     </Suspense>
   );
-}
+};
+
+export default SetMenuDetailPage;

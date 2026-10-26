@@ -103,10 +103,15 @@ describe("BottomNavigation", () => {
       "@/components/features/layout/bottom-navigation"
     );
     render(<BottomNavigation />);
-    const homeLink = screen.getByText("ホーム").closest("a");
-    const planLink = screen.getByText("献立").closest("a");
     // /home is active (mocked pathname)
-    expect(homeLink?.className).toContain("text-brand");
-    expect(planLink?.className).toContain("text-muted-foreground");
+    expect(screen.getByRole("link", { name: "ホーム" })).toHaveAttribute(
+      "aria-current",
+      "page",
+    );
+    for (const name of ["献立", "レシピ", "その他"]) {
+      expect(screen.getByRole("link", { name })).not.toHaveAttribute(
+        "aria-current",
+      );
+    }
   });
 });

@@ -1,5 +1,10 @@
 import { expect, test } from "@playwright/test";
-import { fillStable, gotoHydrated, openSlotDrawer } from "./helpers";
+import {
+  fillStable,
+  gotoHydrated,
+  openSlotDrawer,
+  visibleText,
+} from "./helpers";
 
 test.describe("食事記録", () => {
   test("手動入力で朝食を登録するとサマリーに反映される", async ({ page }) => {
@@ -15,11 +20,11 @@ test.describe("食事記録", () => {
     await page.getByRole("button", { name: "カードに追加" }).click();
 
     // Footer summary shows the queued item
-    await expect(page.getByText("直前: E2Eトースト")).toBeVisible();
+    await expect(visibleText(page, "直前: E2Eトースト")).toBeVisible();
 
     // Register and verify it lands in the breakfast slot
     await page.getByRole("button", { name: "1件まとめて登録する" }).click();
-    await expect(page.getByText("1件の食事を登録しました")).toBeVisible({
+    await expect(visibleText(page, "1件の食事を登録しました")).toBeVisible({
       timeout: 10_000,
     });
     await expect(
@@ -37,7 +42,7 @@ test.describe("食事記録", () => {
     await fillStable(page, "メニュー名", "E2Eそば");
     await fillStable(page, "カロリー (kcal)", "400");
     await page.getByRole("button", { name: "カードに追加" }).click();
-    await expect(page.getByText("直前: E2Eそば")).toBeVisible();
+    await expect(visibleText(page, "直前: E2Eそば")).toBeVisible();
 
     // Type a second item but do NOT add it to the card
     await fillStable(page, "メニュー名", "E2Eいなり");
@@ -45,12 +50,12 @@ test.describe("食事記録", () => {
 
     // Register: the pending-input dialog must appear
     await page.getByRole("button", { name: "1件まとめて登録する" }).click();
-    await expect(page.getByText("入力中のアイテムがあります")).toBeVisible();
-    await expect(page.getByText("「E2Eいなり」")).toBeVisible();
+    await expect(visibleText(page, "入力中のアイテムがあります")).toBeVisible();
+    await expect(visibleText(page, "「E2Eいなり」")).toBeVisible();
 
     // Include the typed item and register both
     await page.getByRole("button", { name: "追加して登録" }).click();
-    await expect(page.getByText("2件の食事を登録しました")).toBeVisible({
+    await expect(visibleText(page, "2件の食事を登録しました")).toBeVisible({
       timeout: 10_000,
     });
     await expect(page.getByRole("button", { name: /E2Eそば/ })).toBeVisible();
@@ -64,12 +69,12 @@ test.describe("食事記録", () => {
     await fillStable(page, "メニュー名", "E2E破棄テスト");
     await fillStable(page, "カロリー (kcal)", "100");
     await page.getByRole("button", { name: "カードに追加" }).click();
-    await expect(page.getByText("直前: E2E破棄テスト")).toBeVisible();
+    await expect(visibleText(page, "直前: E2E破棄テスト")).toBeVisible();
 
     // Close the drawer via Escape → discard confirmation appears
     await page.keyboard.press("Escape");
     await expect(
-      page.getByText("入力中のアイテムを破棄しますか?"),
+      visibleText(page, "入力中のアイテムを破棄しますか?"),
     ).toBeVisible();
     await page.getByRole("button", { name: "破棄して閉じる" }).click();
 

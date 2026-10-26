@@ -1,9 +1,9 @@
 import { expect, test as setup } from "@playwright/test";
-import { loginViaUi } from "./helpers";
+import { loginViaUi, visibleText } from "./helpers";
 
 setup("authenticate", async ({ page }) => {
   await loginViaUi(page);
-  await expect(page.getByText("朝食")).toBeVisible();
+  await expect(visibleText(page, "朝食")).toBeVisible();
 
   await page.context().storageState({ path: "e2e/.auth/user.json" });
 });

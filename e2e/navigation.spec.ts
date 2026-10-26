@@ -1,5 +1,11 @@
 import { expect, test } from "@playwright/test";
-import { clickToReveal, fillStable, gotoHydrated } from "./helpers";
+import {
+  clickToReveal,
+  fillStable,
+  gotoHydrated,
+  visibleField,
+  visibleText,
+} from "./helpers";
 
 test.describe("ナビゲーション", () => {
   test("ボトムナビで各タブへ遷移できる", async ({ page }) => {
@@ -19,7 +25,7 @@ test.describe("ナビゲーション", () => {
     await expect(page.getByRole("link", { name: /設定/ })).toBeVisible();
 
     await page.getByRole("link", { name: "ホーム" }).click();
-    await expect(page.getByText("朝食")).toBeVisible();
+    await expect(visibleText(page, "朝食")).toBeVisible();
   });
 
   test("レシピを登録して一覧と編集画面に反映される", async ({ page }) => {
@@ -33,12 +39,12 @@ test.describe("ナビゲーション", () => {
     await fillStable(page, /レシピ名/, "E2E肉じゃが");
     await fillStable(page, /カロリー/, "500");
     await page.getByRole("button", { name: /登録する/ }).click();
-    await expect(page.getByText("レシピを登録しました")).toBeVisible();
+    await expect(visibleText(page, "レシピを登録しました")).toBeVisible();
 
     // The new recipe appears in the list; opening it prefills the edit form
     const card = page.getByRole("link", { name: /E2E肉じゃが/ });
     await expect(card).toBeVisible();
     await card.click();
-    await expect(page.getByLabel(/レシピ名/)).toHaveValue("E2E肉じゃが");
+    await expect(visibleField(page, /レシピ名/)).toHaveValue("E2E肉じゃが");
   });
 });

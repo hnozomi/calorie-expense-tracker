@@ -33,6 +33,23 @@ export const openSlotDrawer = async (
   );
 };
 
+/** Text on the screen being shown. With cacheComponents, screens visited
+ *  earlier stay in the DOM hidden (display: none), so a plain getByText can
+ *  match the same words on a hidden screen and fail on strict mode */
+export const visibleText = (
+  scope: Page | Locator,
+  text: string | RegExp,
+  options?: { exact?: boolean },
+): Locator => scope.getByText(text, options).filter({ visible: true });
+
+/** Field on the screen being shown, by its label. Hidden screens keep their
+ *  forms, so the same label (カロリー (kcal) etc.) can exist twice */
+export const visibleField = (
+  page: Page,
+  label: string | RegExp,
+  options?: { exact?: boolean },
+): Locator => page.getByLabel(label, options).filter({ visible: true });
+
 /** Fill an input and retry until the value sticks — React hydration can
  *  wipe values typed before the page becomes interactive */
 export const fillStable = async (
@@ -41,7 +58,7 @@ export const fillStable = async (
   value: string,
   options?: { exact?: boolean },
 ) => {
-  const field = page.getByLabel(label, { exact: options?.exact });
+  const field = visibleField(page, label, { exact: options?.exact });
   await expect(async () => {
     await field.fill(value);
     await expect(field).toHaveValue(value, { timeout: 500 });
@@ -50,12 +67,22 @@ export const fillStable = async (
 
 /** Log in through the UI and land on /home. Values typed before hydration
  *  never reach react-hook-form state, so the whole fill+submit is retried
- *  until the navigation succeeds. */
-export const loginViaUi = async (page: Page) => {
-  await gotoHydrated(page, "/login");
+ *  until the navigation succeeds. `navigate: false` uses the login screen
+ *  already shown (after a logout) instead of loading /login again. */
+export const loginViaUi = async (
+  page: Page,
+  user: { email: string; password: string } = e2eUser,
+  options: { navigate?: boolean } = {},
+) => {
+  if (options.navigate ?? true) {
+    await gotoHydrated(page, "/login");
+  } else {
+    await expect(page).toHaveURL(/\/login/);
+    await page.waitForLoadState("networkidle");
+  }
   await expect(async () => {
-    await fillStable(page, "メールアドレス", e2eUser.email);
-    await fillStable(page, "パスワード", e2eUser.password, {
+    await fillStable(page, "メールアドレス", user.email);
+    await fillStable(page, "パスワード", user.password, {
       exact: true,
     });
     await page.getByRole("button", { name: "ログイン" }).click();

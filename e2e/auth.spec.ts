@@ -1,5 +1,5 @@
 import { expect, test } from "@playwright/test";
-import { fillStable, gotoHydrated } from "./helpers";
+import { fillStable, gotoHydrated, visibleText } from "./helpers";
 import { e2eUser } from "./local-supabase";
 
 // Auth failure paths need a signed-out context
@@ -24,7 +24,7 @@ test.describe("認証", () => {
       await page.getByRole("button", { name: "ログイン" }).click();
       // Repeated E2E runs can hit the auth rate limit, which has its own message
       await expect(
-        page.getByText(/正しくありません|試行回数が多すぎます/),
+        visibleText(page, /正しくありません|試行回数が多すぎます/),
       ).toBeVisible({ timeout: 8_000 });
     }).toPass({ timeout: 40_000 });
     await expect(page).toHaveURL(/\/login/);
@@ -32,6 +32,6 @@ test.describe("認証", () => {
 
   test("存在しないページで日本語の404が表示される", async ({ page }) => {
     await page.goto("/no-such-page");
-    await expect(page.getByText("ページが見つかりません")).toBeVisible();
+    await expect(visibleText(page, "ページが見つかりません")).toBeVisible();
   });
 });

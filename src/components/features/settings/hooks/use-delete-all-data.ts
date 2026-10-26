@@ -4,6 +4,7 @@ import { useQueryClient } from "@tanstack/react-query";
 import { useCallback, useState } from "react";
 import { toast } from "sonner";
 import { useSupabase } from "@/hooks";
+import { revalidateAfterLegacyMutation } from "@/lib/legacy-bridge";
 
 /** Hook for deleting all user data with confirmation */
 export const useDeleteAllData = () => {
@@ -44,6 +45,8 @@ export const useDeleteAllData = () => {
 
       // Drop every cached query so deleted data disappears immediately app-wide
       queryClient.clear();
+      // Not a useMutation, so the MutationCache hook in providers.tsx does not see it
+      revalidateAfterLegacyMutation();
 
       toast.success("全データを削除しました");
     } catch (error) {

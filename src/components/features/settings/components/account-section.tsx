@@ -1,7 +1,7 @@
 "use client";
+// Client because it reads the session and signs out in the browser
 
 import { LogOut, User } from "lucide-react";
-import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useState } from "react";
 import { toast } from "sonner";
 import {
@@ -18,11 +18,11 @@ import {
 import { Button } from "@/components/ui/button";
 import { SectionHeader } from "@/components/ui/section-header";
 import { useSupabase } from "@/hooks";
+import { clearServiceWorkerCache } from "@/lib/service-worker";
 
 /** Section displaying account info and logout button */
 const AccountSection = () => {
   const supabase = useSupabase();
-  const router = useRouter();
   const [email, setEmail] = useState<string | null>(null);
   const [isSigningOut, setIsSigningOut] = useState(false);
 
@@ -42,9 +42,11 @@ const AccountSection = () => {
       setIsSigningOut(false);
       return;
     }
-    router.push("/login");
-    router.refresh();
-  }, [supabase, router]);
+    clearServiceWorkerCache();
+    // A full page load, not router.push: visited screens stay in the DOM (hidden) and the query cache
+    // keeps their data until the page is loaded again, so the next user could see them
+    window.location.assign("/login");
+  }, [supabase]);
 
   return (
     <section className="space-y-3">
