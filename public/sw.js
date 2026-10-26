@@ -39,9 +39,17 @@ self.addEventListener("message", (event) => {
     self.skipWaiting();
   }
   // Cached pages carry the signed-in user's data now that screens render on the server,
-  // so signing out drops them (the public pages are cached again on the next visit)
+  // so signing out drops them. The public pages are cached again right away: /offline is
+  // never visited, so it would otherwise be missing until the next install
   if (event.data?.type === "CLEAR_CACHE") {
-    event.waitUntil(caches.delete(CACHE_VERSION));
+    event.waitUntil(
+      caches
+        .delete(CACHE_VERSION)
+        .then(() => caches.open(CACHE_VERSION))
+        .then((cache) =>
+          Promise.allSettled(STATIC_ASSETS.map((asset) => cache.add(asset))),
+        ),
+    );
   }
 });
 
