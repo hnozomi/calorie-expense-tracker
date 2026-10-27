@@ -1,13 +1,13 @@
 "use server";
 
 import { z } from "zod/v4";
+import { mealPlanFormSchema } from "@/components/features/plan/types/meal-plan";
 import type { ActionResult } from "@/lib/action-result";
 import { revalidateAllScreens } from "@/lib/revalidate-screens";
 import { createClient } from "@/lib/supabase/server";
 import { getSignedInUserId } from "@/lib/supabase/user";
 import { MEAL_TYPES } from "@/types";
 import { isValidDateString } from "@/utils";
-import { mealPlanFormSchema } from "../types/meal-plan";
 
 // Action arguments come from the client and can be anything, so every input is parsed here
 const dateSchema = z.string().refine(isValidDateString);

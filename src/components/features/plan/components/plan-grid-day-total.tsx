@@ -1,26 +1,22 @@
+import type {
+  DailyTotals,
+  DayCalorieRating,
+} from "@/components/features/plan/utils/plan-index";
 import { PfcDisplay } from "@/components/ui/pfc-display";
 import { cn } from "@/utils";
-import type { DailyTotals } from "../utils/plan-index";
 
 type Props = {
   totals: DailyTotals;
   isToday: boolean;
-  targetCalories: number;
-  /** The largest day of the week, so the bar shows each day relative to it */
-  maxCalories: number;
+  rating: DayCalorieRating;
 };
 
 export const PlanGridDayTotal = ({
   totals,
   isToday,
-  targetCalories,
-  maxCalories,
+  rating: { isOver, isLow, intensity },
 }: Props) => {
   const cal = totals.calories;
-  const hasTarget = targetCalories > 0;
-  const isOver = hasTarget && cal > targetCalories;
-  const isLow = hasTarget && cal > 0 && cal < targetCalories * 0.8;
-  const intensity = maxCalories > 0 ? cal / maxCalories : 0;
 
   return (
     <div

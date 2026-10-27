@@ -1,7 +1,7 @@
 "use client";
 
 import { use, useState } from "react";
-import { buildShoppingList } from "../utils/shopping-list";
+import { buildShoppingList } from "@/components/features/plan/utils/shopping-list";
 import { useWeeklyPlansContext } from "./use-weekly-plans-context";
 
 /** The week's recipe-based plans added up into ingredients, with which ones are already bought */

@@ -1,4 +1,4 @@
-import type { DisplayedMealPlan } from "../types/meal-plan";
+import type { DisplayedMealPlan } from "@/components/features/plan/types/meal-plan";
 
 export type DailyTotals = {
   calories: number;
@@ -41,4 +41,25 @@ export const buildPlanIndex = (plans: DisplayedMealPlan[]) => {
   }
 
   return { plansBySlot, totalsByDate };
+};
+
+export type DayCalorieRating = {
+  isOver: boolean;
+  /** Planned but under 80% of the target */
+  isLow: boolean;
+  /** 0..1 against the largest day of the week, for the bar */
+  intensity: number;
+};
+
+export const rateDayCalories = (
+  calories: number,
+  targetCalories: number,
+  maxCalories: number,
+): DayCalorieRating => {
+  const hasTarget = targetCalories > 0;
+  return {
+    isOver: hasTarget && calories > targetCalories,
+    isLow: hasTarget && calories > 0 && calories < targetCalories * 0.8,
+    intensity: maxCalories > 0 ? calories / maxCalories : 0,
+  };
 };

@@ -1,21 +1,16 @@
 "use client";
+
 // Client because the dialog, its tabs and the manual form are interactive
 
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
+import { usePlanMenuSelectController } from "@/components/features/plan/hooks/use-plan-menu-select-controller";
+import type { MealPlan } from "@/components/features/plan/types/meal-plan";
+import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { Tabs, TabsContent } from "@/components/ui/tabs";
-import { MEAL_TYPE_LABELS, type MealType } from "@/types";
-import { formatDisplayDate } from "@/utils";
-import { usePlanMenuSelectController } from "../hooks/use-plan-menu-select-controller";
-import type { MealPlan } from "../types/meal-plan";
+import type { MealType } from "@/types";
 import { DeletePlanButton } from "./delete-plan-button";
 import { PlanCandidateTabs } from "./plan-candidate-tabs";
 import { PlanManualForm } from "./plan-manual-form";
+import { PlanMenuDialogHeader } from "./plan-menu-dialog-header";
 import { PlanMenuTabsList } from "./plan-menu-tabs-list";
 
 type Props = {
@@ -46,19 +41,7 @@ export const PlanMenuSelectModal = ({
   return (
     <Dialog open={isOpen} onOpenChange={menu.handleOpenChange}>
       <DialogContent className="max-h-[85vh] overflow-y-auto sm:max-w-md">
-        <DialogHeader className="space-y-1">
-          <DialogTitle className="flex items-center gap-2 text-base">
-            <span className="rounded-md bg-primary/10 px-2 py-0.5 text-sm font-semibold text-primary">
-              {MEAL_TYPE_LABELS[mealType]}
-            </span>
-            <span className="text-muted-foreground">
-              {formatDisplayDate(date)}
-            </span>
-          </DialogTitle>
-          <DialogDescription className="text-xs">
-            献立のメニューを選択または入力してください
-          </DialogDescription>
-        </DialogHeader>
+        <PlanMenuDialogHeader date={date} mealType={mealType} />
 
         <Tabs defaultValue="manual" className="mt-1">
           <PlanMenuTabsList />

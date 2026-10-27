@@ -1,5 +1,5 @@
+import type { MealPlan } from "@/components/features/plan/types/meal-plan";
 import type { MealType } from "@/types";
-import type { MealPlan } from "../types/meal-plan";
 
 // The Supabase client has no generated types, so rows arrive untyped; the casts follow the table definitions in supabase/migrations
 export type MasterRow = Record<string, unknown>;

@@ -1,15 +1,15 @@
 import "server-only";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { cacheLife } from "next/cache";
-import { SCREEN_CACHE } from "@/lib/screen-cache";
-import { createClient } from "@/lib/supabase/server";
-import { shiftDate } from "@/utils";
-import type { MealPlan } from "../types/meal-plan";
+import type { MealPlan } from "@/components/features/plan/types/meal-plan";
 import {
   collectPlanMasterIds,
   type MasterRow,
   toMealPlan,
-} from "../utils/meal-plan-rows";
+} from "@/components/features/plan/utils/meal-plan-rows";
+import { SCREEN_CACHE } from "@/lib/screen-cache";
+import { createClient } from "@/lib/supabase/server";
+import { shiftDate } from "@/utils";
 
 const fetchPlanMasters = async (
   supabase: SupabaseClient,

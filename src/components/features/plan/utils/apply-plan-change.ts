@@ -1,4 +1,7 @@
-import type { DisplayedMealPlan, PlanChange } from "../types/meal-plan";
+import type {
+  DisplayedMealPlan,
+  PlanChange,
+} from "@/components/features/plan/types/meal-plan";
 
 /** Show a change right away: a saved plan replaces the one with its id, or is added */
 export const applyPlanChange = (

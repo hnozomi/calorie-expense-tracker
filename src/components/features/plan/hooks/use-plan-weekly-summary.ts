@@ -2,10 +2,13 @@
 
 import { useTransition } from "react";
 import { toast } from "sonner";
+import {
+  syncMealsToPlans,
+  transferPlansToMeals,
+} from "@/components/features/plan/api/actions";
 import { callAction } from "@/lib/action-result";
 import { useRefreshLegacyScreens } from "@/lib/legacy-bridge";
 import { formatMonthDay, shiftDate } from "@/utils";
-import { syncMealsToPlans, transferPlansToMeals } from "../api/actions";
 import { useWeeklyPlansContext } from "./use-weekly-plans-context";
 
 /** Weekly totals against the target, plus moving today's plans into the meal record and actual meals into past plans */

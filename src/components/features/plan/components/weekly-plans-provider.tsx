@@ -4,9 +4,9 @@
 import {
   useWeeklyPlansProviderValue,
   WeeklyPlansContext,
-} from "../hooks/use-weekly-plans-context";
-import type { MealPlan } from "../types/meal-plan";
-import type { PlanCandidates } from "../types/plan-candidates";
+} from "@/components/features/plan/hooks/use-weekly-plans-context";
+import type { MealPlan } from "@/components/features/plan/types/meal-plan";
+import type { PlanCandidates } from "@/components/features/plan/types/plan-candidates";
 
 type Props = {
   weekStart: string;

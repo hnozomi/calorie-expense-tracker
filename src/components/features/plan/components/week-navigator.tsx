@@ -1,8 +1,8 @@
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import Link from "next/link";
+import { planHref } from "@/components/features/plan/utils/plan-href";
 import { Button } from "@/components/ui/button";
 import { formatWeekLabel, shiftDate } from "@/utils";
-import { planHref } from "../utils/plan-href";
 
 type Props = {
   weekStart: string;

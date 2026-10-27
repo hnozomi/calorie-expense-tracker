@@ -1,9 +1,10 @@
 "use client";
+
 // Client because it follows the plans still being saved and runs the transfer and sync actions
 
+import { usePlanWeeklySummary } from "@/components/features/plan/hooks/use-plan-weekly-summary";
 import { Button } from "@/components/ui/button";
 import { PfcDisplay } from "@/components/ui/pfc-display";
-import { usePlanWeeklySummary } from "../hooks/use-plan-weekly-summary";
 import { SyncActualsButton } from "./sync-actuals-button";
 import { WeeklyTargetBar } from "./weekly-target-bar";
 

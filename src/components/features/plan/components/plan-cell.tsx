@@ -3,9 +3,9 @@
 
 import { Plus } from "lucide-react";
 import { Suspense } from "react";
+import { usePlanCell } from "@/components/features/plan/hooks/use-plan-cell";
+import type { DisplayedMealPlan } from "@/components/features/plan/types/meal-plan";
 import type { MealType } from "@/types";
-import { usePlanCell } from "../hooks/use-plan-cell";
-import type { DisplayedMealPlan } from "../types/meal-plan";
 import { PlanMenuSelectModal } from "./plan-menu-select-modal";
 
 type Props = {

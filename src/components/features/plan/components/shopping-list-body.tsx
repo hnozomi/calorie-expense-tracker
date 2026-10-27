@@ -1,7 +1,7 @@
 "use client";
 // Client because ticking an ingredient is local state, and the recipes are unwrapped with use()
 
-import { useShoppingList } from "../hooks/use-shopping-list";
+import { useShoppingList } from "@/components/features/plan/hooks/use-shopping-list";
 import { ShoppingListRow } from "./shopping-list-row";
 
 export const ShoppingListBody = () => {

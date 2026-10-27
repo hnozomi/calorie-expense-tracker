@@ -4,13 +4,19 @@ import { startTransition, use, useEffect, useState } from "react";
 import { toast } from "sonner";
 import type { FoodMaster } from "@/components/features/food-masters/types/food-master";
 import { matchesSearch } from "@/components/features/meals/utils/matches-search";
+import {
+  deleteMealPlan,
+  saveMealPlan,
+} from "@/components/features/plan/api/actions";
+import type {
+  MealPlan,
+  MealPlanFormValues,
+} from "@/components/features/plan/types/meal-plan";
 import type { Recipe } from "@/components/features/recipes/types/recipe";
 import type { SetMenu } from "@/components/features/set-menus/types/set-menu";
 import { callAction } from "@/lib/action-result";
 import { useRefreshLegacyScreens } from "@/lib/legacy-bridge";
 import type { MealType } from "@/types";
-import { deleteMealPlan, saveMealPlan } from "../api/actions";
-import type { MealPlan, MealPlanFormValues } from "../types/meal-plan";
 import { useWeeklyPlansContext } from "./use-weekly-plans-context";
 
 type SaveRefs = {

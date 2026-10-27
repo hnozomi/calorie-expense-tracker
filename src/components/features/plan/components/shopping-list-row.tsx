@@ -1,8 +1,8 @@
-import { cn } from "@/utils";
 import {
   formatShoppingQuantity,
   type ShoppingListEntry,
-} from "../utils/shopping-list";
+} from "@/components/features/plan/utils/shopping-list";
+import { cn } from "@/utils";
 
 type Props = {
   entry: ShoppingListEntry;

@@ -1,9 +1,9 @@
 import { getFoodMasters } from "@/components/features/food-masters/api/queries";
+import { getWeeklyMealPlans } from "@/components/features/plan/api/queries";
+import type { PlanCandidates } from "@/components/features/plan/types/plan-candidates";
 import { getRecipes } from "@/components/features/recipes/api/queries";
 import { getSetMenus } from "@/components/features/set-menus/api/queries";
 import { getNutritionTarget } from "@/components/features/settings/api/queries";
-import { getWeeklyMealPlans } from "../api/queries";
-import type { PlanCandidates } from "../types/plan-candidates";
 import { PlanCalendarGrid } from "./plan-calendar-grid";
 import { PlanWeeklySummary } from "./plan-weekly-summary";
 import { ShoppingListButton } from "./shopping-list-button";

@@ -1,7 +1,7 @@
+import type { DisplayedMealPlan } from "@/components/features/plan/types/meal-plan";
 import { MEAL_TYPE_LABELS, type MealType } from "@/types";
 import { cn } from "@/utils";
 import type { WeekDay } from "@/utils/date";
-import type { DisplayedMealPlan } from "../types/meal-plan";
 import { PlanCell } from "./plan-cell";
 
 type Props = {

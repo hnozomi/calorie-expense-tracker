@@ -2,8 +2,8 @@
 // Client because it opens the shopping list dialog
 
 import { ShoppingCart } from "lucide-react";
+import { useShoppingListButton } from "@/components/features/plan/hooks/use-shopping-list-button";
 import { Button } from "@/components/ui/button";
-import { useShoppingListButton } from "../hooks/use-shopping-list-button";
 import { ShoppingListDialog } from "./shopping-list-dialog";
 
 export const ShoppingListButton = () => {

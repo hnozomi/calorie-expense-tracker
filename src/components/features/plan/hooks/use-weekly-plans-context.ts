@@ -5,9 +5,9 @@ import type {
   DisplayedMealPlan,
   MealPlan,
   PlanChange,
-} from "../types/meal-plan";
-import type { PlanCandidates } from "../types/plan-candidates";
-import { applyPlanChange } from "../utils/apply-plan-change";
+} from "@/components/features/plan/types/meal-plan";
+import type { PlanCandidates } from "@/components/features/plan/types/plan-candidates";
+import { applyPlanChange } from "@/components/features/plan/utils/apply-plan-change";
 
 type WeeklyPlansContextValue = {
   weekStart: string;
