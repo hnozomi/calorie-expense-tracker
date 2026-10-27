@@ -82,23 +82,28 @@ src/components/features/<feature>/
 どの画面も同じ形にする。ホームを例に書く。
 
 ```
-app/(main)/home/page.tsx                    Server。searchParams を受けて <Suspense key={date}> を置くだけ
+app/(main)/home/page.tsx                    Server。Header と <Suspense> を置くだけ
 ├─ Header「めしログ」                        Server。Suspense の外(すぐ出る)
-├─ <Suspense key={date} fallback={DailySkeleton}>
-│   └─ DailySection                          Server。今日を決め、食事・集計・目標値を Promise.all で読む
-│       ├─ DateNavigator                     Client(日付の入力)。前後の日は <Link prefetch>。useDateNavigator
-│       ├─ DailySummaryCard                  Server(描画だけ)
-│       └─ MealSlotList                      Client。useOptimisticMeals(楽観的な追加・削除・編集)
-│           ├─ MealSlotCard × 4              Client(描画だけ)。前日コピー・献立へ転記のボタン
-│           └─ MealItemEditModal             Client。useMealItemEdit
-└─ <Suspense fallback={null}>
-    └─ RegisterDrawerSection                 Server。履歴・レシピ・マスタ・セットの Promise を作って渡す(await しない)
-        └─ MealRegisterDrawer                Client。use(promise) で候補を受ける。useMealRegisterDrawerController
+└─ <Suspense fallback={DailySkeleton}>
+    └─ DailySection                          Server。?date= を読み、今日を決める(形が違えば notFound)
+        └─ <Suspense key={date} fallback={DailySkeleton}>
+            └─ DailyContent                  Server。食事・集計・目標値を Promise.all で読む。Drawer の候補は Promise のまま渡す(await しない)
+                └─ DailyMealsProvider        Client。useOptimistic の食事をスロット・集計・Drawer で共有(useDailyMealsContext)
+                    ├─ DateNavigator         Client。前後の日と「今日へ」は <Link>(前後は prefetch)、日付の入力は router.push。useDateNavigator
+                    ├─ DailySummary          Client。サーバーの集計に、保存中の変更の差分を足して出す(useDisplayedSummaryRows)
+                    │   └─ DailySummaryCard  描画だけ
+                    ├─ MealSlotList          Client
+                    │   └─ MealSlotCard × 4  Client(描画だけ)。useMealSlot(前日コピー・献立へ転記・編集の開閉)
+                    │       └─ MealItemEditModal  Client。useMealItemEdit
+                    └─ MealRegisterDrawer    Client。useMealRegisterDrawerController
+                        └─ CandidateSelector Client。use(promise) で候補を受ける(Suspense の中)
 ```
 
 - **ページ**: Server。`searchParams` を読む部品を Suspense の中に置き、`key` に日・週・検索語を入れる
-- **Section**: Server。データを読み、Client の末端に props で渡す。ロジックを持たない
-- **Client の末端**: 状態・イベントが要る所だけ。ロジックはフックに置く(`useOptimisticMeals` `useMealItemEdit` `useDateNavigator`)
+- **Section・Content**: Server。データを読み、Client の末端に props で渡す。ロジックを持たない
+- **Client の末端**: 状態・イベントが要る所だけ。ロジックはフックに置く(`useDailyMealsContext` `useMealItemEdit` `useDateNavigator`)
+- **集計の楽観表示**: 集計の正はサーバー(RPC)のまま。保存中の項目と確定した項目の差だけを足すので、保存が終われば数字はサーバーと一致する(`utils/adjust-summary-rows.ts`)
+- **Server Action の呼び出しの失敗**: 通信が切れたときなどは呼び出しが例外になる。`callAction`(`src/lib/action-result.ts`)で `{ ok: false }` と同じ扱いにし、画面全体をエラーにしない
 - **Drawer・モーダルの候補**: 開く前から要るが、画面の主な表示には要らない。Section で Promise を作って Client に渡し、Client の中で `use()` する。開くまでに読み終わり、開いた瞬間に出る
 - 献立(`PlanSection` → `PlanCalendarGrid`・`PlanWeeklySummary`・買い物リスト・献立の候補)、一覧(`RecipeListSection` → 検索欄は Client で `?q=` を書き換える)、詳細(`RecipeFormSection` → `RecipeFormView` は Client のまま、初期値を props で受ける)も同じ形
 
@@ -126,7 +131,7 @@ app/(main)/home/page.tsx                    Server。searchParams を受けて <
 - 読む: `api/queries.ts`。`'use cache: private'` + `cacheLife({ stale: 300, revalidate: 300, expire: 3600 })`。データはこのアプリの中からしか変わらず、記録はスマホからだけ(別の端末で足すことが無い)ため 300 秒(規約)
 - 1回の表示で同じものを2か所から読むとき(目標値をホームの集計と Drawer で使う など)は、`cache` で包む
 - 書く: `api/actions.ts`。入力を `unknown` で受けて zod で確かめ、今の更新(`from().insert/update/delete`・RPC)をそのまま呼び、最後に `revalidateApp()`
-- 「今日」: サーバーで `getTodayInTokyo()`(`Intl.DateTimeFormat` に `timeZone: "Asia/Tokyo"`)。cookie を読んだ後で呼ぶ(規約)
+- 「今日」: サーバーで `getToday()`(`src/lib/today.ts`)。`'use cache: private'` の中で `getTodayInTokyo()`(`Intl.DateTimeFormat` に `timeZone: "Asia/Tokyo"`)を呼ぶ。searchParams を読んだ後でも、dev の事前描画は `new Date()` を止めるため(規約)。使い回す時間は画面のデータと同じなので、0時をまたいだ直後は最大その時間だけ前の日のままになる
 - ブラウザから DB を読むのは、ログイン・新規登録(`auth`)だけ残す
 
 ### 移行中のつなぎ
@@ -199,7 +204,9 @@ app/(main)/home/page.tsx                    Server。searchParams を受けて <
 
 - `/home?date=`。`meals/api/queries.ts`(日の食事・集計・履歴)・`settings/api/queries.ts`(目標値)・`recipes`・`food-masters`・`set-menus` の一覧の読み取り(Drawer の候補)
 - `meals/api/actions.ts`: 登録(RPC)・編集・削除・前日コピー・献立へ転記
-- `home/page.tsx`・`DailySection`・`RegisterDrawerSection`・`MealSlotList`(useOptimistic)・`DateNavigator`(前後の日は `<Link prefetch>`、日付の入力は `router.replace`)
+- `home/page.tsx`・`DailySection`・`DailyContent`・`DailyMealsProvider`(useOptimistic)・`DailySummary`・`MealSlotList`・`DateNavigator`(前後の日は `<Link prefetch>`、日付の入力は `router.push`。前後の日と同じく履歴に積み、戻るで前の日に戻れるようにする)
+- 一覧の行の型への変換(`to-recipe` など)を各機能の `utils/` に出し、まだ TanStack Query の一覧画面と、サーバーで読む関数の両方から使う
+- サーバーで読んだ画面の更新の後は、まだ TanStack Query の画面(献立・レポート)を `useRefreshLegacyScreens` で古い扱いにする
 - 消す: `meals/queries.ts`・`stores/date-atom.ts`・`use-daily-meals` などの取得・更新の hooks・ホームの `HydratedOnly`。`TabDataPrefetcher` から食事を外す
 - 単体テストを書き直す(`meal-slot-card`・`meal-item-edit-modal`・`use-meal-register-drawer-controller`・各 selector・`date-atom`・`date-navigator`)
 
