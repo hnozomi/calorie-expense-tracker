@@ -1,86 +1,32 @@
 "use client";
+// Client because it opens the register and edit drawers and runs the slot actions
 
-import { useAtomValue, useSetAtom } from "jotai";
-import { CalendarPlus, ChevronRight, CopyPlus, Plus } from "lucide-react";
-import { useState } from "react";
-import { toast } from "sonner";
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-  AlertDialogTrigger,
-} from "@/components/ui/alert-dialog";
-import { PfcDisplay } from "@/components/ui/pfc-display";
+import { Plus } from "lucide-react";
 import { MEAL_TYPE_LABELS, type MealType } from "@/types";
-import { cn, MEAL_TYPE_META } from "@/utils";
-import { useCopyPreviousDayMeal } from "../hooks/use-copy-previous-day-meal";
-import { useTransferMealToPlan } from "../hooks/use-transfer-meal-to-plan";
-import { selectedDateAtom } from "../stores/date-atom";
-import {
-  drawerMealTypeAtom,
-  isDrawerOpenAtom,
-} from "../stores/meal-register-atom";
-import type { MealItem } from "../types/meal";
+import { useMealSlot } from "../hooks/use-meal-slot";
+import type { DisplayedMealItem } from "../types/meal";
+import { EmptySlotActions } from "./empty-slot-actions";
 import { MealItemEditModal } from "./meal-item-edit-modal";
+import { MealItemRow } from "./meal-item-row";
+import { MealSlotHeader } from "./meal-slot-header";
 
-type MealSlotCardProps = {
+type Props = {
   mealType: MealType;
-  items: MealItem[];
+  items: DisplayedMealItem[];
 };
 
-/** A single meal slot (breakfast/lunch/dinner/snack) showing its items */
-const MealSlotCard = ({ mealType, items }: MealSlotCardProps) => {
-  const setIsDrawerOpen = useSetAtom(isDrawerOpenAtom);
-  const setDrawerMealType = useSetAtom(drawerMealTypeAtom);
-  const selectedDate = useAtomValue(selectedDateAtom);
-  const [editingItem, setEditingItem] = useState<MealItem | null>(null);
-  const transferToPlan = useTransferMealToPlan();
-  const copyPreviousDay = useCopyPreviousDayMeal();
-
-  const openDrawer = () => {
-    setDrawerMealType(mealType);
-    setIsDrawerOpen(true);
-  };
-
-  /** Copy the previous day's items in this slot into the selected date */
-  const handleCopyPreviousDay = async () => {
-    try {
-      const copiedCount = await copyPreviousDay.mutateAsync({
-        date: selectedDate,
-        mealType,
-      });
-      if (copiedCount === 0) {
-        toast.info(`前日の${MEAL_TYPE_LABELS[mealType]}の記録がありません`);
-      } else {
-        toast.success(
-          `前日の${MEAL_TYPE_LABELS[mealType]}(${copiedCount}件)をコピーしました`,
-        );
-      }
-    } catch {
-      toast.error("コピーに失敗しました");
-    }
-  };
-
-  const handleTransferToPlan = async () => {
-    try {
-      await transferToPlan.mutateAsync({
-        targetDate: selectedDate,
-        mealType,
-      });
-      toast.success("献立に反映しました");
-    } catch {
-      toast.error("献立への反映に失敗しました");
-    }
-  };
-
-  const totalCalories = items.reduce((sum, item) => sum + item.calories, 0);
-  const meta = MEAL_TYPE_META[mealType];
-  const Icon = meta.icon;
+export const MealSlotCard = ({ mealType, items }: Props) => {
+  const {
+    editingItem,
+    isCopying,
+    isTransferring,
+    totalCalories,
+    openDrawer,
+    handleCopyPreviousDay,
+    handleTransferToPlan,
+    startEditing,
+    stopEditing,
+  } = useMealSlot(mealType, items);
 
   return (
     <>
@@ -88,105 +34,26 @@ const MealSlotCard = ({ mealType, items }: MealSlotCardProps) => {
         aria-label={`${MEAL_TYPE_LABELS[mealType]}の記録`}
         className="overflow-hidden rounded-xl border bg-card shadow-sm"
       >
-        {/* Header row */}
-        <div className="flex items-center justify-between px-3.5 pt-3 pb-2">
-          <div className="flex items-center gap-2">
-            <div
-              className={cn(
-                "flex h-7 w-7 items-center justify-center rounded-lg",
-                meta.iconBg,
-              )}
-            >
-              <Icon className={cn("h-3.5 w-3.5", meta.accent)} />
-            </div>
-            <span className="text-sm font-semibold">
-              {MEAL_TYPE_LABELS[mealType]}
-            </span>
-          </div>
-          {items.length > 0 && (
-            <div className="flex items-center gap-2">
-              <span className="text-sm font-semibold tabular-nums text-muted-foreground">
-                {Math.round(totalCalories)} kcal
-              </span>
-              <AlertDialog>
-                <AlertDialogTrigger asChild>
-                  <button
-                    type="button"
-                    className="flex h-6 w-6 items-center justify-center rounded-md text-muted-foreground/60 transition-colors hover:bg-muted hover:text-foreground active:bg-muted/80"
-                    disabled={transferToPlan.isPending}
-                    title="献立に反映"
-                    aria-label="献立に反映"
-                  >
-                    <CalendarPlus className="h-3.5 w-3.5" />
-                  </button>
-                </AlertDialogTrigger>
-                <AlertDialogContent>
-                  <AlertDialogHeader>
-                    <AlertDialogTitle>献立に反映しますか？</AlertDialogTitle>
-                    <AlertDialogDescription>
-                      この{MEAL_TYPE_LABELS[mealType]}
-                      の内容を献立カレンダーに追加します。
-                    </AlertDialogDescription>
-                  </AlertDialogHeader>
-                  <AlertDialogFooter>
-                    <AlertDialogCancel>キャンセル</AlertDialogCancel>
-                    <AlertDialogAction onClick={handleTransferToPlan}>
-                      反映する
-                    </AlertDialogAction>
-                  </AlertDialogFooter>
-                </AlertDialogContent>
-              </AlertDialog>
-            </div>
-          )}
-        </div>
+        <MealSlotHeader
+          mealType={mealType}
+          hasItems={items.length > 0}
+          totalCalories={totalCalories}
+          isTransferring={isTransferring}
+          onTransfer={handleTransferToPlan}
+        />
 
         {/* Items list */}
         <div className="px-1.5 pb-1.5">
           {items.length === 0 ? (
-            <>
-              <button
-                type="button"
-                className="flex w-full items-center justify-center gap-1.5 rounded-lg border border-dashed border-muted-foreground/20 py-4 text-sm text-muted-foreground transition-colors active:bg-muted/60"
-                onClick={openDrawer}
-              >
-                <Plus className="h-4 w-4" />
-                登録する
-              </button>
-              <button
-                type="button"
-                className="mt-1 flex w-full items-center justify-center gap-1.5 rounded-lg py-2 text-xs text-muted-foreground/80 transition-colors active:bg-muted/60 disabled:opacity-50"
-                onClick={handleCopyPreviousDay}
-                disabled={copyPreviousDay.isPending}
-              >
-                <CopyPlus className="h-3.5 w-3.5" />
-                {copyPreviousDay.isPending ? "コピー中..." : "前日をコピー"}
-              </button>
-            </>
+            <EmptySlotActions
+              isCopying={isCopying}
+              onRegister={openDrawer}
+              onCopyPreviousDay={handleCopyPreviousDay}
+            />
           ) : (
             <>
               {items.map((item) => (
-                <button
-                  key={item.id}
-                  type="button"
-                  className="flex w-full items-center justify-between gap-2 rounded-lg px-2.5 py-2 text-left text-sm transition-colors active:bg-muted/70"
-                  onClick={() => setEditingItem(item)}
-                >
-                  <div className="min-w-0 flex-1">
-                    <p className="truncate font-medium">{item.name}</p>
-                    <PfcDisplay
-                      protein={item.protein}
-                      fat={item.fat}
-                      carbs={item.carbs}
-                      className="mt-0.5"
-                    />
-                  </div>
-                  <div className="flex shrink-0 items-center gap-1">
-                    <span className="tabular-nums text-muted-foreground">
-                      {Math.round(item.calories)} kcal
-                    </span>
-                    <ChevronRight className="h-3.5 w-3.5 text-muted-foreground/50" />
-                  </div>
-                </button>
+                <MealItemRow key={item.id} item={item} onEdit={startEditing} />
               ))}
 
               {/* Add button as a list row */}
@@ -206,12 +73,10 @@ const MealSlotCard = ({ mealType, items }: MealSlotCardProps) => {
       <MealItemEditModal
         key={editingItem?.id}
         item={editingItem}
-        date={selectedDate}
         isOpen={!!editingItem}
-        onClose={() => setEditingItem(null)}
+        onClose={stopEditing}
+        onSaveFailed={startEditing}
       />
     </>
   );
 };
-
-export { MealSlotCard };

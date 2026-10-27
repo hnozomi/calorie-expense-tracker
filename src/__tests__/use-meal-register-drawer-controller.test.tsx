@@ -1,15 +1,18 @@
 import { act, renderHook, waitFor } from "@testing-library/react";
-import { Provider as JotaiProvider } from "jotai";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { useMealRegisterDrawerController } from "@/components/features/meals/hooks/use-meal-register-drawer-controller";
+import { drawerMealTypeAtom } from "@/components/features/meals/stores/meal-register-atom";
 import type { MealItemFormValues } from "@/components/features/meals/types/meal";
+import type { ActionResult } from "@/lib/action-result";
+import { createDailyMealsWrapper, deferred } from "./helpers/daily-meals";
 
-const mockRegisterMutateAsync = vi.fn();
-vi.mock("@/components/features/meals/hooks/use-register-meal-items", () => ({
-  useRegisterMealItems: () => ({
-    mutateAsync: mockRegisterMutateAsync,
-    isPending: false,
-  }),
+const mockRegisterMealItems = vi.fn();
+vi.mock("@/components/features/meals/api/actions", () => ({
+  registerMealItems: (...args: unknown[]) => mockRegisterMealItems(...args),
+  updateMealItem: vi.fn(),
+  deleteMealItem: vi.fn(),
+  copyPreviousDayMeal: vi.fn(),
+  transferMealToPlan: vi.fn(),
 }));
 
 const mockProcessImage = vi.fn();
@@ -28,19 +31,34 @@ vi.mock("next/navigation", () => ({
   useRouter: () => ({ push: mockPush }),
 }));
 
+const mockToastError = vi.fn();
 vi.mock("sonner", () => ({
-  toast: { success: vi.fn(), error: vi.fn(), info: vi.fn() },
+  toast: {
+    success: vi.fn(),
+    error: (...args: unknown[]) => mockToastError(...args),
+    info: vi.fn(),
+  },
 }));
 
 afterEach(() => {
   vi.clearAllMocks();
 });
 
-/** Fresh Jotai store per test so atom state never leaks between cases */
-const renderController = () =>
-  renderHook(() => useMealRegisterDrawerController(), {
-    wrapper: ({ children }) => <JotaiProvider>{children}</JotaiProvider>,
+const DAY = "2026-10-19";
+
+/** Fresh Jotai store per test so atom state never leaks between cases. The home screen shows DAY */
+const renderController = () => {
+  const { Wrapper, store } = createDailyMealsWrapper({
+    date: DAY,
+    today: "2026-10-20",
   });
+  return {
+    ...renderHook(() => useMealRegisterDrawerController(), {
+      wrapper: Wrapper,
+    }),
+    store,
+  };
+};
 
 const itemValues = (
   overrides: Partial<MealItemFormValues> = {},
@@ -54,7 +72,7 @@ const itemValues = (
 });
 
 describe("useMealRegisterDrawerController", () => {
-  it("手動追加で下書きにsourceType=manualのアイテムが積まれる", () => {
+  it("S-02: 手動追加で下書きにsourceType=manualのアイテムが積まれる", () => {
     const { result } = renderController();
     act(() => result.current.handleManualAdd(itemValues()));
 
@@ -65,7 +83,7 @@ describe("useMealRegisterDrawerController", () => {
     });
   });
 
-  it("履歴からの追加は元のsourceTypeとマスタ参照を保持する", () => {
+  it("QA-2: 履歴からの追加は元のsourceTypeとマスタ参照を保持する", () => {
     const { result } = renderController();
     act(() =>
       result.current.handleRecentAdd({
@@ -90,7 +108,7 @@ describe("useMealRegisterDrawerController", () => {
     });
   });
 
-  it("下書きがある状態で閉じると破棄確認が開き、ドロワーは閉じない", () => {
+  it("M-3: 下書きがある状態で閉じると破棄確認が開き、ドロワーは閉じない", () => {
     const { result } = renderController();
     act(() => result.current.handleOpenChange(true));
     act(() => result.current.handleManualAdd(itemValues()));
@@ -101,7 +119,7 @@ describe("useMealRegisterDrawerController", () => {
     expect(result.current.isOpen).toBe(true);
   });
 
-  it("下書きが無くても入力中のフォーム値があれば破棄確認が開く", () => {
+  it("M-3: 下書きが無くても入力中のフォーム値があれば破棄確認が開く", () => {
     const { result } = renderController();
     act(() => result.current.handleOpenChange(true));
     result.current.manualPendingRef.current = () => itemValues();
@@ -112,7 +130,7 @@ describe("useMealRegisterDrawerController", () => {
     expect(result.current.isOpen).toBe(true);
   });
 
-  it("下書きも入力も無ければそのまま閉じる", () => {
+  it("M-3: 下書きも入力も無ければそのまま閉じる", () => {
     const { result } = renderController();
     act(() => result.current.handleOpenChange(true));
 
@@ -122,7 +140,7 @@ describe("useMealRegisterDrawerController", () => {
     expect(result.current.isOpen).toBe(false);
   });
 
-  it("破棄を選ぶとドロワーが閉じて下書きが消える", () => {
+  it("M-3: 破棄を選ぶとドロワーが閉じて下書きが消える", () => {
     const { result } = renderController();
     act(() => result.current.handleOpenChange(true));
     act(() => result.current.handleManualAdd(itemValues()));
@@ -133,23 +151,21 @@ describe("useMealRegisterDrawerController", () => {
     expect(result.current.draftItems).toHaveLength(0);
   });
 
-  it("未追加入力が無ければ登録が実行され、下書きが消えて閉じる", async () => {
-    mockRegisterMutateAsync.mockResolvedValue(undefined);
+  it("S-02: 未追加入力が無ければ登録が実行され、下書きが消えて閉じる", async () => {
+    mockRegisterMealItems.mockResolvedValue({ ok: true });
     const { result } = renderController();
     act(() => result.current.handleOpenChange(true));
     act(() => result.current.handleManualAdd(itemValues()));
 
     await act(async () => result.current.handleRegister());
 
-    await waitFor(() =>
-      expect(mockRegisterMutateAsync).toHaveBeenCalledTimes(1),
-    );
-    expect(mockRegisterMutateAsync.mock.calls[0][0].items).toHaveLength(1);
+    await waitFor(() => expect(mockRegisterMealItems).toHaveBeenCalledTimes(1));
+    expect(mockRegisterMealItems.mock.calls[0][0].items).toHaveLength(1);
     expect(result.current.isOpen).toBe(false);
     expect(result.current.draftItems).toHaveLength(0);
   });
 
-  it("未追加入力があると登録せず確認状態(pendingRegisterItems)になる", async () => {
+  it("M-2: 未追加入力があると登録せず確認状態(pendingRegisterItems)になる", async () => {
     const { result } = renderController();
     act(() => result.current.handleManualAdd(itemValues()));
     result.current.manualPendingRef.current = () =>
@@ -157,15 +173,15 @@ describe("useMealRegisterDrawerController", () => {
 
     await act(async () => result.current.handleRegister());
 
-    expect(mockRegisterMutateAsync).not.toHaveBeenCalled();
+    expect(mockRegisterMealItems).not.toHaveBeenCalled();
     expect(result.current.pendingRegisterItems).toHaveLength(1);
     expect(result.current.pendingRegisterItems?.[0].values.name).toBe(
       "未追加の品",
     );
   });
 
-  it("「追加して登録」は下書き+未追加入力をまとめて登録する", async () => {
-    mockRegisterMutateAsync.mockResolvedValue(undefined);
+  it("M-2: 「追加して登録」は下書き+未追加入力をまとめて登録する", async () => {
+    mockRegisterMealItems.mockResolvedValue({ ok: true });
     const { result } = renderController();
     act(() => result.current.handleManualAdd(itemValues()));
     result.current.manualPendingRef.current = () =>
@@ -174,10 +190,8 @@ describe("useMealRegisterDrawerController", () => {
 
     await act(async () => result.current.handleRegisterWithPending());
 
-    await waitFor(() =>
-      expect(mockRegisterMutateAsync).toHaveBeenCalledTimes(1),
-    );
-    const registered = mockRegisterMutateAsync.mock.calls[0][0].items;
+    await waitFor(() => expect(mockRegisterMealItems).toHaveBeenCalledTimes(1));
+    const registered = mockRegisterMealItems.mock.calls[0][0].items;
     expect(registered).toHaveLength(2);
     expect(registered[1]).toMatchObject({
       name: "未追加の品",
@@ -185,8 +199,8 @@ describe("useMealRegisterDrawerController", () => {
     });
   });
 
-  it("「追加せずに登録」は下書きのみ登録する", async () => {
-    mockRegisterMutateAsync.mockResolvedValue(undefined);
+  it("M-2: 「追加せずに登録」は下書きのみ登録する", async () => {
+    mockRegisterMealItems.mockResolvedValue({ ok: true });
     const { result } = renderController();
     act(() => result.current.handleManualAdd(itemValues()));
     result.current.manualPendingRef.current = () =>
@@ -195,29 +209,155 @@ describe("useMealRegisterDrawerController", () => {
 
     await act(async () => result.current.handleRegisterWithoutPending());
 
-    await waitFor(() =>
-      expect(mockRegisterMutateAsync).toHaveBeenCalledTimes(1),
-    );
-    expect(mockRegisterMutateAsync.mock.calls[0][0].items).toHaveLength(1);
+    await waitFor(() => expect(mockRegisterMealItems).toHaveBeenCalledTimes(1));
+    expect(mockRegisterMealItems.mock.calls[0][0].items).toHaveLength(1);
     expect(result.current.pendingRegisterItems).toBeNull();
   });
 
-  it("登録失敗時はドロワーが開いたままで下書きも残る", async () => {
-    mockRegisterMutateAsync.mockRejectedValue(new Error("network"));
+  it("AC-R-5: 登録に失敗するとドロワーが下書きを残したまま開き直り、エラーが出る", async () => {
+    mockRegisterMealItems.mockResolvedValue({ ok: false });
     const { result } = renderController();
     act(() => result.current.handleOpenChange(true));
     act(() => result.current.handleManualAdd(itemValues()));
 
     await act(async () => result.current.handleRegister());
 
-    await waitFor(() =>
-      expect(mockRegisterMutateAsync).toHaveBeenCalledTimes(1),
-    );
-    expect(result.current.isOpen).toBe(true);
+    await waitFor(() => expect(mockRegisterMealItems).toHaveBeenCalledTimes(1));
+    await waitFor(() => expect(result.current.isOpen).toBe(true));
     expect(result.current.draftItems).toHaveLength(1);
+    expect(mockToastError).toHaveBeenCalledWith(
+      "登録に失敗しました。もう一度お試しください",
+    );
   });
 
-  it("食品マスタに保存はスキャン値をクエリパラメータで引き継いで遷移する", () => {
+  it("AC-R-5: 登録を押すと保存を待たずにドロワーが閉じる", async () => {
+    const pending = deferred<ActionResult>();
+    mockRegisterMealItems.mockReturnValue(pending.promise);
+    const { result } = renderController();
+    act(() => result.current.handleOpenChange(true));
+    act(() => result.current.handleManualAdd(itemValues()));
+
+    await act(async () => result.current.handleRegister());
+
+    expect(mockRegisterMealItems).toHaveBeenCalledTimes(1);
+    expect(result.current.isOpen).toBe(false);
+    expect(result.current.isRegistering).toBe(true);
+    await act(async () => pending.resolve({ ok: true }));
+    expect(result.current.isRegistering).toBe(false);
+  });
+
+  it("AC-R-5: 登録を押すと保存を待たずに下書きが消える", async () => {
+    const pending = deferred<ActionResult>();
+    mockRegisterMealItems.mockReturnValue(pending.promise);
+    const { result } = renderController();
+    act(() => result.current.handleOpenChange(true));
+    act(() => result.current.handleManualAdd(itemValues()));
+
+    await act(async () => result.current.handleRegister());
+
+    expect(result.current.draftItems).toHaveLength(0);
+    await act(async () => pending.resolve({ ok: true }));
+  });
+
+  it("AC-R-5: 保存中に別の枠を開いて足した下書きは、保存が成功しても消えない", async () => {
+    const pending = deferred<ActionResult>();
+    mockRegisterMealItems.mockReturnValue(pending.promise);
+    const { result, store } = renderController();
+    act(() => store.set(drawerMealTypeAtom, "lunch"));
+    act(() => result.current.handleOpenChange(true));
+    act(() => result.current.handleManualAdd(itemValues({ name: "昼の品" })));
+    await act(async () => result.current.handleRegister());
+
+    act(() => store.set(drawerMealTypeAtom, "dinner"));
+    act(() => result.current.handleOpenChange(true));
+    act(() => result.current.handleManualAdd(itemValues({ name: "夜の品" })));
+    await act(async () => pending.resolve({ ok: true }));
+
+    await waitFor(() => expect(result.current.isRegistering).toBe(false));
+    expect(result.current.isOpen).toBe(true);
+    expect(result.current.mealType).toBe("dinner");
+    expect(result.current.draftItems.map((item) => item.name)).toEqual([
+      "夜の品",
+    ]);
+  });
+
+  it("AC-R-5: 登録に失敗すると、その間に別の枠を開いていても、元の枠・元の下書きで開き直す", async () => {
+    const pending = deferred<ActionResult>();
+    mockRegisterMealItems.mockReturnValue(pending.promise);
+    const { result, store } = renderController();
+    act(() => store.set(drawerMealTypeAtom, "lunch"));
+    act(() => result.current.handleOpenChange(true));
+    act(() => result.current.handleManualAdd(itemValues({ name: "昼の品" })));
+    const originalDrafts = result.current.draftItems;
+    await act(async () => result.current.handleRegister());
+    // Another slot's drawer was opened and closed again without adding anything
+    act(() => store.set(drawerMealTypeAtom, "dinner"));
+    act(() => result.current.handleOpenChange(true));
+    act(() => result.current.handleOpenChange(false));
+
+    await act(async () => pending.resolve({ ok: false }));
+
+    await waitFor(() => expect(result.current.isOpen).toBe(true));
+    expect(result.current.mealType).toBe("lunch");
+    expect(result.current.draftItems).toEqual(originalDrafts);
+    expect(mockToastError).toHaveBeenCalledWith(
+      "登録に失敗しました。もう一度お試しください",
+    );
+  });
+
+  it("AC-R-5: 登録に失敗したとき、ドロワーに別の下書きがあれば開き直さず、その下書きを残す", async () => {
+    const pending = deferred<ActionResult>();
+    mockRegisterMealItems.mockReturnValue(pending.promise);
+    const { result, store } = renderController();
+    act(() => store.set(drawerMealTypeAtom, "lunch"));
+    act(() => result.current.handleOpenChange(true));
+    act(() => result.current.handleManualAdd(itemValues({ name: "昼の品" })));
+    await act(async () => result.current.handleRegister());
+    act(() => store.set(drawerMealTypeAtom, "dinner"));
+    act(() => result.current.handleOpenChange(true));
+    act(() => result.current.handleManualAdd(itemValues({ name: "夜の品" })));
+
+    await act(async () => pending.resolve({ ok: false }));
+
+    await waitFor(() =>
+      expect(mockToastError).toHaveBeenCalledWith(
+        "登録に失敗しました。もう一度お試しください",
+      ),
+    );
+    expect(result.current.mealType).toBe("dinner");
+    expect(result.current.draftItems.map((item) => item.name)).toEqual([
+      "夜の品",
+    ]);
+  });
+
+  it("AC-R-3: 画面に出ている日と、ドロワーを開いたスロットに登録する", async () => {
+    mockRegisterMealItems.mockResolvedValue({ ok: true });
+    const { result, store } = renderController();
+    act(() => store.set(drawerMealTypeAtom, "dinner"));
+    act(() => result.current.handleManualAdd(itemValues()));
+
+    await act(async () => result.current.handleRegister());
+
+    await waitFor(() =>
+      expect(mockRegisterMealItems).toHaveBeenCalledWith({
+        date: DAY,
+        mealType: "dinner",
+        items: [
+          expect.objectContaining({ name: "テスト品", sourceType: "manual" }),
+        ],
+      }),
+    );
+  });
+
+  it("S-02: 下書きが空なら登録しない", async () => {
+    const { result } = renderController();
+
+    await act(async () => result.current.handleRegister());
+
+    expect(mockRegisterMealItems).not.toHaveBeenCalled();
+  });
+
+  it("S-03: 食品マスタに保存はスキャン値をクエリパラメータで引き継いで遷移する", () => {
     const { result } = renderController();
     act(() => result.current.handleOpenChange(true));
 
@@ -235,7 +375,7 @@ describe("useMealRegisterDrawerController", () => {
     expect(result.current.isOpen).toBe(false);
   });
 
-  it("OCRが何も抽出できなかったときはエラーメッセージが設定される", async () => {
+  it("S-03: OCRが何も抽出できなかったときはエラーメッセージが設定される", async () => {
     mockProcessImage.mockResolvedValue({
       name: null,
       calories: null,

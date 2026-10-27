@@ -67,7 +67,7 @@ Tests are statements of the spec. Rationale for these rules: `docs/testing/test-
 6. **If you cannot fix it, report it as failing** — never green it by weakening.
 
 ## Performance
-- Navigation must be instant: use `<Link>` (with explicit `prefetch` for dynamic routes), never `router.push` for user-initiated navigation. Do not add blocking work (e.g. auth round-trips) to the middleware path for RSC requests. Seed detail queries from cached list data (`useListCacheSeed`) instead of refetching. See `docs/performance-issues-and-fixes.md` for past incidents and the pre-merge checklist.
+- Navigation must be instant: use `<Link>` (with explicit `prefetch` for dynamic routes), never `router.push` for user-initiated navigation (the one exception is the home date picker: an OS date input cannot be a link, and it pushes like the day arrows so back returns to the previous day). Do not add blocking work (e.g. auth round-trips) to the middleware path for RSC requests. Seed detail queries from cached list data (`useListCacheSeed`) instead of refetching. See `docs/performance-issues-and-fixes.md` for past incidents and the pre-merge checklist.
 
 ## Coding Rules
 See `.claude/rules/` for detailed coding rules.

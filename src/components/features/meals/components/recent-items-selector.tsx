@@ -1,30 +1,18 @@
 "use client";
+// Client because tapping an item adds it to the drafts
 
 import { History } from "lucide-react";
 import { PfcDisplay } from "@/components/ui/pfc-display";
-import { Skeleton } from "@/components/ui/skeleton";
-import { useRecentMealItems } from "../hooks/use-recent-meal-items";
 import type { RecentMealItem } from "../utils/recent-meal-items";
 
-type RecentItemsSelectorProps = {
+type Props = {
+  recentItems: RecentMealItem[];
   onSelect: (item: RecentMealItem) => void;
 };
 
 /** List of recently registered items for one-tap re-adding */
-const RecentItemsSelector = ({ onSelect }: RecentItemsSelectorProps) => {
-  const { data: recentItems, isLoading } = useRecentMealItems();
-
-  if (isLoading) {
-    return (
-      <div className="space-y-1">
-        {["ri1", "ri2", "ri3", "ri4"].map((key) => (
-          <Skeleton key={key} className="h-12 rounded-lg" />
-        ))}
-      </div>
-    );
-  }
-
-  if (!recentItems || recentItems.length === 0) {
+export const RecentItemsSelector = ({ recentItems, onSelect }: Props) => {
+  if (recentItems.length === 0) {
     return (
       <div className="rounded-lg border border-dashed border-muted-foreground/25 py-6 text-center">
         <History className="mx-auto mb-2 h-8 w-8 text-muted-foreground/50" />
@@ -60,5 +48,3 @@ const RecentItemsSelector = ({ onSelect }: RecentItemsSelectorProps) => {
     </div>
   );
 };
-
-export { RecentItemsSelector };

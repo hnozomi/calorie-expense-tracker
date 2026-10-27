@@ -28,6 +28,24 @@ export type MealItem = NutritionValues & {
   updatedAt: string;
 };
 
+/** A day's meals grouped by meal type (mealId is null while the slot has no meal row) */
+export type DailyMealGroup = Record<
+  MealType,
+  { mealId: string | null; items: MealItem[] }
+>;
+
+/** An item as the slot shows it: optimistic ones are drafts still being saved */
+export type DisplayedMealItem = MealItem & { isOptimistic?: boolean };
+
+/** Items per slot as the home screen shows them */
+export type DisplayedDailyMeals = Record<MealType, DisplayedMealItem[]>;
+
+/** A change applied to the screen before the server confirms it */
+export type MealChange =
+  | { type: "add"; mealType: MealType; items: MealItemDraft[] }
+  | { type: "update"; itemId: string; values: MealItemFormValues }
+  | { type: "remove"; itemId: string };
+
 /** Summary row returned by get_daily_summary RPC */
 export type DailySummaryRow = NutritionValues & {
   mealType: MealType;

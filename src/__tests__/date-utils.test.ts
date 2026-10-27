@@ -109,6 +109,10 @@ describe("getTodayString", () => {
   it("returns today's date in YYYY-MM-DD format", () => {
     expect(getTodayString()).toMatch(/^\d{4}-\d{2}-\d{2}$/);
   });
+
+  it("matches formatDateToString(new Date())", () => {
+    expect(getTodayString()).toBe(formatDateToString(new Date()));
+  });
 });
 
 describe("formatDisplayDate", () => {

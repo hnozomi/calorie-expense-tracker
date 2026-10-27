@@ -1,9 +1,6 @@
 "use client";
+// Client because it is a form in a drawer
 
-import { zodResolver } from "@hookform/resolvers/zod";
-import { useState } from "react";
-import { useForm } from "react-hook-form";
-import { toast } from "sonner";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -14,79 +11,43 @@ import {
   DrawerTitle,
 } from "@/components/ui/drawer";
 import { SOURCE_TYPE_LABELS } from "@/types";
-import { useDeleteMealItem } from "../hooks/use-delete-meal-item";
-import { useUpdateMealItem } from "../hooks/use-update-meal-item";
-import {
-  type MealItem,
-  type MealItemFormInput,
-  type MealItemFormValues,
-  mealItemFormSchema,
-} from "../types/meal";
+import { useMealItemEdit } from "../hooks/use-meal-item-edit";
+import type { MealItem } from "../types/meal";
+import { DeleteItemSection } from "./delete-item-section";
 import { NutritionFormFields } from "./nutrition-form-fields";
 
-type MealItemEditModalProps = {
+type Props = {
   item: MealItem | null;
-  date: string;
   isOpen: boolean;
   onClose: () => void;
+  onSaveFailed: (itemWithTypedValues: MealItem) => void;
 };
 
 /** Bottom drawer for editing or deleting an existing meal item */
-const MealItemEditModal = ({
+export const MealItemEditModal = ({
   item,
-  date,
   isOpen,
   onClose,
-}: MealItemEditModalProps) => {
-  const updateMutation = useUpdateMealItem();
-  const deleteMutation = useDeleteMealItem();
-  const [isDeleteConfirmOpen, setIsDeleteConfirmOpen] = useState(false);
-
+  onSaveFailed,
+}: Props) => {
   const {
-    register,
-    handleSubmit,
-    formState: { errors },
-  } = useForm<MealItemFormInput, undefined, MealItemFormValues>({
-    resolver: zodResolver(mealItemFormSchema),
-    values: item
-      ? {
-          name: item.name,
-          calories: item.calories,
-          protein: item.protein,
-          fat: item.fat,
-          carbs: item.carbs,
-          cost: item.cost ?? undefined,
-        }
-      : undefined,
-  });
-
-  const handleSave = async (values: MealItemFormValues) => {
-    if (!item) return;
-    try {
-      await updateMutation.mutateAsync({ itemId: item.id, date, values });
-      toast.success("変更を保存しました");
-      onClose();
-    } catch {
-      toast.error("更新に失敗しました");
-    }
-  };
-
-  const handleDelete = async () => {
-    if (!item) return;
-    try {
-      await deleteMutation.mutateAsync({ itemId: item.id, date });
-      toast.success("削除しました");
-      setIsDeleteConfirmOpen(false);
-      onClose();
-    } catch {
-      toast.error("削除に失敗しました");
-    }
-  };
+    form: {
+      register,
+      handleSubmit,
+      formState: { errors },
+    },
+    isDeleteConfirmOpen,
+    openDeleteConfirm,
+    closeDeleteConfirm,
+    handleOpenChange,
+    handleSave,
+    handleDelete,
+  } = useMealItemEdit(item, onClose, onSaveFailed);
 
   if (!item) return null;
 
   return (
-    <Drawer open={isOpen} onOpenChange={(open) => !open && onClose()}>
+    <Drawer open={isOpen} onOpenChange={handleOpenChange}>
       <DrawerContent className="max-h-[80dvh]">
         <DrawerHeader className="flex-row items-center justify-between pb-2">
           <div>
@@ -114,57 +75,22 @@ const MealItemEditModal = ({
             />
           </form>
 
-          {/* Delete section */}
-          {isDeleteConfirmOpen ? (
-            <div className="mt-4 space-y-3 rounded-xl border border-destructive/30 bg-destructive/5 p-3">
-              <p className="text-sm font-medium">
-                「{item.name}」を削除しますか？
-              </p>
-              <div className="flex gap-2">
-                <Button
-                  variant="outline"
-                  size="sm"
-                  className="flex-1"
-                  onClick={() => setIsDeleteConfirmOpen(false)}
-                >
-                  キャンセル
-                </Button>
-                <Button
-                  variant="destructive"
-                  size="sm"
-                  className="flex-1"
-                  disabled={deleteMutation.isPending}
-                  onClick={handleDelete}
-                >
-                  {deleteMutation.isPending ? "削除中..." : "削除する"}
-                </Button>
-              </div>
-            </div>
-          ) : (
-            <button
-              type="button"
-              className="mt-4 w-full text-center text-sm text-destructive transition-colors hover:text-destructive/80 hover:underline"
-              onClick={() => setIsDeleteConfirmOpen(true)}
-            >
-              このアイテムを削除する
-            </button>
-          )}
+          <DeleteItemSection
+            itemName={item.name}
+            isConfirmOpen={isDeleteConfirmOpen}
+            onAsk={openDeleteConfirm}
+            onCancel={closeDeleteConfirm}
+            onDelete={handleDelete}
+          />
         </div>
 
         {/* Sticky footer */}
         <div className="shrink-0 border-t bg-background px-4 pt-3 pb-[calc(0.75rem+env(safe-area-inset-bottom))]">
-          <Button
-            type="submit"
-            form="edit-meal-form"
-            className="w-full"
-            disabled={updateMutation.isPending}
-          >
-            {updateMutation.isPending ? "保存中..." : "変更を保存"}
+          <Button type="submit" form="edit-meal-form" className="w-full">
+            変更を保存
           </Button>
         </div>
       </DrawerContent>
     </Drawer>
   );
 };
-
-export { MealItemEditModal };

@@ -1,3 +1,5 @@
+import { useQueryClient } from "@tanstack/react-query";
+import { useCallback } from "react";
 import { revalidateApp } from "@/lib/revalidate";
 
 // Only while the screens move to server-side reads: a change made on a screen that still writes through
@@ -7,4 +9,13 @@ export const revalidateAfterLegacyMutation = (): void => {
   revalidateApp().catch((error: unknown) => {
     console.error("Failed to refresh the screens after a change:", error);
   });
+};
+
+// The other direction: after a Server Action, screens that still read through TanStack Query (plan, report)
+// mark their data stale so they read again when shown
+export const useRefreshLegacyScreens = () => {
+  const queryClient = useQueryClient();
+  return useCallback(() => {
+    void queryClient.invalidateQueries();
+  }, [queryClient]);
 };

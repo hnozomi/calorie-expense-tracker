@@ -1,44 +1,23 @@
 "use client";
+// Client because the search box filters the list as you type
 
 import { Search } from "lucide-react";
-import { useState } from "react";
-import { useRecipes } from "@/components/features/recipes/hooks/use-recipes";
+import type { Recipe } from "@/components/features/recipes/types/recipe";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { PfcDisplay } from "@/components/ui/pfc-display";
-import { Skeleton } from "@/components/ui/skeleton";
-import { useDebounce } from "@/hooks";
+import { useRecipeSelector } from "../hooks/use-recipe-selector";
 import type { MealItemFormValues } from "../types/meal";
 
-type RecipeSelectorProps = {
+type Props = {
+  recipes: Recipe[];
   onSelect: (values: MealItemFormValues, recipeId: string) => void;
 };
 
 /** Select a recipe to add to the meal registration card (per-person values) */
-const RecipeSelector = ({ onSelect }: RecipeSelectorProps) => {
-  const [search, setSearch] = useState("");
-  const debouncedSearch = useDebounce(search);
-  const { data: recipes, isLoading } = useRecipes(debouncedSearch);
-
-  const handleSelect = (recipe: NonNullable<typeof recipes>[number]) => {
-    const perPerson = recipe.servings || 1;
-    const totalIngredientCost = recipe.ingredients.reduce(
-      (sum, ing) => sum + ing.unitPrice * ing.quantity,
-      0,
-    );
-
-    onSelect(
-      {
-        name: recipe.name,
-        calories: recipe.calories / perPerson,
-        protein: recipe.protein / perPerson,
-        fat: recipe.fat / perPerson,
-        carbs: recipe.carbs / perPerson,
-        cost: totalIngredientCost / perPerson,
-      },
-      recipe.id,
-    );
-  };
+export const RecipeSelector = ({ recipes, onSelect }: Props) => {
+  const { search, setSearch, filteredRecipes, handleSelect } =
+    useRecipeSelector(recipes, onSelect);
 
   return (
     <div className="space-y-3">
@@ -53,12 +32,8 @@ const RecipeSelector = ({ onSelect }: RecipeSelectorProps) => {
       </div>
 
       <div className="space-y-1">
-        {isLoading ? (
-          ["rs1", "rs2", "rs3"].map((key) => (
-            <Skeleton key={key} className="h-14 rounded-lg" />
-          ))
-        ) : recipes && recipes.length > 0 ? (
-          recipes.map((recipe) => (
+        {filteredRecipes.length > 0 ? (
+          filteredRecipes.map((recipe) => (
             <button
               key={recipe.id}
               type="button"
@@ -94,5 +69,3 @@ const RecipeSelector = ({ onSelect }: RecipeSelectorProps) => {
     </div>
   );
 };
-
-export { RecipeSelector };

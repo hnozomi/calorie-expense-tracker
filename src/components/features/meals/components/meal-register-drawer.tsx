@@ -1,26 +1,8 @@
 "use client";
+// Client because the drawer, its tabs and the OCR camera are interactive
 
-import {
-  BookOpen,
-  Camera,
-  Database,
-  History,
-  ImageIcon,
-  ListChecks,
-  PenLine,
-} from "lucide-react";
-import { OcrCameraOverlay, OcrResultForm } from "@/components/features/ocr";
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-} from "@/components/ui/alert-dialog";
-import { Button } from "@/components/ui/button";
+import { Suspense } from "react";
+import { OcrCameraOverlay } from "@/components/features/ocr";
 import {
   Drawer,
   DrawerContent,
@@ -31,64 +13,32 @@ import {
 import { MEAL_TYPE_LABELS } from "@/types";
 import { cn } from "@/utils";
 import { useMealRegisterDrawerController } from "../hooks/use-meal-register-drawer-controller";
-import { FoodMasterSelector } from "./food-master-selector";
+import type { DrawerCandidates } from "../types/drawer-candidates";
+import { CandidateListSkeleton } from "./candidate-list-skeleton";
+import { CandidateSelector } from "./candidate-selector";
+import { DiscardDraftsDialog } from "./discard-drafts-dialog";
 import { ManualInputForm } from "./manual-input-form";
 import { MealRegisterCard } from "./meal-register-card";
-import { RecentItemsSelector } from "./recent-items-selector";
-import { RecipeSelector } from "./recipe-selector";
-import { SetMenuSelector } from "./set-menu-selector";
+import { OcrPanel } from "./ocr-panel";
+import { PendingInputDialog } from "./pending-input-dialog";
+import { RegisterFooter } from "./register-footer";
+import { RegisterTabBar } from "./register-tab-bar";
 
-/** Bottom drawer for adding meal items and batch registering */
-const MealRegisterDrawer = () => {
-  const {
-    activeTab,
-    draftItems,
-    isDiscardConfirmOpen,
-    isOcrOpen,
-    isOcrProcessing,
-    isOpen,
-    libraryInputRef,
-    manualPendingRef,
-    mealType,
-    ocrError,
-    ocrPendingRef,
-    ocrResult,
-    pendingRegisterItems,
-    registerMutation,
-    setActiveTab,
-    setIsDiscardConfirmOpen,
-    setIsOcrOpen,
-    setPendingRegisterItems,
-    handleDiscardDrafts,
-    handleFoodMasterAdd,
-    handleLibraryFile,
-    handleManualAdd,
-    handleOcrAdd,
-    handleOcrResult,
-    handleOpenChange,
-    handleRecentAdd,
-    handleRecipeAdd,
-    handleRegister,
-    handleRegisterWithoutPending,
-    handleRegisterWithPending,
-    handleRemove,
-    handleSaveToMaster,
-    handleSetMenuAdd,
-  } = useMealRegisterDrawerController();
+type Props = {
+  /** Read on the server with the home screen; the lists are ready by the time the drawer opens */
+  candidates: Promise<DrawerCandidates>;
+};
 
-  const totalDraftCalories = draftItems.reduce(
-    (sum, item) => sum + item.calories,
-    0,
-  );
-  const lastDraftItem = draftItems[draftItems.length - 1];
+export const MealRegisterDrawer = ({ candidates }: Props) => {
+  const drawer = useMealRegisterDrawerController();
 
   return (
     <>
       {/* On iOS, repositionInputs lifted the drawer when the keyboard opened, and dragging it
           back down from the form counted as a close, so the discard dialog kept appearing */}
       <Drawer
-        open={isOpen}
-        onOpenChange={handleOpenChange}
+        open={drawer.isOpen}
+        onOpenChange={drawer.handleOpenChange}
         repositionInputs={false}
         handleOnly
       >
@@ -96,228 +46,97 @@ const MealRegisterDrawer = () => {
         <DrawerContent className="h-[85dvh] max-h-[85dvh]">
           <DrawerHeader className="shrink-0 pb-2">
             <DrawerTitle className="text-base">
-              {MEAL_TYPE_LABELS[mealType]}を登録
+              {MEAL_TYPE_LABELS[drawer.mealType]}を登録
             </DrawerTitle>
             <DrawerDescription className="sr-only">
               食事アイテムを追加してまとめて登録します
             </DrawerDescription>
           </DrawerHeader>
 
-          {/* Fixed tab bar */}
-          <div className="shrink-0 px-4" role="tablist">
-            <div className="flex gap-1 rounded-xl bg-muted/50 p-1">
-              {(
-                [
-                  { value: "manual", icon: PenLine, label: "手動" },
-                  { value: "recent", icon: History, label: "履歴" },
-                  { value: "recipe", icon: BookOpen, label: "レシピ" },
-                  { value: "food_master", icon: Database, label: "マスタ" },
-                  { value: "set_menu", icon: ListChecks, label: "セット" },
-                  { value: "ocr", icon: Camera, label: "OCR" },
-                ] as const
-              ).map(({ value, icon: Icon, label }) => (
-                <button
-                  key={value}
-                  type="button"
-                  role="tab"
-                  aria-selected={activeTab === value}
-                  onClick={() => setActiveTab(value)}
-                  className={cn(
-                    "flex flex-1 flex-col items-center gap-1 rounded-lg py-2 text-[11px] font-medium transition-all",
-                    activeTab === value
-                      ? "bg-background text-foreground shadow-sm"
-                      : "text-muted-foreground hover:text-foreground/80",
-                  )}
-                >
-                  <Icon className="size-4 shrink-0" />
-                  {label}
-                </button>
-              ))}
-            </div>
-          </div>
+          <RegisterTabBar
+            activeTab={drawer.activeTab}
+            onTabChange={drawer.setActiveTab}
+          />
 
-          {/* Scrollable tab content */}
           <div className="min-h-0 flex-1 overflow-y-auto px-4 pb-[calc(2.5rem+env(safe-area-inset-bottom))]">
             <div className="mt-3">
               {/* Manual and OCR panels stay mounted (hidden) so typed input and
                   OCR corrections survive tab switches */}
-              <div className={cn(activeTab !== "manual" && "hidden")}>
+              <div className={cn(drawer.activeTab !== "manual" && "hidden")}>
                 <ManualInputForm
-                  onAdd={handleManualAdd}
-                  pendingItemRef={manualPendingRef}
+                  onAdd={drawer.handleManualAdd}
+                  pendingItemRef={drawer.manualPendingRef}
                 />
               </div>
-              {activeTab === "recent" && (
-                <RecentItemsSelector onSelect={handleRecentAdd} />
-              )}
-              {activeTab === "recipe" && (
-                <RecipeSelector onSelect={handleRecipeAdd} />
-              )}
-              {activeTab === "food_master" && (
-                <FoodMasterSelector onSelect={handleFoodMasterAdd} />
-              )}
-              {activeTab === "set_menu" && (
-                <SetMenuSelector onSelect={handleSetMenuAdd} />
-              )}
-              <div className={cn(activeTab !== "ocr" && "hidden")}>
-                {ocrResult ? (
-                  <OcrResultForm
-                    // Remount when a new scan arrives so defaultValues refresh,
-                    // while user corrections survive tab switches
-                    key={JSON.stringify(ocrResult)}
-                    ocrResult={ocrResult}
-                    onAdd={handleOcrAdd}
-                    onSaveToMaster={handleSaveToMaster}
-                    pendingItemRef={ocrPendingRef}
+              {drawer.activeTab !== "manual" && drawer.activeTab !== "ocr" && (
+                <Suspense fallback={<CandidateListSkeleton />}>
+                  <CandidateSelector
+                    tab={drawer.activeTab}
+                    candidates={candidates}
+                    onRecentSelect={drawer.handleRecentAdd}
+                    onRecipeSelect={drawer.handleRecipeAdd}
+                    onFoodMasterSelect={drawer.handleFoodMasterAdd}
+                    onSetMenuSelect={drawer.handleSetMenuAdd}
                   />
-                ) : isOcrProcessing ? (
-                  <div className="py-10 text-center">
-                    <div className="mx-auto mb-3 h-10 w-10 animate-spin rounded-full border-4 border-muted border-t-primary" />
-                    <p className="text-sm text-muted-foreground">
-                      OCR解析中...
-                    </p>
-                  </div>
-                ) : (
-                  <div className="rounded-lg border border-dashed border-muted-foreground/25 py-6 text-center">
-                    <Camera className="mx-auto mb-2 h-8 w-8 text-muted-foreground/50" />
-                    <p className="mb-3 text-sm text-muted-foreground">
-                      栄養成分表示を撮影して自動入力
-                    </p>
-                    <div className="flex flex-col items-center gap-2">
-                      <Button
-                        variant="outline"
-                        onClick={() => setIsOcrOpen(true)}
-                      >
-                        <Camera className="mr-1.5 size-4" />
-                        カメラを起動
-                      </Button>
-                      <input
-                        ref={libraryInputRef}
-                        type="file"
-                        accept="image/*"
-                        className="hidden"
-                        onChange={handleLibraryFile}
-                      />
-                      <Button
-                        variant="ghost"
-                        onClick={() => libraryInputRef.current?.click()}
-                      >
-                        <ImageIcon className="mr-1.5 size-4" />
-                        ライブラリから選択
-                      </Button>
-                    </div>
-                    {ocrError && (
-                      <p className="mt-3 px-4 text-sm text-destructive">
-                        {ocrError}
-                      </p>
-                    )}
-                  </div>
-                )}
+                </Suspense>
+              )}
+              <div className={cn(drawer.activeTab !== "ocr" && "hidden")}>
+                <OcrPanel
+                  ocrResult={drawer.ocrResult}
+                  isProcessing={drawer.isOcrProcessing}
+                  error={drawer.ocrError}
+                  libraryInputRef={drawer.libraryInputRef}
+                  pendingItemRef={drawer.ocrPendingRef}
+                  onOpenCamera={drawer.openOcrCamera}
+                  onOpenLibrary={drawer.openLibraryPicker}
+                  onLibraryFile={drawer.handleLibraryFile}
+                  onAdd={drawer.handleOcrAdd}
+                  onSaveToMaster={drawer.handleSaveToMaster}
+                />
               </div>
             </div>
 
-            {draftItems.length > 0 && (
+            {drawer.draftItems.length > 0 && (
               <div className="mt-3">
-                <MealRegisterCard items={draftItems} onRemove={handleRemove} />
+                <MealRegisterCard
+                  items={drawer.draftItems}
+                  onRemove={drawer.handleRemove}
+                />
               </div>
             )}
           </div>
 
-          {/* Sticky footer with an always-visible summary and register button */}
-          {draftItems.length > 0 && (
-            <div className="shrink-0 border-t bg-background px-4 pt-2.5 pb-[calc(1rem+env(safe-area-inset-bottom))]">
-              <div className="mb-2 flex items-center justify-between gap-2 text-xs text-muted-foreground">
-                <span className="min-w-0 truncate">
-                  登録予定{" "}
-                  <span className="font-semibold text-foreground">
-                    {draftItems.length}
-                  </span>{" "}
-                  件
-                  {lastDraftItem && (
-                    <span className="ml-1">（直前: {lastDraftItem.name}）</span>
-                  )}
-                </span>
-                <span className="shrink-0">
-                  合計{" "}
-                  <span className="font-semibold tabular-nums text-foreground">
-                    {Math.round(totalDraftCalories)}
-                  </span>{" "}
-                  kcal
-                </span>
-              </div>
-              <Button
-                className="w-full"
-                disabled={registerMutation.isPending}
-                onClick={handleRegister}
-              >
-                {registerMutation.isPending
-                  ? "登録中..."
-                  : `${draftItems.length}件まとめて登録する`}
-              </Button>
-            </div>
+          {drawer.draftItems.length > 0 && (
+            <RegisterFooter
+              draftCount={drawer.draftItems.length}
+              lastDraftName={drawer.lastDraftName}
+              totalCalories={drawer.totalDraftCalories}
+              isRegistering={drawer.isRegistering}
+              onRegister={drawer.handleRegister}
+            />
           )}
         </DrawerContent>
       </Drawer>
 
       <OcrCameraOverlay
-        isOpen={isOcrOpen}
-        onClose={() => setIsOcrOpen(false)}
-        onResult={handleOcrResult}
+        isOpen={drawer.isOcrOpen}
+        onClose={drawer.closeOcrCamera}
+        onResult={drawer.handleOcrResult}
       />
 
-      {/* Confirm before discarding unsaved draft items or typed input on drawer close */}
-      <AlertDialog
-        open={isDiscardConfirmOpen}
-        onOpenChange={setIsDiscardConfirmOpen}
-      >
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>入力中のアイテムを破棄しますか?</AlertDialogTitle>
-            <AlertDialogDescription>
-              {draftItems.length > 0
-                ? `追加した${draftItems.length}件のアイテムはまだ登録されていません。閉じると破棄されます。`
-                : "入力中の内容はまだカードに追加されていません。閉じると破棄されます。"}
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel>入力を続ける</AlertDialogCancel>
-            <AlertDialogAction onClick={handleDiscardDrafts}>
-              破棄して閉じる
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
+      <DiscardDraftsDialog
+        isOpen={drawer.isDiscardConfirmOpen}
+        draftCount={drawer.draftItems.length}
+        onOpenChange={drawer.setIsDiscardConfirmOpen}
+        onDiscard={drawer.handleDiscardDrafts}
+      />
 
-      {/* Confirm when registering while typed input was never added to the card */}
-      <AlertDialog
-        open={pendingRegisterItems !== null}
-        onOpenChange={(open) => {
-          if (!open) setPendingRegisterItems(null);
-        }}
-      >
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>入力中のアイテムがあります</AlertDialogTitle>
-            <AlertDialogDescription>
-              {pendingRegisterItems
-                ?.map((pending) => `「${pending.values.name}」`)
-                .join("、")}
-              はまだカードに追加されていません。
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel>キャンセル</AlertDialogCancel>
-            <Button variant="outline" onClick={handleRegisterWithoutPending}>
-              追加せずに登録
-            </Button>
-            <AlertDialogAction onClick={handleRegisterWithPending}>
-              追加して登録
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
+      <PendingInputDialog
+        pendingNames={drawer.pendingNames}
+        onOpenChange={drawer.handlePendingDialogOpenChange}
+        onRegisterWithoutPending={drawer.handleRegisterWithoutPending}
+        onRegisterWithPending={drawer.handleRegisterWithPending}
+      />
     </>
   );
 };
-
-export { MealRegisterDrawer };

@@ -2,9 +2,13 @@ import { cleanup, render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { RecipeSelector } from "@/components/features/meals/components/recipe-selector";
+import type { Recipe } from "@/components/features/recipes/types/recipe";
 
-/** Mock useRecipes hook */
-const mockRecipes = [
+afterEach(() => {
+  cleanup();
+});
+
+const sampleRecipes: Recipe[] = [
   {
     id: "r-1",
     userId: "user-1",
@@ -54,85 +58,104 @@ const mockRecipes = [
   },
 ];
 
-vi.mock("@/components/features/recipes/hooks/use-recipes", () => ({
-  useRecipes: () => ({
-    data: mockRecipes,
-    isLoading: false,
-  }),
-}));
-
-vi.mock("@/hooks", () => ({
-  useDebounce: (value: string) => value,
-}));
-
-afterEach(() => {
-  cleanup();
-});
+const searchBox = () => screen.getByPlaceholderText("レシピ名で検索...");
 
 describe("RecipeSelector", () => {
-  it("displays search input", () => {
-    render(<RecipeSelector onSelect={vi.fn()} />);
+  it("S-02: shows every recipe it receives", () => {
+    render(<RecipeSelector recipes={sampleRecipes} onSelect={vi.fn()} />);
     expect(
-      screen.getByPlaceholderText("レシピ名で検索..."),
+      screen.getByRole("button", { name: /鶏むね肉のサラダ/ }),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole("button", { name: /プロテインスムージー/ }),
     ).toBeInTheDocument();
   });
 
-  it("displays recipe list", () => {
-    render(<RecipeSelector onSelect={vi.fn()} />);
-    expect(screen.getByText("鶏むね肉のサラダ")).toBeInTheDocument();
-    expect(screen.getByText("プロテインスムージー")).toBeInTheDocument();
+  it("S-02: each recipe shows how many servings it makes", () => {
+    render(<RecipeSelector recipes={sampleRecipes} onSelect={vi.fn()} />);
+    expect(
+      screen.getByRole("button", { name: /鶏むね肉のサラダ.*2人分/ }),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole("button", { name: /プロテインスムージー.*1人分/ }),
+    ).toBeInTheDocument();
   });
 
-  it("displays servings badge for each recipe", () => {
-    render(<RecipeSelector onSelect={vi.fn()} />);
-    expect(screen.getByText("2人分")).toBeInTheDocument();
-    expect(screen.getByText("1人分")).toBeInTheDocument();
+  it("S-02: each recipe shows the calories per person", () => {
+    render(<RecipeSelector recipes={sampleRecipes} onSelect={vi.fn()} />);
+    // 400 kcal / 2 servings and 200 kcal / 1 serving
+    expect(
+      screen.getByRole("button", { name: /鶏むね肉のサラダ.*200 kcal\/人/ }),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole("button", {
+        name: /プロテインスムージー.*200 kcal\/人/,
+      }),
+    ).toBeInTheDocument();
   });
 
-  it("displays per-person calories", () => {
-    render(<RecipeSelector onSelect={vi.fn()} />);
-    // 400/2 = 200 kcal/人, 200/1 = 200 kcal/人
-    const kcalTexts = screen.getAllByText(/200 kcal\/人/);
-    expect(kcalTexts.length).toBe(2);
+  it("S-02: an empty list says no recipe is registered", () => {
+    render(<RecipeSelector recipes={[]} onSelect={vi.fn()} />);
+    expect(screen.getByText("レシピが未登録です")).toBeInTheDocument();
   });
 
-  it("calls onSelect with per-person values when recipe is clicked", async () => {
+  it("S-02: typing a recipe name narrows the list without reading again", async () => {
+    const user = userEvent.setup();
+    render(<RecipeSelector recipes={sampleRecipes} onSelect={vi.fn()} />);
+
+    await user.type(searchBox(), "鶏");
+
+    expect(searchBox()).toHaveValue("鶏");
+    expect(
+      screen.getByRole("button", { name: /鶏むね肉のサラダ/ }),
+    ).toBeInTheDocument();
+    expect(
+      screen.queryByRole("button", { name: /プロテインスムージー/ }),
+    ).not.toBeInTheDocument();
+  });
+
+  it("S-02: a search with no match says nothing matched", async () => {
+    const user = userEvent.setup();
+    render(<RecipeSelector recipes={sampleRecipes} onSelect={vi.fn()} />);
+
+    await user.type(searchBox(), "カレー");
+
+    expect(screen.getByText("該当するレシピがありません")).toBeInTheDocument();
+  });
+
+  it("S-02: tapping a recipe passes the values for one person and its id", async () => {
     const user = userEvent.setup();
     const onSelect = vi.fn();
-    render(<RecipeSelector onSelect={onSelect} />);
+    render(<RecipeSelector recipes={sampleRecipes} onSelect={onSelect} />);
 
-    await user.click(screen.getByText("鶏むね肉のサラダ"));
+    await user.click(screen.getByRole("button", { name: /鶏むね肉のサラダ/ }));
 
-    expect(onSelect).toHaveBeenCalledOnce();
-    const called = onSelect.mock.calls[0][0];
-    // Per-person: servings=2
-    expect(called.name).toBe("鶏むね肉のサラダ");
-    expect(called.calories).toBe(200); // 400/2
-    expect(called.protein).toBe(25); // 50/2
-    expect(called.fat).toBe(5); // 10/2
-    expect(called.carbs).toBe(10); // 20/2
-    // cost: (200*1.5 + 1*150) / 2 = 225
-    expect(called.cost).toBe(225);
+    // cost: (200 g × 1.5 + 1 × 150) / 2 servings = 225
+    expect(onSelect).toHaveBeenCalledWith(
+      {
+        name: "鶏むね肉のサラダ",
+        calories: 200,
+        protein: 25,
+        fat: 5,
+        carbs: 10,
+        cost: 225,
+      },
+      "r-1",
+    );
   });
 
-  it("calls onSelect with zero cost when recipe has no ingredients", async () => {
+  it("S-02: a recipe without ingredients costs 0", async () => {
     const user = userEvent.setup();
     const onSelect = vi.fn();
-    render(<RecipeSelector onSelect={onSelect} />);
+    render(<RecipeSelector recipes={sampleRecipes} onSelect={onSelect} />);
 
-    await user.click(screen.getByText("プロテインスムージー"));
+    await user.click(
+      screen.getByRole("button", { name: /プロテインスムージー/ }),
+    );
 
-    expect(onSelect).toHaveBeenCalledOnce();
-    const called = onSelect.mock.calls[0][0];
-    expect(called.cost).toBe(0);
-  });
-
-  it("allows typing in search input", async () => {
-    const user = userEvent.setup();
-    render(<RecipeSelector onSelect={vi.fn()} />);
-
-    const input = screen.getByPlaceholderText("レシピ名で検索...");
-    await user.type(input, "鶏");
-    expect(input).toHaveValue("鶏");
+    expect(onSelect).toHaveBeenCalledWith(
+      expect.objectContaining({ cost: 0 }),
+      "r-2",
+    );
   });
 });

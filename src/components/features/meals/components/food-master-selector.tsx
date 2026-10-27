@@ -1,37 +1,22 @@
 "use client";
+// Client because the search box filters the list as you type
 
 import { Search } from "lucide-react";
-import { useState } from "react";
-import { useFoodMasters } from "@/components/features/food-masters/hooks/use-food-masters";
+import type { FoodMaster } from "@/components/features/food-masters/types/food-master";
 import { Input } from "@/components/ui/input";
 import { PfcDisplay } from "@/components/ui/pfc-display";
-import { Skeleton } from "@/components/ui/skeleton";
-import { useDebounce } from "@/hooks";
+import { useFoodMasterSelector } from "../hooks/use-food-master-selector";
 import type { MealItemFormValues } from "../types/meal";
 
-type FoodMasterSelectorProps = {
+type Props = {
+  foodMasters: FoodMaster[];
   onSelect: (values: MealItemFormValues, foodMasterId: string) => void;
 };
 
 /** Select a food master item to add to the meal registration card */
-const FoodMasterSelector = ({ onSelect }: FoodMasterSelectorProps) => {
-  const [search, setSearch] = useState("");
-  const debouncedSearch = useDebounce(search);
-  const { data: foodMasters, isLoading } = useFoodMasters(debouncedSearch);
-
-  const handleSelect = (fm: NonNullable<typeof foodMasters>[number]) => {
-    onSelect(
-      {
-        name: fm.name,
-        calories: fm.calories,
-        protein: fm.protein,
-        fat: fm.fat,
-        carbs: fm.carbs,
-        cost: fm.defaultPrice ?? undefined,
-      },
-      fm.id,
-    );
-  };
+export const FoodMasterSelector = ({ foodMasters, onSelect }: Props) => {
+  const { search, setSearch, filteredFoodMasters, handleSelect } =
+    useFoodMasterSelector(foodMasters, onSelect);
 
   return (
     <div className="space-y-3">
@@ -46,12 +31,8 @@ const FoodMasterSelector = ({ onSelect }: FoodMasterSelectorProps) => {
       </div>
 
       <div className="space-y-1">
-        {isLoading ? (
-          ["fms1", "fms2", "fms3"].map((key) => (
-            <Skeleton key={key} className="h-14 rounded-lg" />
-          ))
-        ) : foodMasters && foodMasters.length > 0 ? (
-          foodMasters.map((fm) => (
+        {filteredFoodMasters.length > 0 ? (
+          filteredFoodMasters.map((fm) => (
             <button
               key={fm.id}
               type="button"
@@ -85,5 +66,3 @@ const FoodMasterSelector = ({ onSelect }: FoodMasterSelectorProps) => {
     </div>
   );
 };
-
-export { FoodMasterSelector };

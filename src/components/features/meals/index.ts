@@ -1,2 +1,2 @@
+export { DailySection } from "./components/daily-section";
 export { DailySkeleton } from "./components/daily-skeleton";
-export { DailyView } from "./components/daily-view";

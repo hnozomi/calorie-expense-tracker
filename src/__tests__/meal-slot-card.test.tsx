@@ -1,160 +1,351 @@
-import { cleanup, render, screen } from "@testing-library/react";
+import { act, cleanup, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { createStore, Provider } from "jotai";
+import { Component, type ReactNode } from "react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { MealSlotCard } from "@/components/features/meals/components/meal-slot-card";
-import type { MealItem } from "@/components/features/meals/types/meal";
-import { getTodayString } from "@/utils";
+import {
+  drawerMealTypeAtom,
+  isDrawerOpenAtom,
+} from "@/components/features/meals/stores/meal-register-atom";
+import type { ActionResult } from "@/lib/action-result";
+import {
+  createMealItem,
+  deferred,
+  renderWithDailyMeals,
+} from "./helpers/daily-meals";
 
-// Mock hooks that depend on Supabase
-vi.mock("@/components/features/meals/hooks/use-delete-meal-item", () => ({
-  useDeleteMealItem: () => ({ mutateAsync: vi.fn(), isPending: false }),
+const copyPreviousDayMeal = vi.fn();
+const transferMealToPlan = vi.fn();
+vi.mock("@/components/features/meals/api/actions", () => ({
+  copyPreviousDayMeal: (...args: unknown[]) => copyPreviousDayMeal(...args),
+  transferMealToPlan: (...args: unknown[]) => transferMealToPlan(...args),
+  registerMealItems: vi.fn(),
+  updateMealItem: vi.fn(),
+  deleteMealItem: vi.fn(),
 }));
-vi.mock("@/components/features/meals/hooks/use-update-meal-item", () => ({
-  useUpdateMealItem: () => ({ mutateAsync: vi.fn(), isPending: false }),
-}));
-vi.mock("@/components/features/meals/hooks/use-transfer-meal-to-plan", () => ({
-  useTransferMealToPlan: () => ({ mutateAsync: vi.fn(), isPending: false }),
-}));
-const mockCopyMutateAsync = vi.fn();
-let mockCopyIsPending = false;
-vi.mock("@/components/features/meals/hooks/use-copy-previous-day-meal", () => ({
-  useCopyPreviousDayMeal: () => ({
-    mutateAsync: mockCopyMutateAsync,
-    isPending: mockCopyIsPending,
-  }),
+
+const toastSuccess = vi.fn();
+const toastError = vi.fn();
+const toastInfo = vi.fn();
+vi.mock("sonner", () => ({
+  toast: {
+    success: (...args: unknown[]) => toastSuccess(...args),
+    error: (...args: unknown[]) => toastError(...args),
+    info: (...args: unknown[]) => toastInfo(...args),
+  },
 }));
 
 afterEach(() => {
   cleanup();
   vi.clearAllMocks();
-  mockCopyIsPending = false;
 });
 
-/** Create a mock MealItem */
-const createMealItem = (overrides: Partial<MealItem> = {}): MealItem => ({
-  id: crypto.randomUUID(),
-  mealId: "meal-1",
-  name: "サラダチキン",
-  calories: 120,
-  protein: 25,
-  fat: 2,
-  carbs: 1,
-  cost: 250,
-  sourceType: "manual",
-  recipeId: null,
-  foodMasterId: null,
-  setMenuId: null,
-  servingQuantity: 1,
-  sortOrder: 0,
-  createdAt: "2026-03-21T00:00:00Z",
-  updatedAt: "2026-03-21T00:00:00Z",
-  ...overrides,
-});
+const DAY = "2026-10-19";
 
-const renderWithStore = (ui: React.ReactElement) => {
-  const store = createStore();
-  return render(<Provider store={store}>{ui}</Provider>);
-};
+/** Stands in for src/app/error.tsx: if the failure escapes to it, the whole screen is replaced */
+class ScreenErrorBoundary extends Component<
+  { children: ReactNode },
+  { hasError: boolean }
+> {
+  state = { hasError: false };
+  static getDerivedStateFromError() {
+    return { hasError: true };
+  }
+  render() {
+    return this.state.hasError ? (
+      <p>エラーが発生しました</p>
+    ) : (
+      this.props.children
+    );
+  }
+}
 
 describe("MealSlotCard", () => {
-  it("shows meal type label for breakfast", () => {
-    renderWithStore(<MealSlotCard mealType="breakfast" items={[]} />);
-    expect(screen.getByText("朝食")).toBeInTheDocument();
+  it.each([
+    ["breakfast", "朝食"],
+    ["lunch", "昼食"],
+    ["dinner", "夕食"],
+    ["snack", "間食"],
+  ] as const)("S-01: the %s slot is labelled %s", (mealType, label) => {
+    renderWithDailyMeals(<MealSlotCard mealType={mealType} items={[]} />);
+    expect(
+      screen.getByRole("region", { name: `${label}の記録` }),
+    ).toBeInTheDocument();
+    expect(screen.getByText(label)).toBeInTheDocument();
   });
 
-  it("shows meal type label for lunch", () => {
-    renderWithStore(<MealSlotCard mealType="lunch" items={[]} />);
-    expect(screen.getByText("昼食")).toBeInTheDocument();
-  });
-
-  it("shows meal type label for dinner", () => {
-    renderWithStore(<MealSlotCard mealType="dinner" items={[]} />);
-    expect(screen.getByText("夕食")).toBeInTheDocument();
-  });
-
-  it("shows meal type label for snack", () => {
-    renderWithStore(<MealSlotCard mealType="snack" items={[]} />);
-    expect(screen.getByText("間食")).toBeInTheDocument();
-  });
-
-  it("shows empty state when no items", () => {
-    renderWithStore(<MealSlotCard mealType="lunch" items={[]} />);
+  it("S-01: an empty slot offers 登録する and 前日をコピー", () => {
+    renderWithDailyMeals(<MealSlotCard mealType="lunch" items={[]} />);
     expect(
       screen.getByRole("button", { name: /登録する/ }),
     ).toBeInTheDocument();
-  });
-
-  it("displays items with name", () => {
-    const items = [
-      createMealItem({ name: "サラダチキン" }),
-      createMealItem({ name: "おにぎり" }),
-    ];
-    renderWithStore(<MealSlotCard mealType="dinner" items={items} />);
-    expect(screen.getByText("サラダチキン")).toBeInTheDocument();
-    expect(screen.getByText("おにぎり")).toBeInTheDocument();
-  });
-
-  it("shows total calories in header when items exist", () => {
-    const items = [
-      createMealItem({ calories: 300 }),
-      createMealItem({ calories: 200 }),
-    ];
-    renderWithStore(<MealSlotCard mealType="snack" items={items} />);
-    expect(screen.getByText(/500 kcal/)).toBeInTheDocument();
-  });
-
-  it("shows '追加する' button when items exist", () => {
-    const items = [createMealItem()];
-    renderWithStore(<MealSlotCard mealType="breakfast" items={items} />);
-    expect(
-      screen.getByRole("button", { name: /追加する/ }),
-    ).toBeInTheDocument();
-  });
-
-  it("opens edit modal when item is clicked", async () => {
-    const user = userEvent.setup();
-    const items = [createMealItem({ name: "テストアイテム" })];
-    renderWithStore(<MealSlotCard mealType="lunch" items={items} />);
-
-    await user.click(screen.getByText("テストアイテム"));
-
-    expect(screen.getByText("アイテム編集")).toBeInTheDocument();
-  });
-
-  it("空のスロットには「前日をコピー」ボタンが表示される", () => {
-    renderWithStore(<MealSlotCard mealType="dinner" items={[]} />);
     expect(
       screen.getByRole("button", { name: /前日をコピー/ }),
     ).toBeInTheDocument();
   });
 
-  it("アイテムがあるスロットには「前日をコピー」ボタンが表示されない", () => {
-    renderWithStore(
-      <MealSlotCard mealType="dinner" items={[createMealItem()]} />,
+  it("S-01: a slot with items lists them by name", () => {
+    renderWithDailyMeals(
+      <MealSlotCard
+        mealType="dinner"
+        items={[
+          createMealItem({ name: "サラダチキン" }),
+          createMealItem({ name: "おにぎり" }),
+        ]}
+      />,
     );
+    expect(
+      screen.getByRole("button", { name: /サラダチキン/ }),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole("button", { name: /おにぎり/ }),
+    ).toBeInTheDocument();
+  });
+
+  it("S-01: a slot with items shows their total calories in its header", () => {
+    renderWithDailyMeals(
+      <MealSlotCard
+        mealType="snack"
+        items={[
+          createMealItem({ calories: 300 }),
+          createMealItem({ calories: 200 }),
+        ]}
+      />,
+    );
+    expect(screen.getByText("500 kcal")).toBeInTheDocument();
+  });
+
+  it("S-01: a slot with items offers + 追加する and no 前日をコピー", () => {
+    renderWithDailyMeals(
+      <MealSlotCard mealType="breakfast" items={[createMealItem()]} />,
+    );
+    expect(
+      screen.getByRole("button", { name: /追加する/ }),
+    ).toBeInTheDocument();
     expect(
       screen.queryByRole("button", { name: /前日をコピー/ }),
     ).not.toBeInTheDocument();
   });
 
-  it("「前日をコピー」をタップすると選択中の日付とスロットでコピーが実行される", async () => {
+  it("S-01: 登録する opens the register drawer for this slot", async () => {
     const user = userEvent.setup();
-    mockCopyMutateAsync.mockResolvedValue(2);
-    renderWithStore(<MealSlotCard mealType="snack" items={[]} />);
+    const { store } = renderWithDailyMeals(
+      <MealSlotCard mealType="dinner" items={[]} />,
+    );
 
-    await user.click(screen.getByRole("button", { name: /前日をコピー/ }));
+    await user.click(screen.getByRole("button", { name: /登録する/ }));
 
-    expect(mockCopyMutateAsync).toHaveBeenCalledWith({
-      date: getTodayString(),
-      mealType: "snack",
+    expect(store.get(isDrawerOpenAtom)).toBe(true);
+    expect(store.get(drawerMealTypeAtom)).toBe("dinner");
+  });
+
+  it("S-01: + 追加する opens the register drawer for this slot", async () => {
+    const user = userEvent.setup();
+    const { store } = renderWithDailyMeals(
+      <MealSlotCard mealType="snack" items={[createMealItem()]} />,
+    );
+
+    await user.click(screen.getByRole("button", { name: /追加する/ }));
+
+    expect(store.get(isDrawerOpenAtom)).toBe(true);
+    expect(store.get(drawerMealTypeAtom)).toBe("snack");
+  });
+
+  it("S-02a: tapping an item opens the edit drawer", async () => {
+    const user = userEvent.setup();
+    renderWithDailyMeals(
+      <MealSlotCard
+        mealType="lunch"
+        items={[createMealItem({ name: "テストアイテム" })]}
+      />,
+    );
+
+    await user.click(screen.getByRole("button", { name: /テストアイテム/ }));
+
+    expect(
+      await screen.findByRole("dialog", { name: "アイテム編集" }),
+    ).toBeInTheDocument();
+  });
+
+  it("AC-R-5: an item still being saved cannot be opened for editing yet", () => {
+    renderWithDailyMeals(
+      <MealSlotCard
+        mealType="lunch"
+        items={[
+          { ...createMealItem({ name: "保存中の品" }), isOptimistic: true },
+        ]}
+      />,
+    );
+    expect(screen.getByRole("button", { name: /保存中の品/ })).toBeDisabled();
+  });
+
+  describe("前日をコピー", () => {
+    it("QA-1: copies the previous day for the day on screen and this slot", async () => {
+      const user = userEvent.setup();
+      copyPreviousDayMeal.mockResolvedValue({ ok: true, copiedCount: 2 });
+      renderWithDailyMeals(<MealSlotCard mealType="snack" items={[]} />, {
+        date: DAY,
+        today: "2026-10-20",
+      });
+
+      await user.click(screen.getByRole("button", { name: /前日をコピー/ }));
+
+      expect(copyPreviousDayMeal).toHaveBeenCalledWith({
+        date: DAY,
+        mealType: "snack",
+      });
+      await waitFor(() =>
+        expect(toastSuccess).toHaveBeenCalledWith(
+          "前日の間食(2件)をコピーしました",
+        ),
+      );
+    });
+
+    it("QA-1: while copying the button is disabled and says コピー中...", async () => {
+      const user = userEvent.setup();
+      const pending = deferred<ActionResult<{ copiedCount: number }>>();
+      copyPreviousDayMeal.mockReturnValue(pending.promise);
+      renderWithDailyMeals(<MealSlotCard mealType="dinner" items={[]} />);
+
+      await user.click(screen.getByRole("button", { name: /前日をコピー/ }));
+
+      expect(screen.getByRole("button", { name: /コピー中/ })).toBeDisabled();
+      await act(async () => pending.resolve({ ok: true, copiedCount: 1 }));
+      expect(
+        screen.getByRole("button", { name: /前日をコピー/ }),
+      ).toBeEnabled();
+    });
+
+    it("QA-1: when the previous day has nothing in the slot it says so", async () => {
+      const user = userEvent.setup();
+      copyPreviousDayMeal.mockResolvedValue({ ok: true, copiedCount: 0 });
+      renderWithDailyMeals(<MealSlotCard mealType="dinner" items={[]} />);
+
+      await user.click(screen.getByRole("button", { name: /前日をコピー/ }));
+
+      await waitFor(() =>
+        expect(toastInfo).toHaveBeenCalledWith("前日の夕食の記録がありません"),
+      );
+      expect(toastSuccess).not.toHaveBeenCalled();
+    });
+
+    it("AC-R-5: when the copy fails an error is shown", async () => {
+      const user = userEvent.setup();
+      copyPreviousDayMeal.mockResolvedValue({ ok: false });
+      renderWithDailyMeals(<MealSlotCard mealType="dinner" items={[]} />);
+
+      await user.click(screen.getByRole("button", { name: /前日をコピー/ }));
+
+      await waitFor(() =>
+        expect(toastError).toHaveBeenCalledWith("コピーに失敗しました"),
+      );
+      expect(toastSuccess).not.toHaveBeenCalled();
     });
   });
 
-  it("コピー実行中はボタンが無効化されラベルが変わる", () => {
-    mockCopyIsPending = true;
-    renderWithStore(<MealSlotCard mealType="dinner" items={[]} />);
-    const copyButton = screen.getByRole("button", { name: /コピー中/ });
-    expect(copyButton).toBeDisabled();
+  describe("献立に反映", () => {
+    it("MI-2: asks first, then adds this slot of the day on screen to the plan", async () => {
+      const user = userEvent.setup();
+      transferMealToPlan.mockResolvedValue({ ok: true });
+      renderWithDailyMeals(
+        <MealSlotCard mealType="snack" items={[createMealItem()]} />,
+        { date: DAY, today: "2026-10-20" },
+      );
+
+      await user.click(screen.getByRole("button", { name: "献立に反映" }));
+      expect(
+        screen.getByRole("alertdialog", { name: "献立に反映しますか？" }),
+      ).toBeInTheDocument();
+      expect(transferMealToPlan).not.toHaveBeenCalled();
+
+      await user.click(screen.getByRole("button", { name: "反映する" }));
+
+      expect(transferMealToPlan).toHaveBeenCalledWith({
+        date: DAY,
+        mealType: "snack",
+      });
+      await waitFor(() =>
+        expect(toastSuccess).toHaveBeenCalledWith("献立に反映しました"),
+      );
+    });
+
+    it("MI-2: cancelling the question adds nothing", async () => {
+      const user = userEvent.setup();
+      renderWithDailyMeals(
+        <MealSlotCard mealType="snack" items={[createMealItem()]} />,
+      );
+
+      await user.click(screen.getByRole("button", { name: "献立に反映" }));
+      await user.click(screen.getByRole("button", { name: "キャンセル" }));
+
+      expect(transferMealToPlan).not.toHaveBeenCalled();
+    });
+
+    it("AC-R-5: when adding to the plan fails an error is shown", async () => {
+      const user = userEvent.setup();
+      transferMealToPlan.mockResolvedValue({ ok: false });
+      renderWithDailyMeals(
+        <MealSlotCard mealType="snack" items={[createMealItem()]} />,
+      );
+
+      await user.click(screen.getByRole("button", { name: "献立に反映" }));
+      await user.click(screen.getByRole("button", { name: "反映する" }));
+
+      await waitFor(() =>
+        expect(toastError).toHaveBeenCalledWith("献立への反映に失敗しました"),
+      );
+      expect(toastSuccess).not.toHaveBeenCalled();
+    });
+
+    it("S-01: an empty slot has nothing to add to the plan", () => {
+      renderWithDailyMeals(<MealSlotCard mealType="snack" items={[]} />);
+      expect(
+        screen.queryByRole("button", { name: "献立に反映" }),
+      ).not.toBeInTheDocument();
+    });
+  });
+  describe("the request itself fails (no connection)", () => {
+    // AC-R-5 / ui-tech §8: a failure after pressing shows a toast by the slot, not a whole-screen error
+    it("AC-R-5: 前日をコピー shows the copy error and the slot stays", async () => {
+      const user = userEvent.setup();
+      copyPreviousDayMeal.mockRejectedValue(new TypeError("Failed to fetch"));
+      renderWithDailyMeals(
+        <ScreenErrorBoundary>
+          <MealSlotCard mealType="dinner" items={[]} />
+        </ScreenErrorBoundary>,
+      );
+
+      await user.click(screen.getByRole("button", { name: /前日をコピー/ }));
+
+      await waitFor(() =>
+        expect(toastError).toHaveBeenCalledWith("コピーに失敗しました"),
+      );
+      expect(
+        screen.queryByText("エラーが発生しました"),
+      ).not.toBeInTheDocument();
+      expect(
+        screen.getByRole("button", { name: /前日をコピー/ }),
+      ).toBeEnabled();
+    });
+
+    it("AC-R-5: 献立に反映 shows the plan error and the slot stays", async () => {
+      const user = userEvent.setup();
+      transferMealToPlan.mockRejectedValue(new TypeError("Failed to fetch"));
+      renderWithDailyMeals(
+        <ScreenErrorBoundary>
+          <MealSlotCard mealType="snack" items={[createMealItem()]} />
+        </ScreenErrorBoundary>,
+      );
+
+      await user.click(screen.getByRole("button", { name: "献立に反映" }));
+      await user.click(screen.getByRole("button", { name: "反映する" }));
+
+      await waitFor(() =>
+        expect(toastError).toHaveBeenCalledWith("献立への反映に失敗しました"),
+      );
+      expect(
+        screen.queryByText("エラーが発生しました"),
+      ).not.toBeInTheDocument();
+    });
   });
 });

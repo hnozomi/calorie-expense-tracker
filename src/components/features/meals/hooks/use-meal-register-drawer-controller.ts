@@ -1,28 +1,37 @@
 "use client";
 
-import { useAtom, useAtomValue } from "jotai";
+import { useAtom, useStore } from "jotai";
 import { useRouter } from "next/navigation";
-import { useCallback, useRef, useState } from "react";
+import {
+  useCallback,
+  useLayoutEffect,
+  useRef,
+  useState,
+  useTransition,
+} from "react";
 import { toast } from "sonner";
 import {
   hasOcrValues,
   type OcrNutritionResult,
   useOcr,
 } from "@/components/features/ocr";
+import { callAction } from "@/lib/action-result";
+import { useRefreshLegacyScreens } from "@/lib/legacy-bridge";
 import type { SourceType } from "@/types";
-import { selectedDateAtom } from "../stores/date-atom";
+import { registerMealItems } from "../api/actions";
 import {
   draftItemsAtom,
   drawerMealTypeAtom,
   isDrawerOpenAtom,
 } from "../stores/meal-register-atom";
+import type { RegisterTab } from "../types/drawer-candidates";
 import type {
   MealItemDraft,
   MealItemFormValues,
   PendingMealItemCollector,
 } from "../types/meal";
 import type { RecentMealItem } from "../utils/recent-meal-items";
-import { useRegisterMealItems } from "./use-register-meal-items";
+import { useDailyMealsContext } from "./use-daily-meals-context";
 
 /** A valid form entry that was typed but never added to the card */
 type PendingFormItem = {
@@ -33,13 +42,13 @@ type PendingFormItem = {
 export const useMealRegisterDrawerController = () => {
   const router = useRouter();
   const [isOpen, setIsOpen] = useAtom(isDrawerOpenAtom);
-  const mealType = useAtomValue(drawerMealTypeAtom);
+  const [mealType, setDrawerMealType] = useAtom(drawerMealTypeAtom);
+  const store = useStore();
   const [draftItems, setDraftItems] = useAtom(draftItemsAtom);
-  const selectedDate = useAtomValue(selectedDateAtom);
-  const registerMutation = useRegisterMealItems();
-  const [activeTab, setActiveTab] = useState<
-    "manual" | "recent" | "recipe" | "food_master" | "set_menu" | "ocr"
-  >("manual");
+  const { date, showMealChange } = useDailyMealsContext();
+  const refreshLegacyScreens = useRefreshLegacyScreens();
+  const [isRegistering, startRegistering] = useTransition();
+  const [activeTab, setActiveTab] = useState<RegisterTab>("manual");
   const [isOcrOpen, setIsOcrOpen] = useState(false);
   const [ocrResult, setOcrResult] = useState<OcrNutritionResult | null>(null);
   const [ocrNoValueError, setOcrNoValueError] = useState<string | null>(null);
@@ -64,6 +73,9 @@ export const useMealRegisterDrawerController = () => {
     setOcrNoValueError(null);
     setActiveTab("manual");
   }, [setIsOpen, setDraftItems]);
+
+  // The home screen stays mounted (hidden) after moving to another tab; close the drawer so it is not open on return
+  useLayoutEffect(() => () => setIsOpen(false), [setIsOpen]);
 
   /** Collect valid form entries that were typed but never added to the card */
   const collectPendingFormItems = useCallback((): PendingFormItem[] => {
@@ -246,22 +258,41 @@ export const useMealRegisterDrawerController = () => {
     [setDraftItems],
   );
 
-  /** Register the given items and close the drawer on success */
+  /** Close the drawer and show the items in the slot at once. On failure the drawer opens again with the drafts kept */
   const registerItems = useCallback(
-    async (items: MealItemDraft[]) => {
-      try {
-        await registerMutation.mutateAsync({
-          date: selectedDate,
-          mealType,
-          items,
-        });
+    (items: MealItemDraft[]) => {
+      // Clear the drawer now, not after the save: it may be reopened for another slot while this one is saving
+      closeDrawer();
+      startRegistering(async () => {
+        showMealChange({ type: "add", mealType, items });
+        const result = await callAction(() =>
+          registerMealItems({ date, mealType, items }),
+        );
+        if (!result.ok) {
+          toast.error("登録に失敗しました。もう一度お試しください");
+          // Give the drafts back to their own slot, unless the drawer already holds new ones by now
+          // (read from the store: the drafts in this closure are from before the save)
+          if (store.get(draftItemsAtom).length > 0) return;
+          setDrawerMealType(mealType);
+          setDraftItems(items);
+          setIsOpen(true);
+          return;
+        }
         toast.success(`${items.length}件の食事を登録しました`);
-        closeDrawer();
-      } catch {
-        toast.error("登録に失敗しました");
-      }
+        refreshLegacyScreens();
+      });
     },
-    [closeDrawer, mealType, registerMutation, selectedDate],
+    [
+      closeDrawer,
+      date,
+      mealType,
+      refreshLegacyScreens,
+      setDraftItems,
+      setDrawerMealType,
+      setIsOpen,
+      showMealChange,
+      store,
+    ],
   );
 
   /** Register drafts; ask first when typed-but-unadded form input would be left behind */
@@ -294,8 +325,23 @@ export const useMealRegisterDrawerController = () => {
     registerItems(draftItems);
   }, [draftItems, registerItems]);
 
+  const lastDraftItem = draftItems[draftItems.length - 1];
+
   return {
     activeTab,
+    lastDraftName: lastDraftItem?.name ?? null,
+    pendingNames:
+      pendingRegisterItems?.map((pending) => pending.values.name) ?? null,
+    totalDraftCalories: draftItems.reduce(
+      (sum, item) => sum + item.calories,
+      0,
+    ),
+    openOcrCamera: () => setIsOcrOpen(true),
+    closeOcrCamera: () => setIsOcrOpen(false),
+    openLibraryPicker: () => libraryInputRef.current?.click(),
+    handlePendingDialogOpenChange: (open: boolean) => {
+      if (!open) setPendingRegisterItems(null);
+    },
     draftItems,
     isDiscardConfirmOpen,
     isOcrOpen,
@@ -308,7 +354,7 @@ export const useMealRegisterDrawerController = () => {
     ocrPendingRef,
     ocrResult,
     pendingRegisterItems,
-    registerMutation,
+    isRegistering,
     setActiveTab,
     setIsDiscardConfirmOpen,
     setIsOcrOpen,

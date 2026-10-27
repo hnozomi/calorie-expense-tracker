@@ -1,53 +1,23 @@
 "use client";
+// Client because the search box filters the list as you type
 
-import { Suspense, useState } from "react";
-import { toast } from "sonner";
-import { useSetMenus } from "@/components/features/set-menus/hooks/use-set-menus";
+import type { SetMenu } from "@/components/features/set-menus/types/set-menu";
 import { Input } from "@/components/ui/input";
 import { PfcDisplay } from "@/components/ui/pfc-display";
-import { Skeleton } from "@/components/ui/skeleton";
-import type { MealItemFormValues } from "../types/meal";
+import {
+  type SetMenuItemWithIds,
+  useSetMenuSelector,
+} from "../hooks/use-set-menu-selector";
 
-type SetMenuItemWithIds = MealItemFormValues & {
-  setMenuId?: string;
-  foodMasterId?: string;
-  recipeId?: string;
-};
-
-type SetMenuSelectorProps = {
+type Props = {
+  setMenus: SetMenu[];
   onSelect: (items: SetMenuItemWithIds[]) => void;
 };
 
 /** List of set menus with items; selecting adds all items to draft */
-const SetMenuSelectorInner = ({ onSelect }: SetMenuSelectorProps) => {
-  const { data: setMenus } = useSetMenus();
-  const [search, setSearch] = useState("");
-
-  const normalizedSearch = search.trim().toLowerCase();
-  const filteredSetMenus = normalizedSearch
-    ? setMenus.filter((menu) =>
-        menu.name.toLowerCase().includes(normalizedSearch),
-      )
-    : setMenus;
-
-  const handleSelect = (menu: NonNullable<typeof setMenus>[number]) => {
-    if (menu.items.length === 0) {
-      toast.info("このセットメニューにはアイテムがありません");
-      return;
-    }
-    const items = menu.items.map((item) => ({
-      name: item.name,
-      calories: item.calories,
-      protein: item.protein,
-      fat: item.fat,
-      carbs: item.carbs,
-      cost: item.cost || undefined,
-      setMenuId: menu.id,
-      foodMasterId: item.foodMasterId ?? undefined,
-      recipeId: item.recipeId ?? undefined,
-    }));
-    onSelect(items);
-  };
+export const SetMenuSelector = ({ setMenus, onSelect }: Props) => {
+  const { search, setSearch, filteredSetMenus, handleSelect } =
+    useSetMenuSelector(setMenus, onSelect);
 
   return (
     <div className="space-y-2">
@@ -89,7 +59,7 @@ const SetMenuSelectorInner = ({ onSelect }: SetMenuSelectorProps) => {
         ) : (
           <div className="rounded-lg border border-dashed border-muted-foreground/25 py-6 text-center">
             <p className="text-sm text-muted-foreground">
-              {normalizedSearch
+              {search.trim()
                 ? "該当するセットメニューがありません"
                 : "セットメニューが未登録です"}
             </p>
@@ -99,22 +69,3 @@ const SetMenuSelectorInner = ({ onSelect }: SetMenuSelectorProps) => {
     </div>
   );
 };
-
-/** Wrapper with Suspense boundary for lazy loading */
-const SetMenuSelector = (props: SetMenuSelectorProps) => {
-  return (
-    <Suspense
-      fallback={
-        <div className="space-y-1">
-          {["sms1", "sms2", "sms3"].map((key) => (
-            <Skeleton key={key} className="h-14 rounded-lg" />
-          ))}
-        </div>
-      }
-    >
-      <SetMenuSelectorInner {...props} />
-    </Suspense>
-  );
-};
-
-export { SetMenuSelector };
