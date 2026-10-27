@@ -4,14 +4,8 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 import { RecentItemsSelector } from "@/components/features/meals/components/recent-items-selector";
 import type { RecentMealItem } from "@/components/features/meals/utils/recent-meal-items";
 
-const mockUseRecentMealItems = vi.fn();
-vi.mock("@/components/features/meals/hooks/use-recent-meal-items", () => ({
-  useRecentMealItems: () => mockUseRecentMealItems(),
-}));
-
 afterEach(() => {
   cleanup();
-  vi.clearAllMocks();
 });
 
 const createItem = (
@@ -31,43 +25,35 @@ const createItem = (
 });
 
 describe("RecentItemsSelector", () => {
-  it("ローディング中はスケルトンを表示する", () => {
-    mockUseRecentMealItems.mockReturnValue({
-      data: undefined,
-      isLoading: true,
-    });
-    const { container } = render(<RecentItemsSelector onSelect={vi.fn()} />);
-    expect(
-      container.querySelectorAll('[data-slot="skeleton"]').length,
-    ).toBeGreaterThan(0);
-  });
-
-  it("履歴が空のときは案内メッセージを表示する", () => {
-    mockUseRecentMealItems.mockReturnValue({ data: [], isLoading: false });
-    render(<RecentItemsSelector onSelect={vi.fn()} />);
+  it("QA-2: with no history it explains that registered items will show here", () => {
+    render(<RecentItemsSelector recentItems={[]} onSelect={vi.fn()} />);
     expect(screen.getByText(/まだ記録がありません/)).toBeInTheDocument();
+    expect(screen.queryAllByRole("button")).toHaveLength(0);
   });
 
-  it("アイテム名とカロリーが表示される", () => {
-    mockUseRecentMealItems.mockReturnValue({
-      data: [createItem()],
-      isLoading: false,
-    });
-    render(<RecentItemsSelector onSelect={vi.fn()} />);
+  it("QA-2: each recent item shows its name and calories", () => {
+    render(
+      <RecentItemsSelector
+        recentItems={[
+          createItem(),
+          createItem({ name: "カフェラテ", calories: 90 }),
+        ]}
+        onSelect={vi.fn()}
+      />,
+    );
     expect(
       screen.getByRole("button", { name: /ヨーグルト.*120 kcal/ }),
     ).toBeInTheDocument();
+    expect(
+      screen.getByRole("button", { name: /カフェラテ.*90 kcal/ }),
+    ).toBeInTheDocument();
   });
 
-  it("タップするとアイテム全体がonSelectに渡される", async () => {
+  it("QA-2: tapping an item passes the whole item, keeping its source and master link", async () => {
     const user = userEvent.setup();
     const onSelect = vi.fn();
     const item = createItem();
-    mockUseRecentMealItems.mockReturnValue({
-      data: [item],
-      isLoading: false,
-    });
-    render(<RecentItemsSelector onSelect={onSelect} />);
+    render(<RecentItemsSelector recentItems={[item]} onSelect={onSelect} />);
 
     await user.click(screen.getByRole("button", { name: /ヨーグルト/ }));
 

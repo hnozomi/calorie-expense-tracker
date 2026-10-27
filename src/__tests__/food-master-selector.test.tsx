@@ -1,40 +1,34 @@
 import { cleanup, render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { afterEach, describe, expect, it, vi } from "vitest";
+import type { FoodMaster } from "@/components/features/food-masters/types/food-master";
 import { FoodMasterSelector } from "@/components/features/meals/components/food-master-selector";
-
-/** Mock the useFoodMasters hook */
-const mockFoodMasters = vi.fn();
-vi.mock("@/components/features/food-masters/hooks/use-food-masters", () => ({
-  useFoodMasters: (...args: unknown[]) => mockFoodMasters(...args),
-}));
-
-/** Mock useDebounce to return value immediately */
-vi.mock("@/hooks", async (importOriginal) => {
-  const original = await importOriginal<typeof import("@/hooks")>();
-  return {
-    ...original,
-    useDebounce: (value: unknown) => value,
-  };
-});
 
 afterEach(() => {
   cleanup();
-  vi.clearAllMocks();
+});
+
+const createFoodMaster = (overrides: Partial<FoodMaster> = {}): FoodMaster => ({
+  id: "fm-1",
+  userId: "user-1",
+  name: "サラダチキン",
+  brand: "セブンイレブン",
+  category: null,
+  calories: 110,
+  protein: 23.8,
+  fat: 1.2,
+  carbs: 0.3,
+  defaultPrice: 250,
+  notes: null,
+  deletedAt: null,
+  createdAt: "2026-01-01T00:00:00Z",
+  updatedAt: "2026-01-01T00:00:00Z",
+  ...overrides,
 });
 
 const sampleFoodMasters = [
-  {
-    id: "fm-1",
-    name: "サラダチキン",
-    brand: "セブンイレブン",
-    calories: 110,
-    protein: 23.8,
-    fat: 1.2,
-    carbs: 0.3,
-    defaultPrice: 250,
-  },
-  {
+  createFoodMaster(),
+  createFoodMaster({
     id: "fm-2",
     name: "おにぎり（鮭）",
     brand: null,
@@ -43,76 +37,87 @@ const sampleFoodMasters = [
     fat: 1.0,
     carbs: 38.0,
     defaultPrice: null,
-  },
+  }),
 ];
 
+const searchBox = () =>
+  screen.getByPlaceholderText("食品名・ブランドで検索...");
+
 describe("FoodMasterSelector", () => {
-  it("displays loading skeletons while fetching", () => {
-    mockFoodMasters.mockReturnValue({ data: undefined, isLoading: true });
-    const { container } = render(<FoodMasterSelector onSelect={vi.fn()} />);
-    // 3 skeleton elements
-    const skeletons = container.querySelectorAll(".animate-pulse");
-    expect(skeletons.length).toBe(3);
+  it("S-02: shows every food master it receives, with its brand and calories", () => {
+    render(
+      <FoodMasterSelector foodMasters={sampleFoodMasters} onSelect={vi.fn()} />,
+    );
+    expect(
+      screen.getByRole("button", {
+        name: /サラダチキン.*セブンイレブン.*110 kcal/,
+      }),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole("button", { name: /おにぎり（鮭）.*180 kcal/ }),
+    ).toBeInTheDocument();
   });
 
-  it("displays food master items when loaded", () => {
-    mockFoodMasters.mockReturnValue({
-      data: sampleFoodMasters,
-      isLoading: false,
-    });
-    render(<FoodMasterSelector onSelect={vi.fn()} />);
-    expect(screen.getByText("サラダチキン")).toBeInTheDocument();
-    expect(screen.getByText("おにぎり（鮭）")).toBeInTheDocument();
-  });
-
-  it("displays brand when available", () => {
-    mockFoodMasters.mockReturnValue({
-      data: sampleFoodMasters,
-      isLoading: false,
-    });
-    render(<FoodMasterSelector onSelect={vi.fn()} />);
-    expect(screen.getByText("セブンイレブン")).toBeInTheDocument();
-  });
-
-  it("displays calories for each item", () => {
-    mockFoodMasters.mockReturnValue({
-      data: sampleFoodMasters,
-      isLoading: false,
-    });
-    render(<FoodMasterSelector onSelect={vi.fn()} />);
-    expect(screen.getByText(/110 kcal/)).toBeInTheDocument();
-    expect(screen.getByText(/180 kcal/)).toBeInTheDocument();
-  });
-
-  it("displays empty message when no food masters exist", () => {
-    mockFoodMasters.mockReturnValue({ data: [], isLoading: false });
-    render(<FoodMasterSelector onSelect={vi.fn()} />);
+  it("S-02: an empty list says no food master is registered", () => {
+    render(<FoodMasterSelector foodMasters={[]} onSelect={vi.fn()} />);
     expect(screen.getByText("食品マスタが未登録です")).toBeInTheDocument();
   });
 
-  it("displays search-specific empty message when search yields no results", async () => {
+  it("S-08: typing a food name narrows the list without reading again", async () => {
     const user = userEvent.setup();
-    mockFoodMasters.mockReturnValue({ data: [], isLoading: false });
-    render(<FoodMasterSelector onSelect={vi.fn()} />);
-
-    const searchInput = screen.getByPlaceholderText(
-      "食品名・ブランドで検索...",
+    render(
+      <FoodMasterSelector foodMasters={sampleFoodMasters} onSelect={vi.fn()} />,
     );
-    await user.type(searchInput, "存在しない食品");
 
-    expect(screen.getByText("該当する食品がありません")).toBeInTheDocument();
+    await user.type(searchBox(), "おにぎり");
+
+    expect(
+      screen.getByRole("button", { name: /おにぎり（鮭）/ }),
+    ).toBeInTheDocument();
+    expect(
+      screen.queryByRole("button", { name: /サラダチキン/ }),
+    ).not.toBeInTheDocument();
   });
 
-  it("calls onSelect with correct values when item is clicked", async () => {
+  it("S-08: typing a brand name finds the food masters of that brand", async () => {
+    const user = userEvent.setup();
+    render(
+      <FoodMasterSelector foodMasters={sampleFoodMasters} onSelect={vi.fn()} />,
+    );
+
+    await user.type(searchBox(), "セブン");
+
+    expect(
+      screen.getByRole("button", { name: /サラダチキン/ }),
+    ).toBeInTheDocument();
+    expect(
+      screen.queryByRole("button", { name: /おにぎり（鮭）/ }),
+    ).not.toBeInTheDocument();
+  });
+
+  it("S-08: a search with no match says nothing matched", async () => {
+    const user = userEvent.setup();
+    render(
+      <FoodMasterSelector foodMasters={sampleFoodMasters} onSelect={vi.fn()} />,
+    );
+
+    await user.type(searchBox(), "存在しない食品");
+
+    expect(screen.getByText("該当する食品がありません")).toBeInTheDocument();
+    expect(screen.queryAllByRole("button")).toHaveLength(0);
+  });
+
+  it("S-02: tapping a food master passes its values and id", async () => {
     const user = userEvent.setup();
     const onSelect = vi.fn();
-    mockFoodMasters.mockReturnValue({
-      data: sampleFoodMasters,
-      isLoading: false,
-    });
-    render(<FoodMasterSelector onSelect={onSelect} />);
+    render(
+      <FoodMasterSelector
+        foodMasters={sampleFoodMasters}
+        onSelect={onSelect}
+      />,
+    );
 
-    await user.click(screen.getByText("サラダチキン"));
+    await user.click(screen.getByRole("button", { name: /サラダチキン/ }));
 
     expect(onSelect).toHaveBeenCalledWith(
       {
@@ -127,28 +132,21 @@ describe("FoodMasterSelector", () => {
     );
   });
 
-  it("passes undefined for cost when defaultPrice is null", async () => {
+  it("S-02: a food master without a default price passes no cost", async () => {
     const user = userEvent.setup();
     const onSelect = vi.fn();
-    mockFoodMasters.mockReturnValue({
-      data: sampleFoodMasters,
-      isLoading: false,
-    });
-    render(<FoodMasterSelector onSelect={onSelect} />);
+    render(
+      <FoodMasterSelector
+        foodMasters={sampleFoodMasters}
+        onSelect={onSelect}
+      />,
+    );
 
-    await user.click(screen.getByText("おにぎり（鮭）"));
+    await user.click(screen.getByRole("button", { name: /おにぎり（鮭）/ }));
 
     expect(onSelect).toHaveBeenCalledWith(
       expect.objectContaining({ cost: undefined }),
       "fm-2",
     );
-  });
-
-  it("has a search input", () => {
-    mockFoodMasters.mockReturnValue({ data: [], isLoading: false });
-    render(<FoodMasterSelector onSelect={vi.fn()} />);
-    expect(
-      screen.getByPlaceholderText("食品名・ブランドで検索..."),
-    ).toBeInTheDocument();
   });
 });
