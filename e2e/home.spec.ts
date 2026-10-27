@@ -174,7 +174,7 @@ test.describe("フェーズ2: ホーム", () => {
     });
   });
 
-  test("AC-R-3: 日付として正しくない ?date= は 404 になる", async ({
+  test("ui-tech §1: 日付として正しくない ?date= は 404 になる", async ({
     page,
   }) => {
     await page.goto("/home?date=2026-02-30");

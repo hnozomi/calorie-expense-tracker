@@ -66,18 +66,44 @@ const ITEM = createMealItem({
 
 const renderModal = (
   item = ITEM,
-  { isOpen = true, onClose = vi.fn() } = {},
+  { isOpen = true, onClose = vi.fn(), onSaveFailed = vi.fn() } = {},
 ) => {
   const view = renderWithDailyMeals(
-    <MealItemEditModal item={item} isOpen={isOpen} onClose={onClose} />,
+    <MealItemEditModal
+      item={item}
+      isOpen={isOpen}
+      onClose={onClose}
+      onSaveFailed={onSaveFailed}
+    />,
   );
-  return { ...view, onClose };
+  return { ...view, onClose, onSaveFailed };
+};
+
+/** Type new values into the name and calorie fields, then press 変更を保存 */
+const editAndSave = async (user: ReturnType<typeof userEvent.setup>) => {
+  await user.clear(screen.getByLabelText("メニュー名"));
+  await user.type(screen.getByLabelText("メニュー名"), "サラダチキン大盛り");
+  await user.clear(screen.getByLabelText("カロリー (kcal)"));
+  await user.type(screen.getByLabelText("カロリー (kcal)"), "250");
+  await user.click(screen.getByRole("button", { name: "変更を保存" }));
+};
+
+/** The item as it was, with what was typed in editAndSave */
+const ITEM_WITH_TYPED_VALUES = {
+  ...ITEM,
+  name: "サラダチキン大盛り",
+  calories: 250,
 };
 
 describe("MealItemEditModal", () => {
   it("S-02a: with no item it renders nothing", () => {
     const { container } = renderWithDailyMeals(
-      <MealItemEditModal item={null} isOpen={false} onClose={vi.fn()} />,
+      <MealItemEditModal
+        item={null}
+        isOpen={false}
+        onClose={vi.fn()}
+        onSaveFailed={vi.fn()}
+      />,
     );
     expect(container).toBeEmptyDOMElement();
   });
@@ -158,6 +184,48 @@ describe("MealItemEditModal", () => {
       ),
     );
     expect(toastSuccess).not.toHaveBeenCalled();
+  });
+
+  it("AC-R-5: when saving fails it hands back the item with the typed values, so the edit drawer can reopen with them", async () => {
+    const user = userEvent.setup();
+    updateMealItem.mockResolvedValue({ ok: false });
+    const { onSaveFailed } = renderModal();
+
+    await editAndSave(user);
+
+    await waitFor(() =>
+      expect(onSaveFailed).toHaveBeenCalledWith(ITEM_WITH_TYPED_VALUES),
+    );
+    expect(onSaveFailed).toHaveBeenCalledTimes(1);
+  });
+
+  it("AC-R-5: when the save request itself fails (no connection) it also hands back the typed values", async () => {
+    const user = userEvent.setup();
+    updateMealItem.mockRejectedValue(new TypeError("Failed to fetch"));
+    const { onSaveFailed } = renderModal();
+
+    await editAndSave(user);
+
+    await waitFor(() =>
+      expect(toastError).toHaveBeenCalledWith(
+        "「サラダチキン」の更新に失敗しました",
+      ),
+    );
+    expect(onSaveFailed).toHaveBeenCalledWith(ITEM_WITH_TYPED_VALUES);
+    expect(onSaveFailed).toHaveBeenCalledTimes(1);
+  });
+
+  it("AC-R-5: when saving succeeds the edit drawer is not reopened", async () => {
+    const user = userEvent.setup();
+    updateMealItem.mockResolvedValue({ ok: true });
+    const { onSaveFailed } = renderModal();
+
+    await editAndSave(user);
+
+    await waitFor(() =>
+      expect(toastSuccess).toHaveBeenCalledWith("変更を保存しました"),
+    );
+    expect(onSaveFailed).not.toHaveBeenCalled();
   });
 
   it("S-02a: このアイテムを削除する asks to confirm with the item's name", async () => {

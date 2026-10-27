@@ -31,7 +31,7 @@ const displayedMeals = (
 });
 
 describe("toDisplayedDailyMeals", () => {
-  it("AC-R-2: keeps the items the server read, slot by slot", () => {
+  it("S-01: keeps the items the server read, slot by slot", () => {
     const toast = createMealItem({ name: "トースト" });
     const ramen = createMealItem({ name: "ラーメン" });
     const meals = emptyDailyMeals();

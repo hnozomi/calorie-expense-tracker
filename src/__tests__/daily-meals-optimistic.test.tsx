@@ -256,6 +256,38 @@ describe("押した直後の表示(useOptimistic)", () => {
     );
   });
 
+  it("AC-R-5: when the edit fails the edit drawer opens again with the typed values", async () => {
+    const user = userEvent.setup();
+    const pending = deferred<ActionResult>();
+    updateMealItem.mockReturnValue(pending.promise);
+    renderWithDailyMeals(<MealSlotList />, {
+      meals: mealsWithLunch(
+        createMealItem({ id: "item-1", name: "E2Eポテチ", calories: 200 }),
+      ),
+    });
+    await user.click(screen.getByRole("button", { name: /E2Eポテチ/ }));
+    await user.clear(screen.getByLabelText("メニュー名"));
+    await user.type(screen.getByLabelText("メニュー名"), "E2Eポテチ大袋");
+    await user.clear(screen.getByLabelText("カロリー (kcal)"));
+    await user.type(screen.getByLabelText("カロリー (kcal)"), "250");
+    await user.click(screen.getByRole("button", { name: "変更を保存" }));
+    // The drawer closes at once while the change is saved
+    await waitFor(() =>
+      expect(
+        screen.queryByLabelText("カロリー (kcal)"),
+      ).not.toBeInTheDocument(),
+    );
+
+    await settle(pending, { ok: false });
+
+    expect(await screen.findByLabelText("カロリー (kcal)")).toHaveValue(250);
+    expect(screen.getByLabelText("メニュー名")).toHaveValue("E2Eポテチ大袋");
+    // The slot itself shows what the server holds, not the typed values
+    expect(
+      within(lunchSlot()).getByRole("button", { name: /E2Eポテチ.*200 kcal/ }),
+    ).toBeInTheDocument();
+  });
+
   it("AC-R-5: a deleted item leaves its slot before the server answers", async () => {
     const user = userEvent.setup();
     const pending = deferred<ActionResult>();
