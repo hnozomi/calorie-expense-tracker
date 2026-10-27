@@ -72,7 +72,8 @@ src/components/features/<feature>/
 | `src/lib/supabase/server.ts` | 今のまま(cookie を読むサーバー用クライアント) |
 | `src/utils/date.ts` | `getTodayInTokyo()`・`getThisMondayInTokyo()`・`getMondayOf()`(その日の週の月曜)を足す(サーバーで「今日」を決める) |
 | `src/utils/search-params.ts` | `parseDateParam`・`parseWeekParam`(形を確かめ、週は月曜に直す) |
-| `src/lib/revalidate.ts` | `revalidateApp()`(`revalidatePath("/", "layout")`)。全 Server Action が最後に呼ぶ |
+| `src/lib/revalidate-screens.ts` | `revalidateAllScreens()`(`revalidatePath("/", "layout")`)。全 Server Action が書き込みの成功の後に呼ぶ |
+| `src/lib/revalidate.ts` | `revalidateApp()`。移行中のつなぎ専用(TanStack Query の画面から呼ぶ Server Action)。ログインを確かめてから `revalidateAllScreens()` |
 | `src/lib/screen-cache.ts` | `SCREEN_CACHE`(`cacheLife` に渡す使い回しの時間) |
 | `src/lib/today.ts` | `getToday()`。`'use cache: private'` の中で今日(Asia/Tokyo)を決める |
 | `src/lib/action-result.ts` | `ActionResult`(Server Action の戻り値)と `callAction`(呼び出しの例外を `{ ok: false }` にする) |
@@ -125,6 +126,7 @@ app/(main)/home/page.tsx                    Server。Header と <Suspense> を�
 隠れて残る画面(Activity)の state:
 
 - ホームの Drawer・編集モーダルは、タブを移ったら閉じる(隠れたときに `useLayoutEffect` の後始末で閉じる)
+- 献立のメニュー選択と買い物リストのダイアログも、タブを移ったら閉じる(同じ作り。保存の失敗で開き直したダイアログが、戻ったときに開いて見えないように)
 - 詳細画面の入力中は残す(戻ったら続きから)。保存したら一覧に移るので残らない
 - 日・週・検索語は URL なので、Suspense の `key` で切り替わる
 
@@ -134,7 +136,7 @@ app/(main)/home/page.tsx                    Server。Header と <Suspense> を�
 - 型: 各機能の `types/`(今のまま)。DB の行から型に直す関数は `queries.ts` から `api/queries.ts` に移す
 - 読む: `api/queries.ts`。`'use cache: private'` + `cacheLife(SCREEN_CACHE)`(`{ stale: 300 }`。`'use cache: private'` はサーバーに残らずブラウザだけに置かれるので、効くのは `stale` だけ。ほかのアプリと同じ)。データはこのアプリの中からしか変わらず、記録はスマホからだけ(別の端末で足すことが無い)ため 300 秒(規約)
 - 1回の表示で同じものを2か所から読むとき(目標値をホームの集計と Drawer で使う など)は、`cache` で包む
-- 書く: `api/actions.ts`。入力を `unknown` で受けて zod で確かめ、今の更新(`from().insert/update/delete`・RPC)をそのまま呼び、最後に `revalidateApp()`
+- 書く: `api/actions.ts`。入力を `unknown` で受けて zod で確かめ、今の更新(`from().insert/update/delete`・RPC)をそのまま呼び、書き込みが成功したら最後に `revalidateAllScreens()`(当たった行が0件なら失敗として返す)
 - 「今日」: サーバーで `getToday()`(`src/lib/today.ts`)。`'use cache: private'` の中で `getTodayInTokyo()`(`Intl.DateTimeFormat` に `timeZone: "Asia/Tokyo"`)を呼ぶ。searchParams を読んだ後でも、dev の事前描画は `new Date()` を止めるため(規約)。使い回す時間は画面のデータと同じなので、0時をまたいだ直後は最大その時間だけ前の日のままになる
 - ブラウザから DB を読むのは、ログイン・新規登録(`auth`)だけ残す
 
@@ -147,7 +149,7 @@ app/(main)/home/page.tsx                    Server。Header と <Suspense> を�
 | まだの画面(TanStack Query の mutation) | 移した画面 | `providers.tsx` の `MutationCache` の `onSuccess` で、すべての mutation の成功後に `revalidateAfterLegacyMutation` を呼ぶ(mutation ごとに足さない)。`useMutation` でない全データ削除だけは直接呼ぶ |
 | 移した画面(Server Action) | まだの画面 | Action を呼ぶ Client のフックが、成功後に `useRefreshLegacyScreens` ですべての query を invalidate する(表示していない query は印を付けるだけで、読み直すのは表示したとき) |
 
-今も読み直していない組み合わせ(マスタを直してもホームの値が古い、食事を変えても週の集計が古い)は、`revalidateApp` で全部読み直すので直る(AC-R-6)。
+今も読み直していない組み合わせ(マスタを直してもホームの値が古い、食事を変えても週の集計が古い)は、`revalidateAllScreens` で全部読み直すので直る(AC-R-6)。
 
 ## 6. バックエンド
 
@@ -166,9 +168,10 @@ app/(main)/home/page.tsx                    Server。Header と <Suspense> を�
 | データを待つ | 各ページの `<Suspense>` の fallback。今のスケルトン(`DailySkeleton` `PlanSkeleton` など)を使い回す。見出しは Suspense の外 |
 | 空(記録が無い日・献立が無い週・一覧が0件) | 今のまま部品の中 |
 | 読めなかった | `src/app/error.tsx`(今のまま)。Section で例外を握りつぶさない |
-| Drawer の候補が読めなかった | 例外にせず、Drawer の一覧の所に「一覧を読み込めませんでした」を出す(`hasError`)。候補は Drawer を開くまで要らず、手動入力は続けられるので、ホーム全体を error.tsx に替えない(ui.md「失敗した物のそばに出す」) |
+| Drawer の候補が読めなかった | 例外にせず、Drawer の一覧の所に「一覧を読み込めませんでした」を出す(`hasError`)。候補は Drawer を開くまで要らず、手動入力は続けられるので、ホーム全体を error.tsx に替えない(ui.md「失敗した物のそばに出す」)。献立のメニュー選択(`PlanCandidateTabs`)と買い物リスト(`ShoppingListBody`)も同じく、ダイアログの中に出す |
 | 押した後に失敗 | `useOptimistic` で元に戻り、toast を出す。登録は下書きを残したまま Drawer を開き直し、編集は打った値のまま編集の Drawer を開き直す(入力を消さない)。toast は品名入り(「「X」の更新に失敗しました」)、登録は「登録に失敗しました。もう一度お試しください」 |
 | 前日をコピー | 楽観表示しない。前日の中身はブラウザに無く、出すには毎回前日も読むことになるため。押している間は「コピー中...」 |
+| 今日の献立を転記・実績を反映・(ホームの)献立に反映 | 楽観表示しない。転記の結果は別のタブ(ホーム・献立)に出る。反映の中身は食事記録で、献立の画面のブラウザには無い。押している間は「転記中...」「反映中...」。転記は枠ごとに進むので、途中で失敗したら何枠移せたかを toast に出す |
 | 無い id・形の違う日付 | route の中で `notFound()` → `src/app/not-found.tsx` |
 
 ## 9. 検討した代替案
@@ -226,8 +229,10 @@ app/(main)/home/page.tsx                    Server。Header と <Suspense> を�
 ### フェーズ 3: 献立
 
 - `/plan?week=`。`plan/api/queries.ts`(週の献立)・`plan/api/actions.ts`(保存・削除・食事へ転記・実績を反映)
-- `PlanSection`(週の献立・目標値・献立の候補の Promise)・前後の週は `<Link prefetch>`・`今週へ`は `<Link>`
-- 買い物リストは、`PlanSection` で読んだ献立とレシピから作る(開いたときに読まない)
+- `PlanSection`(?week= を読み、月曜に直し、形が違えば notFound)→ `<Suspense key={weekStart}>` → `PlanContent`(献立・目標値を `Promise.all`、メニューの候補は Promise のまま)→ `WeeklyPlansProvider`(useOptimistic の献立を、グリッド・週のサマリー・セルのダイアログ・買い物リストで共有)
+- `WeekNavigator`(Server): 前後の週は `<Link prefetch>`、`今週へ`は `<Link>`。今週の URL は `/plan`(`utils/plan-href.ts`)
+- 買い物リストは、画面の献立と候補のレシピ(`use()`)から作る(開いたときに読まない)
+- セルのダイアログは押した直後に閉じ、保存・削除が失敗したら打った値のまま開き直す(ホームの編集と同じ)
 - 消す: `plan/queries.ts`・`stores/plan-week-atom.ts`・取得・更新の hooks。`TabDataPrefetcher` を消す
 - 単体テストを書き直す(`plan-weekly-summary`・`use-plan-menu-select-controller`・`shopping-list-dialog`・`plan-week-atom`)
 
