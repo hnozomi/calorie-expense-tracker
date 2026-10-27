@@ -40,9 +40,11 @@ test.describe("献立カレンダー", () => {
   test("食事記録を「実績を反映」で献立に取り込める", async ({ page }) => {
     // Seed: record yesterday's dinner via the home screen
     await gotoHydrated(page, "/home");
-    // Move to yesterday
-    await page.getByRole("button", { name: "前の日" }).click();
+    // Move to yesterday. Since phase 2 the previous day is a link to /home?date= (ui-tech §phase 2)
+    await page.getByRole("link", { name: "前の日" }).click();
+    await expect(page).toHaveURL(/\/home\?date=\d{4}-\d{2}-\d{2}$/);
     await expect(visibleText(page, "今日へ")).toBeVisible();
+    await page.waitForLoadState("networkidle");
 
     await openSlotDrawer(page, "夕食");
     await fillStable(page, "メニュー名", "E2E実績ラーメン");
