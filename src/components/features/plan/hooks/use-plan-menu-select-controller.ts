@@ -1,15 +1,17 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { startTransition, use, useEffect, useState } from "react";
 import { toast } from "sonner";
-import { useFoodMasters } from "@/components/features/food-masters/hooks/use-food-masters";
-import { useRecipes } from "@/components/features/recipes/hooks/use-recipes";
-import { useSetMenus } from "@/components/features/set-menus/hooks/use-set-menus";
-import { useDebounce } from "@/hooks";
+import type { FoodMaster } from "@/components/features/food-masters/types/food-master";
+import { matchesSearch } from "@/components/features/meals/utils/matches-search";
+import type { Recipe } from "@/components/features/recipes/types/recipe";
+import type { SetMenu } from "@/components/features/set-menus/types/set-menu";
+import { callAction } from "@/lib/action-result";
+import { useRefreshLegacyScreens } from "@/lib/legacy-bridge";
 import type { MealType } from "@/types";
+import { deleteMealPlan, saveMealPlan } from "../api/actions";
 import type { MealPlan, MealPlanFormValues } from "../types/meal-plan";
-import { useDeleteMealPlan } from "./use-delete-meal-plan";
-import { useSaveMealPlan } from "./use-save-meal-plan";
+import { useWeeklyPlansContext } from "./use-weekly-plans-context";
 
 type SaveRefs = {
   recipeId?: string;
@@ -22,6 +24,8 @@ type UsePlanMenuSelectControllerParams = {
   mealType: MealType;
   existingPlan?: MealPlan;
   onClose: () => void;
+  /** Opens the dialog again after a failed save or delete; it stays mounted, so the typed values are still there */
+  onReopen: () => void;
 };
 
 export const usePlanMenuSelectController = ({
@@ -29,9 +33,11 @@ export const usePlanMenuSelectController = ({
   mealType,
   existingPlan,
   onClose,
+  onReopen,
 }: UsePlanMenuSelectControllerParams) => {
-  const saveMutation = useSaveMealPlan();
-  const deleteMutation = useDeleteMealPlan();
+  const { showPlanChange, candidates } = useWeeklyPlansContext();
+  const { recipes, foodMasters, setMenus, hasError } = use(candidates);
+  const refreshLegacyScreens = useRefreshLegacyScreens();
   const [recipeSearch, setRecipeSearch] = useState("");
   const [fmSearch, setFmSearch] = useState("");
   const [manualName, setManualName] = useState("");
@@ -40,11 +46,6 @@ export const usePlanMenuSelectController = ({
   const [manualFat, setManualFat] = useState("");
   const [manualCarbs, setManualCarbs] = useState("");
   const [manualCost, setManualCost] = useState("");
-  const debouncedRecipeSearch = useDebounce(recipeSearch);
-  const debouncedFmSearch = useDebounce(fmSearch);
-  const { data: recipes } = useRecipes(debouncedRecipeSearch);
-  const { data: foodMasters } = useFoodMasters(debouncedFmSearch);
-  const { data: setMenus } = useSetMenus();
 
   useEffect(() => {
     setManualName(existingPlan?.plannedName ?? "");
@@ -55,34 +56,61 @@ export const usePlanMenuSelectController = ({
     setManualCost(existingPlan ? String(existingPlan.estimatedCost) : "");
   }, [existingPlan]);
 
-  const handleSave = useCallback(
-    async (values: MealPlanFormValues, refs?: SaveRefs) => {
-      try {
-        await saveMutation.mutateAsync({
+  /** Close at once and show the plan in the cell while it is saved */
+  const handleSave = (values: MealPlanFormValues, refs?: SaveRefs) => {
+    const recipeId = refs?.recipeId ?? null;
+    const foodMasterId = refs?.foodMasterId ?? null;
+    const setMenuId = refs?.setMenuId ?? null;
+    onClose();
+    // The dialog only closes (it stays mounted), but the save must outlive the press, so it runs in a standalone transition
+    startTransition(async () => {
+      showPlanChange({
+        type: "save",
+        plan: {
+          id: existingPlan?.id ?? `optimistic-${crypto.randomUUID()}`,
+          userId: existingPlan?.userId ?? "",
+          date,
+          mealType,
+          plannedName: values.plannedName,
+          calories: values.calories,
+          protein: values.protein,
+          fat: values.fat,
+          carbs: values.carbs,
+          estimatedCost: values.estimatedCost,
+          recipeId,
+          foodMasterId,
+          setMenuId,
+          isTransferred: existingPlan?.isTransferred ?? false,
+          createdAt: existingPlan?.createdAt ?? "",
+          isOptimistic: true,
+        },
+      });
+      const result = await callAction(() =>
+        saveMealPlan({
           id: existingPlan?.id,
           date,
           mealType,
           values,
-          recipeId: refs?.recipeId ?? null,
-          foodMasterId: refs?.foodMasterId ?? null,
-          setMenuId: refs?.setMenuId ?? null,
-        });
-        toast.success("献立を保存しました");
-        onClose();
-      } catch (error) {
-        console.error("Failed to save meal plan:", error);
-        toast.error("保存に失敗しました");
+          recipeId,
+          foodMasterId,
+          setMenuId,
+        }),
+      );
+      if (!result.ok) {
+        toast.error(`「${values.plannedName}」の保存に失敗しました`);
+        onReopen();
+        return;
       }
-    },
-    [date, existingPlan, mealType, onClose, saveMutation],
-  );
+      toast.success("献立を保存しました");
+      refreshLegacyScreens();
+    });
+  };
 
-  const handleSaveManual = useCallback(() => {
+  const handleSaveManual = () => {
     if (!manualName.trim()) {
       toast.error("メニュー名を入力してください");
       return;
     }
-
     // Keep the original source links when editing an existing plan via the manual tab
     const existingRefs = existingPlan
       ? {
@@ -91,7 +119,6 @@ export const usePlanMenuSelectController = ({
           setMenuId: existingPlan.setMenuId ?? undefined,
         }
       : undefined;
-
     handleSave(
       {
         plannedName: manualName.trim(),
@@ -103,91 +130,79 @@ export const usePlanMenuSelectController = ({
       },
       existingRefs,
     );
-  }, [
-    existingPlan,
-    handleSave,
-    manualCalories,
-    manualCarbs,
-    manualCost,
-    manualFat,
-    manualName,
-    manualProtein,
-  ]);
+  };
 
-  const handleSelectRecipe = useCallback(
-    (recipe: NonNullable<typeof recipes>[number]) => {
-      const perPerson = recipe.servings || 1;
-      const cost =
-        recipe.ingredients.reduce(
-          (sum, ingredient) => sum + ingredient.unitPrice * ingredient.quantity,
-          0,
-        ) / perPerson;
+  const handleSelectRecipe = (recipe: Recipe) => {
+    const perPerson = recipe.servings || 1;
+    const cost =
+      recipe.ingredients.reduce(
+        (sum, ingredient) => sum + ingredient.unitPrice * ingredient.quantity,
+        0,
+      ) / perPerson;
+    handleSave(
+      {
+        plannedName: recipe.name,
+        calories: recipe.calories / perPerson,
+        protein: recipe.protein / perPerson,
+        fat: recipe.fat / perPerson,
+        carbs: recipe.carbs / perPerson,
+        estimatedCost: cost,
+      },
+      { recipeId: recipe.id },
+    );
+  };
 
-      handleSave(
-        {
-          plannedName: recipe.name,
-          calories: recipe.calories / perPerson,
-          protein: recipe.protein / perPerson,
-          fat: recipe.fat / perPerson,
-          carbs: recipe.carbs / perPerson,
-          estimatedCost: cost,
-        },
-        { recipeId: recipe.id },
-      );
-    },
-    [handleSave],
-  );
+  const handleSelectFoodMaster = (foodMaster: FoodMaster) => {
+    handleSave(
+      {
+        plannedName: foodMaster.name,
+        calories: foodMaster.calories,
+        protein: foodMaster.protein,
+        fat: foodMaster.fat,
+        carbs: foodMaster.carbs,
+        estimatedCost: foodMaster.defaultPrice ?? 0,
+      },
+      { foodMasterId: foodMaster.id },
+    );
+  };
 
-  const handleSelectFoodMaster = useCallback(
-    (foodMaster: NonNullable<typeof foodMasters>[number]) => {
-      handleSave(
-        {
-          plannedName: foodMaster.name,
-          calories: foodMaster.calories,
-          protein: foodMaster.protein,
-          fat: foodMaster.fat,
-          carbs: foodMaster.carbs,
-          estimatedCost: foodMaster.defaultPrice ?? 0,
-        },
-        { foodMasterId: foodMaster.id },
-      );
-    },
-    [handleSave],
-  );
+  const handleSelectSetMenu = (setMenu: SetMenu) => {
+    handleSave(
+      {
+        plannedName: setMenu.name,
+        calories: setMenu.totalCalories,
+        protein: setMenu.totalProtein,
+        fat: setMenu.totalFat,
+        carbs: setMenu.totalCarbs,
+        estimatedCost: setMenu.totalCost,
+      },
+      { setMenuId: setMenu.id },
+    );
+  };
 
-  const handleSelectSetMenu = useCallback(
-    (setMenu: NonNullable<typeof setMenus>[number]) => {
-      handleSave(
-        {
-          plannedName: setMenu.name,
-          calories: setMenu.totalCalories,
-          protein: setMenu.totalProtein,
-          fat: setMenu.totalFat,
-          carbs: setMenu.totalCarbs,
-          estimatedCost: setMenu.totalCost,
-        },
-        { setMenuId: setMenu.id },
-      );
-    },
-    [handleSave],
-  );
-
-  const handleDelete = useCallback(async () => {
+  const handleDelete = () => {
     if (!existingPlan) return;
-
-    try {
-      await deleteMutation.mutateAsync(existingPlan.id);
+    onClose();
+    startTransition(async () => {
+      showPlanChange({ type: "remove", planId: existingPlan.id });
+      const result = await callAction(() =>
+        deleteMealPlan({ id: existingPlan.id }),
+      );
+      if (!result.ok) {
+        toast.error(`「${existingPlan.plannedName}」の削除に失敗しました`);
+        onReopen();
+        return;
+      }
       toast.success("献立を削除しました");
-      onClose();
-    } catch (error) {
-      console.error("Failed to delete meal plan:", error);
-      toast.error("削除に失敗しました");
-    }
-  }, [deleteMutation, existingPlan, onClose]);
+      refreshLegacyScreens();
+    });
+  };
 
   return {
-    deleteMutation,
-    foodMasters,
+    hasCandidateError: hasError,
+    foodMasters: foodMasters.filter((fm) =>
+      matchesSearch([fm.name, fm.brand], fmSearch),
+    ),
     fmSearch,
     manualCalories,
     manualCarbs,
@@ -195,9 +210,10 @@ export const usePlanMenuSelectController = ({
     manualFat,
     manualName,
     manualProtein,
-    recipes,
+    recipes: recipes.filter((recipe) =>
+      matchesSearch([recipe.name], recipeSearch),
+    ),
     recipeSearch,
-    saveMutation,
     setFmSearch,
     setManualCalories,
     setManualCarbs,
@@ -208,6 +224,9 @@ export const usePlanMenuSelectController = ({
     setRecipeSearch,
     setMenus,
     handleDelete,
+    handleOpenChange: (open: boolean) => {
+      if (!open) onClose();
+    },
     handleSaveManual,
     handleSelectFoodMaster,
     handleSelectRecipe,

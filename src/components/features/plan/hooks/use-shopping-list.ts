@@ -1,26 +1,35 @@
 "use client";
 
-import { useMemo } from "react";
-import { useRecipes } from "@/components/features/recipes/hooks/use-recipes";
+import { use, useState } from "react";
 import { buildShoppingList } from "../utils/shopping-list";
-import { useMealPlans } from "./use-meal-plans";
+import { useWeeklyPlansContext } from "./use-weekly-plans-context";
 
-/** Build the shopping list for the displayed week from recipe-based plans */
-export const useShoppingList = (weekStart: string) => {
-  const { data: plans } = useMealPlans(weekStart);
-  const { data: recipes, isLoading } = useRecipes();
-
-  const entries = useMemo(
-    () => buildShoppingList(plans, recipes ?? []),
-    [plans, recipes],
+/** The week's recipe-based plans added up into ingredients, with which ones are already bought */
+export const useShoppingList = () => {
+  const { plans, candidates } = useWeeklyPlansContext();
+  const { recipes, hasError } = use(candidates);
+  const [checkedKeys, setCheckedKeys] = useState<ReadonlySet<string>>(
+    new Set(),
   );
+  const entries = buildShoppingList(plans, recipes);
 
-  const totalCost = useMemo(
-    () => entries.reduce((sum, entry) => sum + entry.estimatedCost, 0),
-    [entries],
-  );
+  const handleToggleChecked = (entryKey: string) => {
+    setCheckedKeys((previous) => {
+      const next = new Set(previous);
+      if (next.has(entryKey)) {
+        next.delete(entryKey);
+      } else {
+        next.add(entryKey);
+      }
+      return next;
+    });
+  };
 
-  const hasRecipePlans = plans.some((plan) => plan.recipeId !== null);
-
-  return { entries, totalCost, hasRecipePlans, isLoading };
+  return {
+    entries,
+    hasError,
+    totalCost: entries.reduce((sum, entry) => sum + entry.estimatedCost, 0),
+    checkedKeys,
+    handleToggleChecked,
+  };
 };
