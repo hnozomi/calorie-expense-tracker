@@ -8,7 +8,8 @@ type Props = {
   isDeleting: boolean;
   itemName: string;
   isDeleteConfirmOpen: boolean;
-  onDeleteConfirmOpenChange: (open: boolean) => void;
+  onDeleteAsk: () => void;
+  onDeleteCancel: () => void;
   onDelete: () => void;
 };
 
@@ -18,7 +19,8 @@ export const RecipeFormFooter = ({
   isDeleting,
   itemName,
   isDeleteConfirmOpen,
-  onDeleteConfirmOpenChange,
+  onDeleteAsk,
+  onDeleteCancel,
   onDelete,
 }: Props) => (
   <>
@@ -42,8 +44,8 @@ export const RecipeFormFooter = ({
         description="過去の食事記録は影響を受けません。セットメニューに含まれている場合、既存の内容は保持されますが、新たに追加できなくなります。"
         isOpen={isDeleteConfirmOpen}
         isDeleting={isDeleting}
-        onOpen={() => onDeleteConfirmOpenChange(true)}
-        onCancel={() => onDeleteConfirmOpenChange(false)}
+        onOpen={onDeleteAsk}
+        onCancel={onDeleteCancel}
         onConfirm={onDelete}
       />
     )}

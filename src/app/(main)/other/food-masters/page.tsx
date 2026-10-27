@@ -7,6 +7,7 @@ import {
 } from "@/components/features/food-masters";
 import { Header, PageContainer } from "@/components/features/layout";
 import { Button } from "@/components/ui/button";
+import { SearchBoxSkeleton } from "@/components/ui/search-box";
 
 /** 食品マスタ list. The header shows at once; the results wait for ?q= inside Suspense */
 const FoodMasterListPage = ({
@@ -22,7 +23,14 @@ const FoodMasterListPage = ({
         </Button>
       </Header>
       <PageContainer>
-        <Suspense fallback={<FoodMasterListSkeleton />}>
+        <Suspense
+          fallback={
+            <>
+              <SearchBoxSkeleton />
+              <FoodMasterListSkeleton />
+            </>
+          }
+        >
           <FoodMasterListSection searchParams={searchParams} />
         </Suspense>
       </PageContainer>

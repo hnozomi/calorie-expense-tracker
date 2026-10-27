@@ -7,6 +7,7 @@ import {
   RecipeListSkeleton,
 } from "@/components/features/recipes";
 import { Button } from "@/components/ui/button";
+import { SearchBoxSkeleton } from "@/components/ui/search-box";
 
 /** レシピ list. The header shows at once; the results wait for ?q= inside Suspense */
 const RecipeListPage = ({ searchParams }: PageProps<"/recipes">) => {
@@ -20,7 +21,14 @@ const RecipeListPage = ({ searchParams }: PageProps<"/recipes">) => {
         </Button>
       </Header>
       <PageContainer>
-        <Suspense fallback={<RecipeListSkeleton />}>
+        <Suspense
+          fallback={
+            <>
+              <SearchBoxSkeleton />
+              <RecipeListSkeleton />
+            </>
+          }
+        >
           <RecipeListSection searchParams={searchParams} />
         </Suspense>
       </PageContainer>

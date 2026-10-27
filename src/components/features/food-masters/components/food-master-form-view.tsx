@@ -1,4 +1,5 @@
 "use client";
+// Client because it is a form (react-hook-form) with an unsaved-changes guard and the OCR camera
 
 import { ArrowLeft } from "lucide-react";
 import { useFoodMasterFormController } from "@/components/features/food-masters/hooks/use-food-master-form-controller";
@@ -23,23 +24,24 @@ type Props = {
   prefill: Partial<FoodMasterFormValues>;
 };
 
-/** Form view for creating or editing a food master */
 export const FoodMasterFormView = ({ existing, prefill }: Props) => {
   const {
     form: {
       register,
-      setValue,
       formState: { errors },
     },
     backGuard,
     categoryValue,
+    handleCategoryChange,
     isDeleteConfirmOpen,
     isDeleting,
     isSaving,
     isNew,
     isOcrOpen,
-    setIsDeleteConfirmOpen,
-    setIsOcrOpen,
+    openDeleteConfirm,
+    closeDeleteConfirm,
+    openOcr,
+    closeOcr,
     handleDelete,
     handleOcrResult,
     handleSave,
@@ -63,10 +65,10 @@ export const FoodMasterFormView = ({ existing, prefill }: Props) => {
             register={register}
             errors={errors}
             categoryValue={categoryValue}
-            setValue={setValue}
+            onCategoryChange={handleCategoryChange}
           />
 
-          <FoodMasterOcrButton onOpenOcr={() => setIsOcrOpen(true)} />
+          <FoodMasterOcrButton onOpenOcr={openOcr} />
 
           <FoodMasterNutritionSection register={register} errors={errors} />
 
@@ -78,7 +80,8 @@ export const FoodMasterFormView = ({ existing, prefill }: Props) => {
             isDeleting={isDeleting}
             itemName={existing?.name ?? ""}
             isDeleteConfirmOpen={isDeleteConfirmOpen}
-            onDeleteConfirmOpenChange={setIsDeleteConfirmOpen}
+            onDeleteAsk={openDeleteConfirm}
+            onDeleteCancel={closeDeleteConfirm}
             onDelete={handleDelete}
           />
         </form>
@@ -86,7 +89,7 @@ export const FoodMasterFormView = ({ existing, prefill }: Props) => {
 
       <OcrCameraOverlay
         isOpen={isOcrOpen}
-        onClose={() => setIsOcrOpen(false)}
+        onClose={closeOcr}
         onResult={handleOcrResult}
       />
 

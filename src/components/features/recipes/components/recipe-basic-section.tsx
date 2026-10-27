@@ -20,11 +20,15 @@ export const RecipeBasicSection = ({ register, errors }: Props) => (
         </Label>
         <Input
           id="recipe-name"
+          aria-invalid={!!errors.name}
+          aria-describedby={errors.name ? "recipe-name-error" : undefined}
           placeholder="例: 鶏むね肉のサラダ"
           {...register("name")}
         />
         {errors.name && (
-          <p className="text-xs text-destructive">{errors.name.message}</p>
+          <p id="recipe-name-error" className="text-xs text-destructive">
+            {errors.name.message}
+          </p>
         )}
       </div>
       <div className="space-y-1.5">
@@ -33,12 +37,18 @@ export const RecipeBasicSection = ({ register, errors }: Props) => (
         </Label>
         <Input
           id="recipe-servings"
+          aria-invalid={!!errors.servings}
+          aria-describedby={
+            errors.servings ? "recipe-servings-error" : undefined
+          }
           type="number"
           inputMode="numeric"
           {...register("servings")}
         />
         {errors.servings && (
-          <p className="text-xs text-destructive">{errors.servings.message}</p>
+          <p id="recipe-servings-error" className="text-xs text-destructive">
+            {errors.servings.message}
+          </p>
         )}
       </div>
     </div>

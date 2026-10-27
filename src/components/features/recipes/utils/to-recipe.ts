@@ -1,4 +1,4 @@
-import type { Recipe } from "../types/recipe";
+import type { Recipe } from "@/components/features/recipes/types/recipe";
 
 // The Supabase client has no generated types, so rows arrive untyped; the casts follow the table definitions in supabase/migrations
 

@@ -17,7 +17,7 @@ export const FoodMasterFormSection = async ({
 }: Props) => {
   const { id } = await params;
   if (id === "new") {
-    // The register drawer's "マスタに保存" passes the OCR values in the URL
+    // The register drawer's save-to-master button passes the OCR values in the URL
     const query = new URLSearchParams();
     for (const [key, value] of Object.entries(await searchParams)) {
       if (typeof value === "string") query.set(key, value);

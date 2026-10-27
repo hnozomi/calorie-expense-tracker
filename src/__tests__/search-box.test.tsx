@@ -74,6 +74,33 @@ describe("SearchBox (?q= の検索欄)", () => {
     expect(push).not.toHaveBeenCalled();
   });
 
+  it("AC-R-3: 打たずに URL の ?q= が変わったら(戻る・進む、一覧へのリンク)、検索欄もその語になり、URL は書き換えない", async () => {
+    const { rerender } = renderSearchBox("カレー");
+
+    rerender(
+      <SearchBox
+        basePath="/recipes"
+        initialQuery=""
+        placeholder={PLACEHOLDER}
+      />,
+    );
+    await waitAfterTyping();
+    expect(searchField()).toHaveValue("");
+
+    rerender(
+      <SearchBox
+        basePath="/recipes"
+        initialQuery="鶏むね"
+        placeholder={PLACEHOLDER}
+      />,
+    );
+    await waitAfterTyping();
+    expect(searchField()).toHaveValue("鶏むね");
+
+    expect(replace).not.toHaveBeenCalled();
+    expect(push).not.toHaveBeenCalled();
+  });
+
   it("ui-tech フェーズ4: 打ち終わって少し後に、検索語を ?q= に入れた URL へ replace で書き換える(履歴を積まない)", async () => {
     renderSearchBox();
 

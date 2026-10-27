@@ -12,6 +12,7 @@ import type {
   MealPlanFormValues,
 } from "@/components/features/plan/types/meal-plan";
 import type { Recipe } from "@/components/features/recipes/types/recipe";
+import { totalIngredientCost } from "@/components/features/recipes/utils/recipe-cost";
 import type { SetMenu } from "@/components/features/set-menus/types/set-menu";
 import { callAction } from "@/lib/action-result";
 import { useRefreshLegacyScreens } from "@/lib/legacy-bridge";
@@ -145,11 +146,7 @@ export const usePlanMenuSelectController = ({
 
   const handleSelectRecipe = (recipe: Recipe) => {
     const perPerson = recipe.servings || 1;
-    const cost =
-      recipe.ingredients.reduce(
-        (sum, ingredient) => sum + ingredient.unitPrice * ingredient.quantity,
-        0,
-      ) / perPerson;
+    const cost = totalIngredientCost(recipe) / perPerson;
     handleSave(
       {
         plannedName: recipe.name,

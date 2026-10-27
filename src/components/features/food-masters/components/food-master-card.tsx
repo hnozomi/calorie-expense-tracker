@@ -1,19 +1,17 @@
-"use client";
-
 import Link from "next/link";
+import type { FoodMaster } from "@/components/features/food-masters/types/food-master";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
 import { PfcDisplay } from "@/components/ui/pfc-display";
 import { FOOD_CATEGORY_LABELS } from "@/types";
-import type { FoodMaster } from "../types/food-master";
 
-type FoodMasterCardProps = {
+type Props = {
   foodMaster: FoodMaster;
   href: string;
 };
 
 /** Card displaying a food master's name, nutrition, and category */
-const FoodMasterCard = ({ foodMaster, href }: FoodMasterCardProps) => {
+export const FoodMasterCard = ({ foodMaster, href }: Props) => {
   return (
     <Link href={href} className="block">
       <Card className="cursor-pointer border-muted-foreground/10 transition-all duration-200 hover:scale-[1.01] hover:shadow-md active:scale-[0.99]">
@@ -65,5 +63,3 @@ const FoodMasterCard = ({ foodMaster, href }: FoodMasterCardProps) => {
     </Link>
   );
 };
-
-export { FoodMasterCard };

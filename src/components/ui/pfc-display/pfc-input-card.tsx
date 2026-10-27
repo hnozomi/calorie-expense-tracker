@@ -53,9 +53,15 @@ export const PfcInputCard = ({ id, nutrient, error, ...inputProps }: Props) => {
         step="any"
         className={tone.input}
         placeholder="0"
+        aria-invalid={!!error}
+        aria-describedby={error ? `${id}-error` : undefined}
         {...inputProps}
       />
-      {error && <p className="text-xs text-destructive">{error}</p>}
+      {error && (
+        <p id={`${id}-error`} className="text-xs text-destructive">
+          {error}
+        </p>
+      )}
     </div>
   );
 };

@@ -15,7 +15,6 @@ export const FoodMasterNutritionSection = ({ register, errors }: Props) => (
   <section className="space-y-3">
     <SectionHeader icon={Flame} label="栄養成分" />
     <div className="space-y-3 rounded-xl border border-border/60 bg-muted/30 p-3.5">
-      {/* カロリー — 大きく目立たせる */}
       <div className="space-y-1.5">
         <Label htmlFor="fm-calories" className="text-xs">
           <Sparkles className="mr-1 inline-block h-3 w-3 text-amber-500" />
@@ -23,6 +22,8 @@ export const FoodMasterNutritionSection = ({ register, errors }: Props) => (
         </Label>
         <Input
           id="fm-calories"
+          aria-invalid={!!errors.calories}
+          aria-describedby={errors.calories ? "fm-calories-error" : undefined}
           type="number"
           inputMode="decimal"
           step="any"
@@ -31,11 +32,12 @@ export const FoodMasterNutritionSection = ({ register, errors }: Props) => (
           {...register("calories")}
         />
         {errors.calories && (
-          <p className="text-xs text-destructive">{errors.calories.message}</p>
+          <p id="fm-calories-error" className="text-xs text-destructive">
+            {errors.calories.message}
+          </p>
         )}
       </div>
 
-      {/* PFC — 色分けされた3カラム */}
       <div className="grid grid-cols-3 gap-2.5">
         <PfcInputCard
           id="fm-protein"

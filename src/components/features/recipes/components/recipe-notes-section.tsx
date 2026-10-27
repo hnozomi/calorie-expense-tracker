@@ -14,6 +14,7 @@ export const RecipeNotesSection = ({ register }: Props) => (
     <div className="space-y-3 rounded-xl border border-border/60 bg-muted/30 p-3.5">
       <Textarea
         id="recipe-notes"
+        aria-label="メモ"
         placeholder="調理手順や備考..."
         rows={3}
         {...register("notes")}

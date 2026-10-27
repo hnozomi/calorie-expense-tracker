@@ -1,10 +1,13 @@
 "use server";
 
 import { z } from "zod/v4";
+import {
+  ingredientSchema,
+  recipeFormSchema,
+} from "@/components/features/recipes/types/recipe";
 import type { ActionResult } from "@/lib/action-result";
 import { revalidateAllScreens } from "@/lib/revalidate-screens";
 import { createClient } from "@/lib/supabase/server";
-import { ingredientSchema, recipeFormSchema } from "../types/recipe";
 
 // Action arguments come from the client and can be anything, so every input is parsed here
 const idSchema = z.uuid();
@@ -15,7 +18,6 @@ const saveInputSchema = z.object({
   ingredients: z.array(ingredientSchema),
 });
 
-/** Create a recipe, or overwrite the one being edited, together with its ingredients */
 export const saveRecipe = async (input: unknown): Promise<ActionResult> => {
   const parsed = saveInputSchema.safeParse(input);
   if (!parsed.success) return { ok: false };

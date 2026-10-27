@@ -1,4 +1,5 @@
 "use client";
+// Client because it is a form (react-hook-form) with an unsaved-changes guard
 
 import { ArrowLeft } from "lucide-react";
 import { Header, PageContainer } from "@/components/features/layout";
@@ -17,7 +18,6 @@ type Props = {
   existing?: Recipe;
 };
 
-/** Form view for creating or editing a recipe with ingredients */
 export const RecipeFormView = ({ existing }: Props) => {
   const {
     form: {
@@ -31,7 +31,8 @@ export const RecipeFormView = ({ existing }: Props) => {
     isSaving,
     isNew,
     totalIngredientCost,
-    setIsDeleteConfirmOpen,
+    openDeleteConfirm,
+    closeDeleteConfirm,
     handleAddIngredient,
     handleDelete,
     handleIngredientChange,
@@ -61,7 +62,6 @@ export const RecipeFormView = ({ existing }: Props) => {
             totalIngredientCost={totalIngredientCost}
           />
 
-          {/* ── 材料セクション ── */}
           <RecipeIngredientsEditor
             ingredients={ingredients}
             onAdd={handleAddIngredient}
@@ -77,7 +77,8 @@ export const RecipeFormView = ({ existing }: Props) => {
             isDeleting={isDeleting}
             itemName={existing?.name ?? ""}
             isDeleteConfirmOpen={isDeleteConfirmOpen}
-            onDeleteConfirmOpenChange={setIsDeleteConfirmOpen}
+            onDeleteAsk={openDeleteConfirm}
+            onDeleteCancel={closeDeleteConfirm}
             onDelete={handleDelete}
           />
         </form>

@@ -1,9 +1,9 @@
 import "server-only";
 import { cacheLife } from "next/cache";
+import type { Recipe } from "@/components/features/recipes/types/recipe";
+import { toRecipe } from "@/components/features/recipes/utils/to-recipe";
 import { SCREEN_CACHE } from "@/lib/screen-cache";
 import { createClient } from "@/lib/supabase/server";
-import type { Recipe } from "../types/recipe";
-import { toRecipe } from "../utils/to-recipe";
 
 export const getRecipes = async (): Promise<Recipe[]> => {
   "use cache: private";

@@ -27,7 +27,6 @@ export const RecipeNutritionSection = ({
       <p className="text-xs text-muted-foreground">
         レシピ全量の栄養成分を入力してください（材料からの自動計算は行われません）
       </p>
-      {/* Calories */}
       <div className="space-y-1.5">
         <Label htmlFor="recipe-calories" className="text-xs">
           <Sparkles className="mr-1 inline-block h-3 w-3 text-amber-500" />
@@ -35,6 +34,10 @@ export const RecipeNutritionSection = ({
         </Label>
         <Input
           id="recipe-calories"
+          aria-invalid={!!errors.calories}
+          aria-describedby={
+            errors.calories ? "recipe-calories-error" : undefined
+          }
           type="number"
           inputMode="decimal"
           step="any"
@@ -43,11 +46,12 @@ export const RecipeNutritionSection = ({
           {...register("calories")}
         />
         {errors.calories && (
-          <p className="text-xs text-destructive">{errors.calories.message}</p>
+          <p id="recipe-calories-error" className="text-xs text-destructive">
+            {errors.calories.message}
+          </p>
         )}
       </div>
 
-      {/* PFC color-coded cards */}
       <div className="grid grid-cols-3 gap-2.5">
         <PfcInputCard
           id="recipe-protein"

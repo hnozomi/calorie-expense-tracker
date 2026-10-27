@@ -22,13 +22,15 @@ export const FoodMasterOtherSection = ({ register, errors }: Props) => (
         </Label>
         <Input
           id="fm-price"
+          aria-invalid={!!errors.defaultPrice}
+          aria-describedby={errors.defaultPrice ? "fm-price-error" : undefined}
           type="number"
           inputMode="decimal"
           placeholder="0"
           {...register("defaultPrice")}
         />
         {errors.defaultPrice && (
-          <p className="text-xs text-destructive">
+          <p id="fm-price-error" className="text-xs text-destructive">
             {errors.defaultPrice.message}
           </p>
         )}

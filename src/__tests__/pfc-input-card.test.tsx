@@ -36,7 +36,25 @@ describe("PfcInputCard", () => {
     expect(screen.getByText("0以上で入力してください")).toBeInTheDocument();
   });
 
-  it("入力欄の属性(react-hook-form の register など)はそのまま渡る", async () => {
+  it("02 バリデーション: エラーの文は欄に結び付き(aria-describedby)、欄はエラーの状態(aria-invalid)になる", () => {
+    const { rerender } = render(<PfcInputCard id="p" nutrient="protein" />);
+    const field = screen.getByLabelText("P (g)");
+    expect(field).not.toHaveAttribute("aria-invalid", "true");
+    expect(field).not.toHaveAccessibleDescription();
+
+    rerender(
+      <PfcInputCard
+        id="p"
+        nutrient="protein"
+        error="0以上で入力してください"
+      />,
+    );
+
+    expect(field).toHaveAttribute("aria-invalid", "true");
+    expect(field).toHaveAccessibleDescription("0以上で入力してください");
+  });
+
+  it("S-05・S-08a: 入力欄の属性(react-hook-form の register など)はそのまま渡る", async () => {
     const onChange = vi.fn();
     render(
       <PfcInputCard id="f" nutrient="fat" name="fat" onChange={onChange} />,

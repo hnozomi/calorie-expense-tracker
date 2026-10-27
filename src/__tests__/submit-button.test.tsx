@@ -24,7 +24,7 @@ describe("SubmitButton", () => {
     expect(screen.getByRole("button", { name: /保存中/ })).toBeDisabled();
   });
 
-  it("ボタンの属性(class など)はそのまま渡る", () => {
+  it("S-05・S-08a: ボタンの属性(class など)はそのまま渡る", () => {
     render(
       <SubmitButton isPending={false} className="w-full" form="recipe-form">
         登録する

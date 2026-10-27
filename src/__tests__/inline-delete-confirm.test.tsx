@@ -75,7 +75,7 @@ describe("InlineDeleteConfirm", () => {
     expect(onConfirm).not.toHaveBeenCalled();
   });
 
-  it("フォームの中に置いても、押してフォームを送信しない", async () => {
+  it("S-05・S-08a: 削除の確認をフォームの中に置いても、押してフォームを送信しない", async () => {
     const onSubmit = vi.fn((event: Event) => event.preventDefault());
     const handlers = { onOpen: vi.fn(), onCancel: vi.fn(), onConfirm: vi.fn() };
     render(

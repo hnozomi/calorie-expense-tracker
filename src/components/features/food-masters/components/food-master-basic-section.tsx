@@ -1,9 +1,5 @@
 import { Tag } from "lucide-react";
-import type {
-  FieldErrors,
-  UseFormRegister,
-  UseFormSetValue,
-} from "react-hook-form";
+import type { FieldErrors, UseFormRegister } from "react-hook-form";
 import type { FoodMasterFormInput } from "@/components/features/food-masters/types/food-master";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -16,20 +12,19 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { FOOD_CATEGORIES, FOOD_CATEGORY_LABELS } from "@/types";
-import type { FoodMasterFormValues } from "../types/food-master";
 
 type Props = {
   register: UseFormRegister<FoodMasterFormInput>;
   errors: FieldErrors<FoodMasterFormInput>;
   categoryValue: FoodMasterFormInput["category"];
-  setValue: UseFormSetValue<FoodMasterFormInput>;
+  onCategoryChange: (value: string) => void;
 };
 
 export const FoodMasterBasicSection = ({
   register,
   errors,
   categoryValue,
-  setValue,
+  onCategoryChange,
 }: Props) => (
   <section className="space-y-3">
     <SectionHeader icon={Tag} label="基本情報" />
@@ -40,11 +35,15 @@ export const FoodMasterBasicSection = ({
         </Label>
         <Input
           id="fm-name"
+          aria-invalid={!!errors.name}
+          aria-describedby={errors.name ? "fm-name-error" : undefined}
           placeholder="例: サラダチキン（セブン）"
           {...register("name")}
         />
         {errors.name && (
-          <p className="text-xs text-destructive">{errors.name.message}</p>
+          <p id="fm-name-error" className="text-xs text-destructive">
+            {errors.name.message}
+          </p>
         )}
       </div>
       <div className="grid grid-cols-2 gap-3">
@@ -59,16 +58,11 @@ export const FoodMasterBasicSection = ({
           />
         </div>
         <div className="space-y-1.5">
-          <Label className="text-xs">カテゴリ</Label>
-          <Select
-            value={categoryValue ?? ""}
-            onValueChange={(val) =>
-              setValue("category", val as FoodMasterFormValues["category"], {
-                shouldValidate: true,
-              })
-            }
-          >
-            <SelectTrigger>
+          <Label htmlFor="fm-category" className="text-xs">
+            カテゴリ
+          </Label>
+          <Select value={categoryValue ?? ""} onValueChange={onCategoryChange}>
+            <SelectTrigger id="fm-category">
               <SelectValue placeholder="選択..." />
             </SelectTrigger>
             <SelectContent>

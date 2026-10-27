@@ -1,9 +1,9 @@
 import "server-only";
 import { cacheLife } from "next/cache";
+import type { FoodMaster } from "@/components/features/food-masters/types/food-master";
+import { toFoodMaster } from "@/components/features/food-masters/utils/to-food-master";
 import { SCREEN_CACHE } from "@/lib/screen-cache";
 import { createClient } from "@/lib/supabase/server";
-import type { FoodMaster } from "../types/food-master";
-import { toFoodMaster } from "../utils/to-food-master";
 
 export const getFoodMasters = async (): Promise<FoodMaster[]> => {
   "use cache: private";

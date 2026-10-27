@@ -1,11 +1,11 @@
 "use server";
 
 import { z } from "zod/v4";
+import { foodMasterFormSchema } from "@/components/features/food-masters/types/food-master";
 import type { ActionResult } from "@/lib/action-result";
 import { revalidateAllScreens } from "@/lib/revalidate-screens";
 import { createClient } from "@/lib/supabase/server";
 import { getSignedInUserId } from "@/lib/supabase/user";
-import { foodMasterFormSchema } from "../types/food-master";
 
 // Action arguments come from the client and can be anything, so every input is parsed here
 const idSchema = z.uuid();
@@ -15,7 +15,6 @@ const saveInputSchema = z.object({
   values: foodMasterFormSchema,
 });
 
-/** Create a food master, or overwrite the one being edited */
 export const saveFoodMaster = async (input: unknown): Promise<ActionResult> => {
   const parsed = saveInputSchema.safeParse(input);
   if (!parsed.success) return { ok: false };

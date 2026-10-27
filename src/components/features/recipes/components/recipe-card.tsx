@@ -1,23 +1,18 @@
-"use client";
-
 import Link from "next/link";
+import type { Recipe } from "@/components/features/recipes/types/recipe";
+import { totalIngredientCost } from "@/components/features/recipes/utils/recipe-cost";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
 import { PfcDisplay } from "@/components/ui/pfc-display";
-import type { Recipe } from "../types/recipe";
 
-type RecipeCardProps = {
+type Props = {
   recipe: Recipe;
   href: string;
 };
 
 /** Card displaying a recipe's name, servings, nutrition, and ingredient cost */
-const RecipeCard = ({ recipe, href }: RecipeCardProps) => {
-  /** Calculate total ingredient cost */
-  const totalCost = recipe.ingredients.reduce(
-    (sum, ing) => sum + ing.unitPrice * ing.quantity,
-    0,
-  );
+export const RecipeCard = ({ recipe, href }: Props) => {
+  const totalCost = totalIngredientCost(recipe);
 
   return (
     <Link href={href} className="block">
@@ -67,5 +62,3 @@ const RecipeCard = ({ recipe, href }: RecipeCardProps) => {
     </Link>
   );
 };
-
-export { RecipeCard };

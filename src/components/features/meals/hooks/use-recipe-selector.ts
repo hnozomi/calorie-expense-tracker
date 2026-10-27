@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import type { Recipe } from "@/components/features/recipes/types/recipe";
+import { totalIngredientCost } from "@/components/features/recipes/utils/recipe-cost";
 import { matchesSearch } from "@/utils/matches-search";
 import type { MealItemFormValues } from "../types/meal";
 
@@ -17,10 +18,7 @@ export const useRecipeSelector = (
 
   const handleSelect = (recipe: Recipe) => {
     const perPerson = recipe.servings || 1;
-    const totalIngredientCost = recipe.ingredients.reduce(
-      (sum, ing) => sum + ing.unitPrice * ing.quantity,
-      0,
-    );
+    const recipeCost = totalIngredientCost(recipe);
 
     onSelect(
       {
@@ -29,7 +27,7 @@ export const useRecipeSelector = (
         protein: recipe.protein / perPerson,
         fat: recipe.fat / perPerson,
         carbs: recipe.carbs / perPerson,
-        cost: totalIngredientCost / perPerson,
+        cost: recipeCost / perPerson,
       },
       recipe.id,
     );

@@ -1,12 +1,13 @@
 "use client";
+// Client because the ingredient rows are edited in place
 
 import { Plus, ShoppingBasket, X } from "lucide-react";
+import type { EditableIngredient } from "@/components/features/recipes/hooks/use-recipe-form-controller";
+import type { IngredientFormValues } from "@/components/features/recipes/types/recipe";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { SectionHeader } from "@/components/ui/section-header";
-import type { EditableIngredient } from "../hooks/use-recipe-form-controller";
-import type { IngredientFormValues } from "../types/recipe";
 
 type RecipeIngredientsEditorProps = {
   ingredients: EditableIngredient[];
