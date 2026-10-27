@@ -123,7 +123,7 @@ describe("PlanWeeklySummary", () => {
     expect(screen.getByText("1000")).toBeInTheDocument();
   });
 
-  it("compares the total against the daily target times the planned days only", () => {
+  it("S-07: compares the total against the daily target times the planned days only", () => {
     // 2 planned days × 2000 = 4000; 2 × 1800 planned = 3600, so 400 under
     renderSummary({
       targetCalories: 2000,
@@ -137,7 +137,7 @@ describe("PlanWeeklySummary", () => {
     expect(screen.getByText("7日中2日計画済み")).toBeInTheDocument();
   });
 
-  it("shows no target bar while nothing is planned", () => {
+  it("S-07: shows no target bar while nothing is planned", () => {
     renderSummary({ targetCalories: 2000 });
     expect(screen.queryByText(/目標:/)).not.toBeInTheDocument();
   });

@@ -45,12 +45,18 @@ describe("reportWeekStartAtom", () => {
     expect(store.get(reportWeekStartAtom)).toBe(getThisMonday());
   });
 
-  it("is independent of the plan's week", () => {
-    const store = createStore();
-    store.set(reportWeekStartAtom, "2026-03-09");
-    expect(planHref("2026-03-02", getThisMonday())).toBe(
-      "/plan?week=2026-03-02",
-    );
-    expect(store.get(reportWeekStartAtom)).toBe("2026-03-09");
+  // The report's week stays in a Jotai store until its own phase (ui-tech §10), so the week chosen under one
+  // Provider (e.g. before logging out) must not carry over to a new one, which opens on this week
+  it("AC-R-1: the week chosen in one store is not shared with another store, which opens on this week", () => {
+    const chosen = createStore();
+    const fresh = createStore();
+
+    chosen.set(reportWeekStartAtom, "2026-03-09");
+
+    expect(chosen.get(reportWeekStartAtom)).toBe("2026-03-09");
+    expect(fresh.get(reportWeekStartAtom)).toBe(getThisMonday());
+
+    fresh.set(reportWeekStartAtom, "2026-03-16");
+    expect(chosen.get(reportWeekStartAtom)).toBe("2026-03-09");
   });
 });

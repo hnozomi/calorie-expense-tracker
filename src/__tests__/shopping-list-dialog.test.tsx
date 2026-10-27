@@ -1,5 +1,6 @@
 import { act, cleanup, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
+import { Activity } from "react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { ShoppingListButton } from "@/components/features/plan/components/shopping-list-button";
 import { ShoppingListDialog } from "@/components/features/plan/components/shopping-list-dialog";
@@ -66,7 +67,7 @@ const renderDialog = (options: WeeklyPlansOptions = {}) =>
   );
 
 describe("ShoppingListDialog", () => {
-  it("レシピ由来の献立が無い週は空状態メッセージを表示する", async () => {
+  it("S-07: レシピ由来の献立が無い週は空状態メッセージを表示する", async () => {
     await renderDialog({
       plans: [createPlan({ plannedName: "手動メニュー" })],
       candidates: candidatesOf({ recipes: [curry] }),
@@ -76,7 +77,7 @@ describe("ShoppingListDialog", () => {
     ).toBeInTheDocument();
   });
 
-  it("材料名・数量・単位・概算金額・合計が表示される", async () => {
+  it("S-07: 材料名・数量・単位・概算金額・合計が表示される", async () => {
     await renderDialog({
       plans: twoCurryPlans(),
       candidates: candidatesOf({ recipes: [curry] }),
@@ -109,7 +110,7 @@ describe("ShoppingListDialog", () => {
     expect(screen.getByText("じゃがいも")).not.toHaveClass("line-through");
   });
 
-  it("ローディング中はスケルトンを表示する", async () => {
+  it("S-07: ローディング中はスケルトンを表示する", async () => {
     // The recipes are still being read on the server
     const reading = new Promise<PlanCandidates>(() => {});
     const { baseElement } = await renderDialog({
@@ -173,5 +174,38 @@ describe("ShoppingListButton", () => {
     expect(
       screen.getByRole("checkbox", { name: /じゃがいも/ }),
     ).not.toBeChecked();
+  });
+
+  // With cacheComponents the plan screen stays mounted but hidden (<Activity mode="hidden">) after moving to another tab
+  it("ui-tech §4: タブを移って献立の画面が隠れるとダイアログが閉じ、戻ったときに開いて見えない", async () => {
+    const user = userEvent.setup();
+    const onScreen = (mode: "visible" | "hidden") => (
+      <Activity mode={mode}>
+        <ShoppingListButton />
+      </Activity>
+    );
+    const { rerender } = await renderWithWeeklyPlansSettled(
+      onScreen("visible"),
+      {
+        plans: twoCurryPlans(),
+        candidates: candidatesOf({ recipes: [curry] }),
+      },
+    );
+    await openShoppingList(user);
+    expect(
+      screen.getByRole("dialog", { name: "買い物リスト" }),
+    ).toBeInTheDocument();
+
+    await act(async () => {
+      rerender(onScreen("hidden"));
+    });
+    await act(async () => {
+      rerender(onScreen("visible"));
+    });
+
+    expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
+    expect(
+      screen.getByRole("button", { name: "買い物リスト" }),
+    ).toBeInTheDocument();
   });
 });

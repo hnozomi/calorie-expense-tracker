@@ -40,7 +40,7 @@ describe("applyPlanChange", () => {
     expect(plans.map((plan) => plan.id)).toEqual(["second"]);
   });
 
-  it("removing a plan that is not in the week changes nothing", () => {
+  it("AC-R-5: removing a plan that is not in the week changes nothing", () => {
     const first = createPlan({ id: "first" });
 
     expect(
@@ -48,7 +48,7 @@ describe("applyPlanChange", () => {
     ).toEqual([first]);
   });
 
-  it("does not change the plans it was given", () => {
+  it("AC-R-5: does not change the plans it was given, so a failed save can fall back to them", () => {
     const original = [createPlan({ id: "first" })];
 
     applyPlanChange(original, { type: "remove", planId: "first" });

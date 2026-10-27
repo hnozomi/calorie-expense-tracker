@@ -27,7 +27,7 @@ const planRow = (overrides: Record<string, unknown> = {}) => ({
 const noMasters = () => new Map<string, MasterRow>();
 
 describe("collectPlanMasterIds", () => {
-  it("collects each linked food master and recipe once", () => {
+  it("AC-R-2: collects each linked food master and recipe once, to read them on the server in one query each", () => {
     const { foodMasterIds, recipeIds } = collectPlanMasterIds([
       planRow({ food_master_id: "fm-1" }),
       planRow({ food_master_id: "fm-1" }),
@@ -40,7 +40,7 @@ describe("collectPlanMasterIds", () => {
 });
 
 describe("toMealPlan", () => {
-  it("a manual plan shows what was saved", () => {
+  it("P-1: a manual plan shows what was saved", () => {
     expect(toMealPlan(planRow(), noMasters(), noMasters())).toEqual({
       id: "plan-1",
       userId: "user-1",
@@ -123,7 +123,7 @@ describe("toMealPlan", () => {
     });
   });
 
-  it("a deleted master leaves the plan with what was saved", () => {
+  it("AC-R-6: a deleted master leaves the plan with what was saved", () => {
     const masters = new Map<string, MasterRow>([
       [
         "fm-1",

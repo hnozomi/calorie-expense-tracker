@@ -1,6 +1,6 @@
 import { act, cleanup, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { Component, type ReactNode } from "react";
+import { Activity, Component, type ReactNode } from "react";
 import {
   afterAll,
   afterEach,
@@ -289,6 +289,36 @@ describe("押した直後の表示(useOptimistic)", () => {
     expect(
       within(dialog).getByRole("button", { name: "この献立を削除する" }),
     ).toBeInTheDocument();
+  });
+
+  // With cacheComponents the plan screen stays mounted but hidden (<Activity mode="hidden">) after moving to another tab
+  it("ui-tech §4: moving to another tab closes the cell's dialog, so it is not open on return", async () => {
+    const u = user();
+    const onScreen = (mode: "visible" | "hidden") => (
+      <Activity mode={mode}>
+        <PlanCalendarGrid targetCalories={0} />
+      </Activity>
+    );
+    const { rerender } = await renderWithWeeklyPlansSettled(
+      onScreen("visible"),
+      { weekStart: "2026-10-19", today: "2026-10-20" },
+    );
+    const [firstAdd] = screen.getAllByRole("button", { name: "献立を追加" });
+    await openDialogWith(u, firstAdd);
+
+    await act(async () => {
+      rerender(onScreen("hidden"));
+    });
+    await act(async () => {
+      rerender(onScreen("visible"));
+    });
+
+    await waitFor(() =>
+      expect(screen.queryByRole("dialog")).not.toBeInTheDocument(),
+    );
+    expect(screen.getAllByRole("button", { name: "献立を追加" })).toHaveLength(
+      28,
+    );
   });
 
   it("S-07: the grid has a column for each day of the week and a row for each meal, with an add button in every cell", async () => {

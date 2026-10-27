@@ -162,7 +162,7 @@ describe("saveMealPlan", () => {
     expect(revalidatePath).not.toHaveBeenCalled();
   });
 
-  it("a signed-out request saves nothing", async () => {
+  it("AC-R-5: a signed-out request saves nothing", async () => {
     getClaims.mockResolvedValue({ data: null });
 
     expect(await saveMealPlan(validSave())).toEqual({ ok: false });

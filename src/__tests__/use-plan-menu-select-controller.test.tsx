@@ -107,7 +107,7 @@ const flush = () =>
   });
 
 describe("usePlanMenuSelectController", () => {
-  it("既存プランがあると手動タブの全フィールド(PFC含む)がプリフィルされる", async () => {
+  it("P-3: 既存プランがあると手動タブの全フィールド(PFC含む)がプリフィルされる", async () => {
     const { result } = await renderController(existing());
 
     expect(result.current.manualName).toBe("既存メニュー");
@@ -257,7 +257,7 @@ describe("usePlanMenuSelectController", () => {
     );
   });
 
-  it("新規のセルでは削除しても何も消さない", async () => {
+  it("S-07: 新規のセルでは削除しても何も消さない", async () => {
     const { result } = await renderController();
 
     act(() => result.current.handleDelete());
@@ -267,7 +267,7 @@ describe("usePlanMenuSelectController", () => {
     expect(onClose).not.toHaveBeenCalled();
   });
 
-  it("食品マスタ選択はマスタの値・既定の価格とfoodMasterIdで保存される", async () => {
+  it("P-1: 食品マスタ選択はマスタの値・既定の価格とfoodMasterIdで保存される", async () => {
     saveMealPlan.mockResolvedValue({ ok: true });
     const { result } = await renderController();
 
@@ -289,7 +289,7 @@ describe("usePlanMenuSelectController", () => {
     });
   });
 
-  it("価格の無い食品マスタは食費0で保存される", async () => {
+  it("P-1: 価格の無い食品マスタは食費0で保存される", async () => {
     saveMealPlan.mockResolvedValue({ ok: true });
     const { result } = await renderController();
 
@@ -305,7 +305,7 @@ describe("usePlanMenuSelectController", () => {
     });
   });
 
-  it("セットメニュー選択はセットの合計とsetMenuIdで保存される", async () => {
+  it("P-1: セットメニュー選択はセットの合計とsetMenuIdで保存される", async () => {
     saveMealPlan.mockResolvedValue({ ok: true });
     const { result } = await renderController();
 
@@ -327,7 +327,7 @@ describe("usePlanMenuSelectController", () => {
     });
   });
 
-  it("レシピは名前で、食品マスタは名前とブランドで絞り込める", async () => {
+  it("S-07: レシピは名前で、食品マスタは名前とブランドで絞り込める", async () => {
     const { result } = await renderController();
 
     act(() => {
@@ -356,7 +356,7 @@ describe("usePlanMenuSelectController", () => {
     await waitFor(() => expect(saveMealPlan).toHaveBeenCalledTimes(1));
   });
 
-  it("ダイアログを閉じる操作でonCloseが呼ばれる", async () => {
+  it("S-07: ダイアログを閉じる操作でonCloseが呼ばれる", async () => {
     const { result } = await renderController();
 
     act(() => result.current.handleOpenChange(true));
