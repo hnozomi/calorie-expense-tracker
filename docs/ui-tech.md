@@ -132,7 +132,7 @@ app/(main)/home/page.tsx                    Server。Header と <Suspense> を�
 
 ## 5. データ層
 
-- 永続化先: Supabase の `public` スキーマ(今のまま。テーブル・RPC は変えない)
+- 永続化先: Supabase の `public` スキーマ(今のまま。テーブル・RPC は変えない。フェーズ 4 のレシピの保存の RPC だけ例外。§6)
 - 型: 各機能の `types/`(今のまま)。DB の行から型に直す関数は `queries.ts` から `api/queries.ts` に移す
 - 読む: `api/queries.ts`。`'use cache: private'` + `cacheLife(SCREEN_CACHE)`(`{ stale: 300 }`。`'use cache: private'` はサーバーに残らずブラウザだけに置かれるので、効くのは `stale` だけ。ほかのアプリと同じ)。データはこのアプリの中からしか変わらず、記録はスマホからだけ(別の端末で足すことが無い)ため 300 秒(規約)
 - 1回の表示で同じものを2か所から読むとき(目標値をホームの集計と Drawer で使う など)は、`cache` で包む
@@ -153,7 +153,7 @@ app/(main)/home/page.tsx                    Server。Header と <Suspense> を�
 
 ## 6. バックエンド
 
-原則として変えない(フェーズ 4 のレシピの保存の RPC だけ例外。フェーズ 4 の項目を参照)。テーブル・RLS・RPC は変えない(#8 で本番のスキーマを最初のマイグレーションにし、pgTAP で確かめている)。`is_member()` が無いこと(共通の Auth の別のアプリの利用者も入れる)は、作りとは別の話なので、このフェーズには入れない。
+原則として変えない(フェーズ 4 のレシピの保存の RPC だけ例外。フェーズ 4 の項目を参照)。テーブル・RLS は変えない(#8 で本番のスキーマを最初のマイグレーションにし、pgTAP で確かめている)。`is_member()` が無いこと(共通の Auth の別のアプリの利用者も入れる)は、作りとは別の話なので、このフェーズには入れない。
 
 ## 7. PWA
 
@@ -246,7 +246,7 @@ app/(main)/home/page.tsx                    Server。Header と <Suspense> を�
 
 - `/recipes?q=`・`/recipes/[id]`・`/other/food-masters?q=`・`/other/food-masters/[id]`
 - `recipes/api/{queries,actions}.ts`・`food-masters/api/{queries,actions}.ts`
-- 一覧: `*-list-section.tsx`(?q= を読む)→ `<Suspense key={q}>` → `*-list-content.tsx`(全件を読んで `matchesSearch` で絞る。全件は他の画面と同じ private cache)。検索欄は共通の `ui/search-box`(打ち終わって少し後に ?q= を `router.replace`)で、keyed Suspense の外に置く(入力中にフォーカスと文字が消えないように)。行と「新規」の `prefetch` を外す
+- 一覧: `*-list-section.tsx`(?q= を読む)→ `<Suspense key={q}>` → `*-list-content.tsx`(全件を読んで `matchesSearch` で絞る。全件は他の画面と同じ private cache)。検索欄は共通の `ui/search-box`(打ち終わって少し後に ?q= を `router.replace`。`type="search"` で × で消せ、キーボードの決定は「検索」)で、keyed Suspense の外に置く(入力中にフォーカスと文字が消えないように)。行と「新規」の `prefetch` を外す
 - 詳細: `new` は新規。uuid でない・無い・消した id は `notFound()`。マスタの新規は ?name= などの値(OCR から)をサーバーで読んで `prefill` で渡す。フォームの初期値は `useForm` の `defaultValues` で1回だけ入れる(effect で reset すると、隠れて残る画面に戻ったときに入力が消える。§4「詳細画面の入力中は残す」)
 - 保存・削除の後は、Action が結果を返し、クライアントが toast を出して `router.push` で一覧へ。Action の中で `redirect` すると、クライアントの呼び出しが例外で終わり、成功の toast を出せないため
 - レシピの保存の RPC は、消したレシピを更新しない(マイグレーション `keep_deleted_recipes_unsaved`。§6 の「RPC は変えない」の例外。編集中に別の所で消されたレシピを保存しても、保存できたことにしない)
@@ -258,7 +258,7 @@ app/(main)/home/page.tsx                    Server。Header と <Suspense> を�
 2. 食品マスタのカロリーを直してからホームに移ると、そのマスタで記録した食事の値が変わっている
 3. 消したレシピの URL を開くと 404 が出る
 
-学ぶこと: `notFound()` と Action の中の `redirect`、検索語を URL に置く
+学ぶこと: `notFound()`、Action が redirect せず結果を返す理由(成功の toast)、検索語を URL に置く(keyed Suspense の外に検索欄を置く)
 
 ### フェーズ 5: セットメニュー・レポート・設定
 
