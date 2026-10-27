@@ -46,10 +46,13 @@ test.describe("設定", () => {
 
   // Phase 5 (ui-tech §10): the target is saved with a Server Action that re-reads every screen (AC-R-6)
   test.describe("目標を変えるとホームが変わる", () => {
+    // Other specs record today's meals, and over the target the remainder is clamped at 0 and would not show the change.
+    // So the target starts high, straight in the DB; +1000 must still be within the 10000 the form accepts (ST-1)
+    const SEEDED_TARGET = 9000;
     let savedRow: { target_calories: number } | undefined;
 
     test.beforeEach(async ({ page }, testInfo) => {
-      // A cache of this test's own (see food-masters.spec.ts): the settings row is put back straight in the DB afterwards
+      // A cache of this test's own (see food-masters.spec.ts), so the screens read the target seeded below
       await page.setExtraHTTPHeaders({ "x-e2e-test-id": testInfo.testId });
       const userId = await userIdOf(e2eUser.email);
       [savedRow] = (await (
@@ -57,6 +60,21 @@ test.describe("設定", () => {
           `user_settings?user_id=eq.${userId}&select=target_calories`,
         )
       ).json()) as { target_calories: number }[];
+      await serviceRoleRest(
+        savedRow ? `user_settings?user_id=eq.${userId}` : "user_settings",
+        savedRow
+          ? {
+              method: "PATCH",
+              body: JSON.stringify({ target_calories: SEEDED_TARGET }),
+            }
+          : {
+              method: "POST",
+              body: JSON.stringify({
+                user_id: userId,
+                target_calories: SEEDED_TARGET,
+              }),
+            },
+      );
     });
 
     test.afterEach(async () => {
@@ -83,17 +101,16 @@ test.describe("設定", () => {
 
       await gotoHydrated(page, "/home");
       const before = await remainingKcal();
-      // With today's meals over the target the remainder is clamped at 0 and would not show the change
+      // Holds unless today's meals already reach the seeded target
       expect(before).toBeGreaterThan(0);
 
       await page.getByRole("link", { name: "その他" }).click();
       await page.getByRole("link", { name: /設定/ }).click();
       const caloriesField = visibleField(page, "カロリー (kcal)");
-      await expect(caloriesField).toBeVisible();
+      await expect(caloriesField).toHaveValue(String(SEEDED_TARGET));
       await page.waitForLoadState("networkidle");
-      const target = Number(await caloriesField.inputValue());
 
-      await fillStable(page, "カロリー (kcal)", String(target + 1000));
+      await fillStable(page, "カロリー (kcal)", String(SEEDED_TARGET + 1000));
       await page.getByRole("button", { name: "保存" }).click();
       await expect(visibleText(page, "目標値を保存しました")).toBeVisible();
 
