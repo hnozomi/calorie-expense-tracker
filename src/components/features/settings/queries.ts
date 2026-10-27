@@ -2,7 +2,7 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 import { queryOptions } from "@tanstack/react-query";
 import { queryKeys } from "@/hooks/query-keys";
 import type { NutritionTarget } from "@/types/settings";
-import { DEFAULT_NUTRITION_TARGET } from "@/types/settings";
+import { toNutritionTarget } from "./utils/to-nutrition-target";
 
 export const getNutritionTargetQueryOptions = (supabase: SupabaseClient) =>
   queryOptions({
@@ -15,21 +15,6 @@ export const getNutritionTargetQueryOptions = (supabase: SupabaseClient) =>
 
       if (error) throw error;
 
-      if (!data) {
-        return {
-          id: "",
-          userId: "",
-          ...DEFAULT_NUTRITION_TARGET,
-        };
-      }
-
-      return {
-        id: data.id,
-        userId: data.user_id,
-        targetCalories: Number(data.target_calories),
-        targetProtein: Number(data.target_protein),
-        targetFat: Number(data.target_fat),
-        targetCarbs: Number(data.target_carbs),
-      };
+      return toNutritionTarget(data);
     },
   });
