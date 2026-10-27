@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { matchesSearch } from "@/components/features/meals/utils/matches-search";
+import { matchesSearch } from "@/utils/matches-search";
 
 describe("matchesSearch", () => {
   it("S-02: an empty search matches everything", () => {

@@ -1,20 +1,26 @@
 "use client";
+// Client because it holds the form state and calls Server Actions from the browser
 
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useRouter, useSearchParams } from "next/navigation";
-import { useCallback, useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
+import { useCallback, useState, useTransition } from "react";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
-import type { OcrNutritionResult } from "@/components/features/ocr";
+import {
+  deleteFoodMaster,
+  saveFoodMaster,
+} from "@/components/features/food-masters/api/actions";
 import type {
   FoodMaster,
   FoodMasterFormInput,
   FoodMasterFormValues,
-} from "../types/food-master";
-import { foodMasterFormSchema } from "../types/food-master";
-import { useDeleteFoodMaster } from "./use-delete-food-master";
-import { useFoodMasterDetail } from "./use-food-master-detail";
-import { useSaveFoodMaster } from "./use-save-food-master";
+} from "@/components/features/food-masters/types/food-master";
+import { foodMasterFormSchema } from "@/components/features/food-masters/types/food-master";
+import type { OcrNutritionResult } from "@/components/features/ocr";
+import { useUnsavedChangesGuard } from "@/hooks";
+import { callAction } from "@/lib/action-result";
+import { useRefreshLegacyScreens } from "@/lib/legacy-bridge";
+import { FOOD_CATEGORIES, type FoodCategory } from "@/types";
 
 const EMPTY_FOOD_MASTER_FORM_VALUES: FoodMasterFormValues = {
   name: "",
@@ -22,32 +28,6 @@ const EMPTY_FOOD_MASTER_FORM_VALUES: FoodMasterFormValues = {
   protein: 0,
   fat: 0,
   carbs: 0,
-};
-
-/** Parse prefill values passed via query params (e.g. OCR result on the "new" route) */
-const parsePrefillParams = (
-  params: URLSearchParams,
-): Partial<FoodMasterFormValues> => {
-  const prefill: Partial<FoodMasterFormValues> = {};
-
-  const name = params.get("name");
-  if (name) prefill.name = name;
-
-  const numericKeys = [
-    "calories",
-    "protein",
-    "fat",
-    "carbs",
-    "defaultPrice",
-  ] as const;
-  for (const key of numericKeys) {
-    const raw = params.get(key);
-    if (raw === null) continue;
-    const value = Number(raw);
-    if (!Number.isNaN(value) && value >= 0) prefill[key] = value;
-  }
-
-  return prefill;
 };
 
 const toFoodMasterFormValues = (
@@ -64,34 +44,27 @@ const toFoodMasterFormValues = (
   notes: foodMaster.notes ?? undefined,
 });
 
-export const useFoodMasterFormController = (id: string) => {
+/** existing is read on the server (undefined on the new screen); prefill carries values passed in the URL, such as an OCR result */
+export const useFoodMasterFormController = (
+  existing: FoodMaster | undefined,
+  prefill: Partial<FoodMasterFormValues>,
+) => {
   const router = useRouter();
-  const searchParams = useSearchParams();
-  const isNew = id === "new";
-  const { data: existing, isLoading } = useFoodMasterDetail(
-    isNew ? undefined : id,
-  );
-  const saveMutation = useSaveFoodMaster();
-  const deleteMutation = useDeleteFoodMaster();
+  const refreshLegacyScreens = useRefreshLegacyScreens();
+  const isNew = existing === undefined;
+  const [isSaving, startSaving] = useTransition();
+  const [isDeleting, startDeleting] = useTransition();
   const [isDeleteConfirmOpen, setIsDeleteConfirmOpen] = useState(false);
   const [isOcrOpen, setIsOcrOpen] = useState(false);
 
   const form = useForm<FoodMasterFormInput, undefined, FoodMasterFormValues>({
     resolver: zodResolver(foodMasterFormSchema),
-    defaultValues: EMPTY_FOOD_MASTER_FORM_VALUES,
+    // Initial values go in once: the screen stays mounted (hidden) after moving to another tab, and an effect
+    // that reset the form would run again on return and throw away what was being typed
+    defaultValues: existing
+      ? toFoodMasterFormValues(existing)
+      : { ...EMPTY_FOOD_MASTER_FORM_VALUES, ...prefill },
   });
-
-  useEffect(() => {
-    if (!existing) {
-      form.reset({
-        ...EMPTY_FOOD_MASTER_FORM_VALUES,
-        ...(isNew ? parsePrefillParams(new URLSearchParams(searchParams)) : {}),
-      });
-      return;
-    }
-
-    form.reset(toFoodMasterFormValues(existing));
-  }, [existing, form, isNew, searchParams]);
 
   const handleOcrResult = useCallback(
     (result: OcrNutritionResult) => {
@@ -116,41 +89,74 @@ export const useFoodMasterFormController = (id: string) => {
     [form],
   );
 
-  const handleSave = form.handleSubmit(async (values) => {
-    try {
-      await saveMutation.mutateAsync({
-        id: isNew ? undefined : id,
-        values,
-      });
+  // The action returns a result instead of redirecting: a redirect ends the call with an exception on the
+  // client, so the success toast could not be shown. The list is re-read by the action, so moving is enough
+  const handleSave = form.handleSubmit((values) => {
+    startSaving(async () => {
+      const result = await callAction(() =>
+        saveFoodMaster({ id: existing?.id, values }),
+      );
+      if (!result.ok) {
+        toast.error("保存に失敗しました");
+        return;
+      }
       toast.success(isNew ? "食品を登録しました" : "変更を保存しました");
+      // A new master's screen starts empty again; an edited one keeps the saved values as its clean state
+      form.reset(isNew ? undefined : values);
+      refreshLegacyScreens();
       router.push("/other/food-masters");
-    } catch {
-      toast.error("保存に失敗しました");
-    }
+    });
   });
 
-  const handleDelete = async () => {
-    try {
-      await deleteMutation.mutateAsync(id);
+  const handleDelete = () => {
+    if (!existing) return;
+    startDeleting(async () => {
+      const result = await callAction(() =>
+        deleteFoodMaster({ id: existing.id }),
+      );
+      if (!result.ok) {
+        toast.error("削除に失敗しました");
+        return;
+      }
       toast.success("食品を削除しました");
+      refreshLegacyScreens();
       router.push("/other/food-masters");
-    } catch {
-      toast.error("削除に失敗しました");
-    }
+    });
   };
+
+  // Leaving with unsaved edits asks first (back button and the header's back arrow)
+  // The screen stays mounted (hidden) after leaving, so discarded input would still be there when it is
+  // opened again; put the form back to its initial values on the way out
+  const backGuard = useUnsavedChangesGuard(form.formState.isDirty, () => {
+    form.reset();
+    router.push("/other/food-masters");
+  });
 
   return {
     form,
+    backGuard,
+    categoryValue: form.watch("category"),
     existing,
     hasUnsavedChanges: form.formState.isDirty,
     isDeleteConfirmOpen,
-    isLoading,
+    isDeleting,
     isNew,
     isOcrOpen,
-    deleteMutation,
-    saveMutation,
+    isSaving,
     setIsDeleteConfirmOpen,
+    openDeleteConfirm: () => setIsDeleteConfirmOpen(true),
+    closeDeleteConfirm: () => setIsDeleteConfirmOpen(false),
     setIsOcrOpen,
+    openOcr: () => setIsOcrOpen(true),
+    closeOcr: () => setIsOcrOpen(false),
+    // The select hands back a plain string; only a known category is written to the form
+    handleCategoryChange: (value: string) => {
+      const category = FOOD_CATEGORIES.find((known) => known === value);
+      if (category)
+        form.setValue("category", category as FoodCategory, {
+          shouldValidate: true,
+        });
+    },
     handleDelete,
     handleOcrResult,
     handleSave,

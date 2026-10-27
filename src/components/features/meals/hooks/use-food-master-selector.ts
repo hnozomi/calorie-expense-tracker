@@ -2,8 +2,8 @@
 
 import { useState } from "react";
 import type { FoodMaster } from "@/components/features/food-masters/types/food-master";
+import { matchesSearch } from "@/utils/matches-search";
 import type { MealItemFormValues } from "../types/meal";
-import { matchesSearch } from "../utils/matches-search";
 
 /** Search matches the name or the brand */
 export const useFoodMasterSelector = (

@@ -3,8 +3,8 @@
 import { useState } from "react";
 import { toast } from "sonner";
 import type { SetMenu } from "@/components/features/set-menus/types/set-menu";
+import { matchesSearch } from "@/utils/matches-search";
 import type { MealItemFormValues } from "../types/meal";
-import { matchesSearch } from "../utils/matches-search";
 
 export type SetMenuItemWithIds = MealItemFormValues & {
   setMenuId?: string;

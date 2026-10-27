@@ -1,8 +1,9 @@
 "use client";
+// Client because the set menu form still reads food masters through TanStack Query (removed in phase 5)
 
 import { useQuery } from "@tanstack/react-query";
+import { toFoodMaster } from "@/components/features/food-masters/utils/to-food-master";
 import { queryKeys, useSupabase } from "@/hooks";
-import { toFoodMaster } from "../utils/to-food-master";
 
 /** Fetch food masters list with optional search, excluding soft-deleted */
 export const useFoodMasters = (search?: string) => {
