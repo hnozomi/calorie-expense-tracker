@@ -1,10 +1,8 @@
-"use client";
-
-import { useRouter } from "next/navigation";
+import Link from "next/link";
+import type { DailyReportEntry } from "@/components/features/report/types/weekly-report";
 import { cn } from "@/utils";
-import type { DailyReportEntry } from "../types/weekly-report";
 
-type WeeklyCalorieChartProps = {
+type Props = {
   entries: DailyReportEntry[];
   averageCalories: number;
 };
@@ -16,19 +14,8 @@ const DAY_LABELS = ["月", "火", "水", "木", "金", "土", "日"];
 const WEEKEND_INDICES = new Set([5, 6]);
 
 /** Bar chart displaying daily calorie intake for the week */
-const WeeklyCalorieChart = ({
-  entries,
-  averageCalories,
-}: WeeklyCalorieChartProps) => {
-  const router = useRouter();
-
-  /** Find max value for scaling bars */
+export const WeeklyCalorieChart = ({ entries, averageCalories }: Props) => {
   const maxCalories = Math.max(...entries.map((e) => e.calories), 1);
-
-  /** Navigate to daily view when a bar is tapped */
-  const handleBarClick = (date: string) => {
-    router.push(`/home?date=${date}`);
-  };
 
   return (
     <div className="space-y-3">
@@ -52,11 +39,11 @@ const WeeklyCalorieChart = ({
           const heightPct = (entry.calories / maxCalories) * 100;
           const isWeekend = WEEKEND_INDICES.has(i);
           return (
-            <button
+            // A link (not a pushed route) so the day can be opened like any other screen
+            <Link
               key={entry.date}
-              type="button"
+              href={`/home?date=${entry.date}`}
               className="group flex flex-1 flex-col items-center gap-1"
-              onClick={() => handleBarClick(entry.date)}
               aria-label={`${DAY_LABELS[i]}曜日 ${Math.round(entry.calories)}kcal（タップで日別画面へ）`}
             >
               {/* Always-visible value (hover is unavailable on touch devices) */}
@@ -84,12 +71,10 @@ const WeeklyCalorieChart = ({
               >
                 {DAY_LABELS[i]}
               </span>
-            </button>
+            </Link>
           );
         })}
       </div>
     </div>
   );
 };
-
-export { WeeklyCalorieChart };

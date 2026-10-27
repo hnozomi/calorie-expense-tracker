@@ -1,14 +1,19 @@
 import { Suspense } from "react";
-import { HydratedOnly } from "@/components/features/layout";
-import { ReportSkeleton, WeeklyReportView } from "@/components/features/report";
+import { Header, PageContainer } from "@/components/features/layout";
+import { ReportSection, ReportSkeleton } from "@/components/features/report";
 
-/** Weekly report page */
-export default function ReportPage() {
+/** S-09: Weekly report. The header shows at once; the week waits for ?week= inside Suspense */
+const ReportPage = ({ searchParams }: PageProps<"/other/report">) => {
   return (
-    <HydratedOnly fallback={<ReportSkeleton />}>
-      <Suspense fallback={<ReportSkeleton />}>
-        <WeeklyReportView />
-      </Suspense>
-    </HydratedOnly>
+    <>
+      <Header title="ウィークリーレポート" />
+      <PageContainer>
+        <Suspense fallback={<ReportSkeleton />}>
+          <ReportSection searchParams={searchParams} />
+        </Suspense>
+      </PageContainer>
+    </>
   );
-}
+};
+
+export default ReportPage;
