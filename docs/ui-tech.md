@@ -44,7 +44,7 @@
 | `/plan?week=` | 週の献立・目標値・買い物リスト・献立の候補 | 同上 | `week` で変わる。無ければ今週の月曜 |
 | `/recipes?q=`・`/recipes/[id]` | レシピの一覧(検索)・詳細 | 同上 | `q`・`id`。`id="new"` は新規 |
 | `/other/food-masters?q=`・`/other/food-masters/[id]` | マスタの一覧(検索)・詳細 | 同上 | 同上 |
-| `/other/set-menus`・`/other/set-menus/[id]` | セットの一覧・詳細 | 同上 | `id` |
+| `/other/set-menus?q=`・`/other/set-menus/[id]` | セットの一覧(検索)・詳細 | 同上 | `q`・`id` |
 | `/other/report?week=` | 週の集計 | 同上 | `week` |
 | `/other/settings` | 目標値・メール・CSV・全削除 | 同上 | なし |
 | `/other`・`/login`・`/signup`・`/offline` | データ無し | 今のまま | 静的 |
@@ -262,7 +262,10 @@ app/(main)/home/page.tsx                    Server。Header と <Suspense> を�
 
 ### フェーズ 5: セットメニュー・レポート・設定
 
-- `/other/set-menus`・`/other/set-menus/[id]`・`/other/report?week=`・`/other/settings`
+- `/other/set-menus?q=`・`/other/set-menus/[id]`・`/other/report?week=`・`/other/settings`
+- セットメニューはフェーズ 4 と同じ形(一覧は ?q= と SearchBox、詳細は new・uuid・消した id で 404、保存・削除は結果を返してクライアントが一覧へ、合計はサーバーで計算)。保存の RPC も消したものを更新しない(マイグレーション `keep_deleted_set_menus_unsaved`)。保存と削除の欄は共通の `ui/edit-form-footer`
+- レポートと献立の週の切り替えは共通の `ui/week-switcher`。レポートの棒はリンク(`/home?date=`)
+- 設定はサーバーで目標値とメールを読む。CSV の行は Server Action が読み(今月・先月は Asia/Tokyo)、ファイルはブラウザで作る
 - `set-menus/api/{queries,actions}.ts`・`report/api/queries.ts`・`settings/api/{queries,actions}.ts`(目標値の保存・全データ削除・CSV の行を返す)
 - ログアウトを `signOut({ scope: "local" })` にする(共通の Auth で、他のアプリのセッションまで切れるため。`supabase.md`)
 - 消す: 各 hooks・`use-recipes`・`use-food-masters`・`use-list-cache-seed`(フェーズ 4 から持ち越し)・`report/queries.ts`・`report-week-atom.ts`・`settings/queries.ts`・残りの `HydratedOnly`
