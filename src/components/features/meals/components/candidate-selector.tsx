@@ -34,7 +34,15 @@ export const CandidateSelector = ({
   onFoodMasterSelect,
   onSetMenuSelect,
 }: Props) => {
-  const { recentItems, recipes, foodMasters, setMenus } = use(candidates);
+  const { recentItems, recipes, foodMasters, setMenus, hasError } =
+    use(candidates);
+  if (hasError) {
+    return (
+      <p className="rounded-lg border border-dashed border-destructive/40 py-6 text-center text-sm text-destructive">
+        一覧を読み込めませんでした。画面を開き直すか、手動タブで入力してください
+      </p>
+    );
+  }
   switch (tab) {
     case "recent":
       return (

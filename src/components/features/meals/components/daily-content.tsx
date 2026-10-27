@@ -19,14 +19,25 @@ type Props = {
   today: string;
 };
 
+// A failed read must not reject: the drawer unwraps this with use(), and a rejection would replace the whole home screen with the error page
 const readDrawerCandidates = async (): Promise<DrawerCandidates> => {
-  const [recentItems, recipes, foodMasters, setMenus] = await Promise.all([
-    getRecentMealItems(),
-    getRecipes(),
-    getFoodMasters(),
-    getSetMenus(),
-  ]);
-  return { recentItems, recipes, foodMasters, setMenus };
+  try {
+    const [recentItems, recipes, foodMasters, setMenus] = await Promise.all([
+      getRecentMealItems(),
+      getRecipes(),
+      getFoodMasters(),
+      getSetMenus(),
+    ]);
+    return { recentItems, recipes, foodMasters, setMenus, hasError: false };
+  } catch {
+    return {
+      recentItems: [],
+      recipes: [],
+      foodMasters: [],
+      setMenus: [],
+      hasError: true,
+    };
+  }
 };
 
 /** One day of the home screen: the summary and slots wait for their data, the drawer's lists keep loading behind them */

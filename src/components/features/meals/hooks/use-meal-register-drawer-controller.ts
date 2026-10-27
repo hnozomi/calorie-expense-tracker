@@ -1,6 +1,6 @@
 "use client";
 
-import { useAtom, useAtomValue } from "jotai";
+import { useAtom, useStore } from "jotai";
 import { useRouter } from "next/navigation";
 import {
   useCallback,
@@ -42,7 +42,8 @@ type PendingFormItem = {
 export const useMealRegisterDrawerController = () => {
   const router = useRouter();
   const [isOpen, setIsOpen] = useAtom(isDrawerOpenAtom);
-  const mealType = useAtomValue(drawerMealTypeAtom);
+  const [mealType, setDrawerMealType] = useAtom(drawerMealTypeAtom);
+  const store = useStore();
   const [draftItems, setDraftItems] = useAtom(draftItemsAtom);
   const { date, showMealChange } = useDailyMealsContext();
   const refreshLegacyScreens = useRefreshLegacyScreens();
@@ -260,7 +261,8 @@ export const useMealRegisterDrawerController = () => {
   /** Close the drawer and show the items in the slot at once. On failure the drawer opens again with the drafts kept */
   const registerItems = useCallback(
     (items: MealItemDraft[]) => {
-      setIsOpen(false);
+      // Clear the drawer now, not after the save: it may be reopened for another slot while this one is saving
+      closeDrawer();
       startRegistering(async () => {
         showMealChange({ type: "add", mealType, items });
         const result = await callAction(() =>
@@ -268,12 +270,15 @@ export const useMealRegisterDrawerController = () => {
         );
         if (!result.ok) {
           toast.error("登録に失敗しました。もう一度お試しください");
+          // Give the drafts back to their own slot, unless the drawer already holds new ones by now
+          // (read from the store: the drafts in this closure are from before the save)
+          if (store.get(draftItemsAtom).length > 0) return;
+          setDrawerMealType(mealType);
           setDraftItems(items);
           setIsOpen(true);
           return;
         }
         toast.success(`${items.length}件の食事を登録しました`);
-        closeDrawer();
         refreshLegacyScreens();
       });
     },
@@ -283,8 +288,10 @@ export const useMealRegisterDrawerController = () => {
       mealType,
       refreshLegacyScreens,
       setDraftItems,
+      setDrawerMealType,
       setIsOpen,
       showMealChange,
+      store,
     ],
   );
 

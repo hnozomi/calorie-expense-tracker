@@ -9,6 +9,8 @@ export type DrawerCandidates = {
   recipes: Recipe[];
   foodMasters: FoodMaster[];
   setMenus: SetMenu[];
+  /** The lists could not be read; the drawer says so and manual input still works */
+  hasError: boolean;
 };
 
 export type CandidateTab = "recent" | "recipe" | "food_master" | "set_menu";
