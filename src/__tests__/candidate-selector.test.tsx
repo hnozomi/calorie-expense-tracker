@@ -125,6 +125,7 @@ const candidates = (
   recipes: [recipe],
   foodMasters: [foodMaster],
   setMenus: [createSetMenu()],
+  hasError: false,
   ...overrides,
 });
 
@@ -181,6 +182,30 @@ describe("CandidateSelector", () => {
       renderSelector(tab, Promise.resolve(candidates()));
     });
     expect(screen.getByRole("button", { name })).toBeInTheDocument();
+  });
+
+  it("S-02: when the lists could not be read, it says so and points to the manual tab instead of an empty list", async () => {
+    await act(async () => {
+      renderSelector(
+        "recipe",
+        Promise.resolve(
+          candidates({
+            recentItems: [],
+            recipes: [],
+            foodMasters: [],
+            setMenus: [],
+            hasError: true,
+          }),
+        ),
+      );
+    });
+
+    expect(
+      screen.getByText(
+        "一覧を読み込めませんでした。画面を開き直すか、手動タブで入力してください",
+      ),
+    ).toBeInTheDocument();
+    expect(screen.queryAllByRole("button")).toHaveLength(0);
   });
 
   it("S-02: switching tabs shows the next list at once from the same candidates", async () => {

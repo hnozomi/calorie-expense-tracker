@@ -45,10 +45,16 @@ vi.mock("@/lib/supabase/server", () => ({
   createClient: async () => ({ from, rpc, auth: { getClaims } }),
 }));
 
-const revalidateApp = vi.fn(async () => {});
-vi.mock("@/lib/revalidate", () => ({
-  revalidateApp: () => revalidateApp(),
+const revalidatePath = vi.fn();
+vi.mock("next/cache", () => ({
+  revalidatePath: (...args: unknown[]) => revalidatePath(...args),
 }));
+
+/** Every screen under the root layout is re-read once (AC-R-6) */
+const expectScreensReRead = () => {
+  expect(revalidatePath).toHaveBeenCalledTimes(1);
+  expect(revalidatePath).toHaveBeenCalledWith("/", "layout");
+};
 
 const ITEM_ID = "3f1c2b4a-5d6e-4f70-8a9b-0c1d2e3f4a5b";
 const FOOD_MASTER_ID = "7a8b9c0d-1e2f-4a3b-8c4d-5e6f7a8b9c0d";
@@ -77,7 +83,7 @@ afterEach(() => {
 const expectNothingSaved = () => {
   expect(from).not.toHaveBeenCalled();
   expect(rpc).not.toHaveBeenCalled();
-  expect(revalidateApp).not.toHaveBeenCalled();
+  expect(revalidatePath).not.toHaveBeenCalled();
 };
 
 const validDraft = (overrides: Record<string, unknown> = {}) => ({
@@ -198,7 +204,7 @@ describe("registerMealItems", () => {
         },
       ],
     });
-    expect(revalidateApp).toHaveBeenCalledTimes(1);
+    expectScreensReRead();
   });
 
   it("AC-R-5: without a signed-in user nothing is saved", async () => {
@@ -213,7 +219,7 @@ describe("registerMealItems", () => {
 
     expect(result).toEqual({ ok: false });
     expect(rpc).not.toHaveBeenCalled();
-    expect(revalidateApp).not.toHaveBeenCalled();
+    expect(revalidatePath).not.toHaveBeenCalled();
   });
 
   it("AC-R-5: when the meal row cannot be made, the items are not added", async () => {
@@ -229,7 +235,7 @@ describe("registerMealItems", () => {
 
     expect(result).toEqual({ ok: false });
     expect(rpc).not.toHaveBeenCalled();
-    expect(revalidateApp).not.toHaveBeenCalled();
+    expect(revalidatePath).not.toHaveBeenCalled();
   });
 
   it("AC-R-5: when the RPC fails it returns ok:false and does not re-read", async () => {
@@ -243,9 +249,19 @@ describe("registerMealItems", () => {
     });
 
     expect(result).toEqual({ ok: false });
-    expect(revalidateApp).not.toHaveBeenCalled();
+    expect(revalidatePath).not.toHaveBeenCalled();
   });
 });
+
+/** The update or delete matched the item's row and returns it */
+const itemRowHit = () => {
+  tables.meal_items = createQuery({ data: [{ id: ITEM_ID }], error: null });
+};
+
+/** The update or delete matched no row: the item was deleted meanwhile, or is another user's (RLS) */
+const noItemRowHit = () => {
+  tables.meal_items = createQuery({ data: [], error: null });
+};
 
 describe("updateMealItem", () => {
   const values = {
@@ -271,17 +287,19 @@ describe("updateMealItem", () => {
   });
 
   it("S-02a: overwrites the item's name, nutrition and cost, then re-reads the screens", async () => {
+    itemRowHit();
     const result = await updateMealItem({ itemId: ITEM_ID, values });
 
     expect(result).toEqual({ ok: true });
     expect(from).toHaveBeenCalledWith("meal_items");
     expect(tables.meal_items.update).toHaveBeenCalledWith(values);
     expect(tables.meal_items.eq).toHaveBeenCalledWith("id", ITEM_ID);
-    expect(revalidateApp).toHaveBeenCalledTimes(1);
+    expectScreensReRead();
   });
 
   it("S-02a: an empty cost is saved as no cost (null)", async () => {
     const { cost: _, ...withoutCost } = values;
+    itemRowHit();
     await updateMealItem({ itemId: ITEM_ID, values: withoutCost });
     expect(tables.meal_items.update).toHaveBeenCalledWith(
       expect.objectContaining({ cost: null }),
@@ -294,7 +312,16 @@ describe("updateMealItem", () => {
     expect(await updateMealItem({ itemId: ITEM_ID, values })).toEqual({
       ok: false,
     });
-    expect(revalidateApp).not.toHaveBeenCalled();
+    expect(revalidatePath).not.toHaveBeenCalled();
+  });
+
+  it("AC-R-5: when no row was updated (the item is gone) it returns ok:false and does not re-read", async () => {
+    noItemRowHit();
+
+    expect(await updateMealItem({ itemId: ITEM_ID, values })).toEqual({
+      ok: false,
+    });
+    expect(revalidatePath).not.toHaveBeenCalled();
   });
 });
 
@@ -308,20 +335,28 @@ describe("deleteMealItem", () => {
   });
 
   it("S-02a: deletes the item and re-reads the screens", async () => {
+    itemRowHit();
     const result = await deleteMealItem({ itemId: ITEM_ID });
 
     expect(result).toEqual({ ok: true });
     expect(from).toHaveBeenCalledWith("meal_items");
     expect(tables.meal_items.delete).toHaveBeenCalled();
     expect(tables.meal_items.eq).toHaveBeenCalledWith("id", ITEM_ID);
-    expect(revalidateApp).toHaveBeenCalledTimes(1);
+    expectScreensReRead();
   });
 
   it("AC-R-5: when the delete fails it returns ok:false and does not re-read", async () => {
     tables.meal_items = createQuery({ error: { message: "network" } });
 
     expect(await deleteMealItem({ itemId: ITEM_ID })).toEqual({ ok: false });
-    expect(revalidateApp).not.toHaveBeenCalled();
+    expect(revalidatePath).not.toHaveBeenCalled();
+  });
+
+  it("AC-R-5: when no row was deleted (the item is already gone) it returns ok:false and does not re-read", async () => {
+    noItemRowHit();
+
+    expect(await deleteMealItem({ itemId: ITEM_ID })).toEqual({ ok: false });
+    expect(revalidatePath).not.toHaveBeenCalled();
   });
 });
 
@@ -380,7 +415,7 @@ describe("copyPreviousDayMeal", () => {
     expect(result).toEqual({ ok: true, copiedCount: 0 });
     expect(rpc).not.toHaveBeenCalled();
     expect(meals.upsert).not.toHaveBeenCalled();
-    expect(revalidateApp).not.toHaveBeenCalled();
+    expect(revalidatePath).not.toHaveBeenCalled();
   });
 
   it("QA-1: copies every item of the day before with its fields, and re-reads the screens", async () => {
@@ -417,7 +452,7 @@ describe("copyPreviousDayMeal", () => {
         },
       ],
     });
-    expect(revalidateApp).toHaveBeenCalledTimes(1);
+    expectScreensReRead();
   });
 
   it("QA-1: the items are copied in sort_order", async () => {
@@ -451,7 +486,7 @@ describe("copyPreviousDayMeal", () => {
 
     expect(result).toEqual({ ok: false });
     expect(rpc).not.toHaveBeenCalled();
-    expect(revalidateApp).not.toHaveBeenCalled();
+    expect(revalidatePath).not.toHaveBeenCalled();
   });
 
   it("AC-R-5: when saving the copies fails it returns ok:false", async () => {
@@ -464,7 +499,7 @@ describe("copyPreviousDayMeal", () => {
     expect(
       await copyPreviousDayMeal({ date: "2026-07-07", mealType: "dinner" }),
     ).toEqual({ ok: false });
-    expect(revalidateApp).not.toHaveBeenCalled();
+    expect(revalidatePath).not.toHaveBeenCalled();
   });
 });
 
@@ -492,7 +527,7 @@ describe("transferMealToPlan", () => {
       p_target_date: "2026-10-20",
       p_meal_type: "snack",
     });
-    expect(revalidateApp).toHaveBeenCalledTimes(1);
+    expectScreensReRead();
   });
 
   it("AC-R-5: when the RPC fails it returns ok:false and does not re-read", async () => {
@@ -501,6 +536,6 @@ describe("transferMealToPlan", () => {
     expect(
       await transferMealToPlan({ date: "2026-10-20", mealType: "snack" }),
     ).toEqual({ ok: false });
-    expect(revalidateApp).not.toHaveBeenCalled();
+    expect(revalidatePath).not.toHaveBeenCalled();
   });
 });

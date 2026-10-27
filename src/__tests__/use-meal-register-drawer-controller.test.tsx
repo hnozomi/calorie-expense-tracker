@@ -246,6 +246,90 @@ describe("useMealRegisterDrawerController", () => {
     expect(result.current.isRegistering).toBe(false);
   });
 
+  it("AC-R-5: 登録を押すと保存を待たずに下書きが消える", async () => {
+    const pending = deferred<ActionResult>();
+    mockRegisterMealItems.mockReturnValue(pending.promise);
+    const { result } = renderController();
+    act(() => result.current.handleOpenChange(true));
+    act(() => result.current.handleManualAdd(itemValues()));
+
+    await act(async () => result.current.handleRegister());
+
+    expect(result.current.draftItems).toHaveLength(0);
+    await act(async () => pending.resolve({ ok: true }));
+  });
+
+  it("AC-R-5: 保存中に別の枠を開いて足した下書きは、保存が成功しても消えない", async () => {
+    const pending = deferred<ActionResult>();
+    mockRegisterMealItems.mockReturnValue(pending.promise);
+    const { result, store } = renderController();
+    act(() => store.set(drawerMealTypeAtom, "lunch"));
+    act(() => result.current.handleOpenChange(true));
+    act(() => result.current.handleManualAdd(itemValues({ name: "昼の品" })));
+    await act(async () => result.current.handleRegister());
+
+    act(() => store.set(drawerMealTypeAtom, "dinner"));
+    act(() => result.current.handleOpenChange(true));
+    act(() => result.current.handleManualAdd(itemValues({ name: "夜の品" })));
+    await act(async () => pending.resolve({ ok: true }));
+
+    await waitFor(() => expect(result.current.isRegistering).toBe(false));
+    expect(result.current.isOpen).toBe(true);
+    expect(result.current.mealType).toBe("dinner");
+    expect(result.current.draftItems.map((item) => item.name)).toEqual([
+      "夜の品",
+    ]);
+  });
+
+  it("AC-R-5: 登録に失敗すると、その間に別の枠を開いていても、元の枠・元の下書きで開き直す", async () => {
+    const pending = deferred<ActionResult>();
+    mockRegisterMealItems.mockReturnValue(pending.promise);
+    const { result, store } = renderController();
+    act(() => store.set(drawerMealTypeAtom, "lunch"));
+    act(() => result.current.handleOpenChange(true));
+    act(() => result.current.handleManualAdd(itemValues({ name: "昼の品" })));
+    const originalDrafts = result.current.draftItems;
+    await act(async () => result.current.handleRegister());
+    // Another slot's drawer was opened and closed again without adding anything
+    act(() => store.set(drawerMealTypeAtom, "dinner"));
+    act(() => result.current.handleOpenChange(true));
+    act(() => result.current.handleOpenChange(false));
+
+    await act(async () => pending.resolve({ ok: false }));
+
+    await waitFor(() => expect(result.current.isOpen).toBe(true));
+    expect(result.current.mealType).toBe("lunch");
+    expect(result.current.draftItems).toEqual(originalDrafts);
+    expect(mockToastError).toHaveBeenCalledWith(
+      "登録に失敗しました。もう一度お試しください",
+    );
+  });
+
+  it("AC-R-5: 登録に失敗したとき、ドロワーに別の下書きがあれば開き直さず、その下書きを残す", async () => {
+    const pending = deferred<ActionResult>();
+    mockRegisterMealItems.mockReturnValue(pending.promise);
+    const { result, store } = renderController();
+    act(() => store.set(drawerMealTypeAtom, "lunch"));
+    act(() => result.current.handleOpenChange(true));
+    act(() => result.current.handleManualAdd(itemValues({ name: "昼の品" })));
+    await act(async () => result.current.handleRegister());
+    act(() => store.set(drawerMealTypeAtom, "dinner"));
+    act(() => result.current.handleOpenChange(true));
+    act(() => result.current.handleManualAdd(itemValues({ name: "夜の品" })));
+
+    await act(async () => pending.resolve({ ok: false }));
+
+    await waitFor(() =>
+      expect(mockToastError).toHaveBeenCalledWith(
+        "登録に失敗しました。もう一度お試しください",
+      ),
+    );
+    expect(result.current.mealType).toBe("dinner");
+    expect(result.current.draftItems.map((item) => item.name)).toEqual([
+      "夜の品",
+    ]);
+  });
+
   it("AC-R-3: 画面に出ている日と、ドロワーを開いたスロットに登録する", async () => {
     mockRegisterMealItems.mockResolvedValue({ ok: true });
     const { result, store } = renderController();
