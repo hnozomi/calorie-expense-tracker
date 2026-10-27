@@ -166,6 +166,7 @@ app/(main)/home/page.tsx                    Server。Header と <Suspense> を�
 | データを待つ | 各ページの `<Suspense>` の fallback。今のスケルトン(`DailySkeleton` `PlanSkeleton` など)を使い回す。見出しは Suspense の外 |
 | 空(記録が無い日・献立が無い週・一覧が0件) | 今のまま部品の中 |
 | 読めなかった | `src/app/error.tsx`(今のまま)。Section で例外を握りつぶさない |
+| Drawer の候補が読めなかった | 例外にせず、Drawer の一覧の所に「一覧を読み込めませんでした」を出す(`hasError`)。候補は Drawer を開くまで要らず、手動入力は続けられるので、ホーム全体を error.tsx に替えない(ui.md「失敗した物のそばに出す」) |
 | 押した後に失敗 | `useOptimistic` で元に戻り、toast を出す。登録は下書きを残したまま Drawer を開き直し、編集は打った値のまま編集の Drawer を開き直す(入力を消さない)。toast は品名入り(「「X」の更新に失敗しました」)、登録は「登録に失敗しました。もう一度お試しください」 |
 | 前日をコピー | 楽観表示しない。前日の中身はブラウザに無く、出すには毎回前日も読むことになるため。押している間は「コピー中...」 |
 | 無い id・形の違う日付 | route の中で `notFound()` → `src/app/not-found.tsx` |
