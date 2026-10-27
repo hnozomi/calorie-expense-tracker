@@ -1,5 +1,7 @@
 import type { SetMenu, SetMenuItem } from "../types/set-menu";
 
+// The Supabase client has no generated types, so rows arrive untyped; the casts follow the table definitions in supabase/migrations
+
 /** A set_menus row (with set_menu_items) as Supabase returns it */
 export const toSetMenu = (row: Record<string, unknown>): SetMenu => ({
   id: row.id as string,

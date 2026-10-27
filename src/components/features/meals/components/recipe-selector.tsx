@@ -2,45 +2,22 @@
 // Client because the search box filters the list as you type
 
 import { Search } from "lucide-react";
-import { useState } from "react";
 import type { Recipe } from "@/components/features/recipes/types/recipe";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { PfcDisplay } from "@/components/ui/pfc-display";
+import { useRecipeSelector } from "../hooks/use-recipe-selector";
 import type { MealItemFormValues } from "../types/meal";
-import { matchesSearch } from "../utils/matches-search";
 
-type RecipeSelectorProps = {
+type Props = {
   recipes: Recipe[];
   onSelect: (values: MealItemFormValues, recipeId: string) => void;
 };
 
 /** Select a recipe to add to the meal registration card (per-person values) */
-const RecipeSelector = ({ recipes, onSelect }: RecipeSelectorProps) => {
-  const [search, setSearch] = useState("");
-  const filteredRecipes = recipes.filter((recipe) =>
-    matchesSearch([recipe.name], search),
-  );
-
-  const handleSelect = (recipe: Recipe) => {
-    const perPerson = recipe.servings || 1;
-    const totalIngredientCost = recipe.ingredients.reduce(
-      (sum, ing) => sum + ing.unitPrice * ing.quantity,
-      0,
-    );
-
-    onSelect(
-      {
-        name: recipe.name,
-        calories: recipe.calories / perPerson,
-        protein: recipe.protein / perPerson,
-        fat: recipe.fat / perPerson,
-        carbs: recipe.carbs / perPerson,
-        cost: totalIngredientCost / perPerson,
-      },
-      recipe.id,
-    );
-  };
+export const RecipeSelector = ({ recipes, onSelect }: Props) => {
+  const { search, setSearch, filteredRecipes, handleSelect } =
+    useRecipeSelector(recipes, onSelect);
 
   return (
     <div className="space-y-3">
@@ -92,5 +69,3 @@ const RecipeSelector = ({ recipes, onSelect }: RecipeSelectorProps) => {
     </div>
   );
 };
-
-export { RecipeSelector };

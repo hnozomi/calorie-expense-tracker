@@ -12,3 +12,6 @@ export type DrawerCandidates = {
 };
 
 export type CandidateTab = "recent" | "recipe" | "food_master" | "set_menu";
+
+/** The register drawer's tabs: typed input, the four candidate lists, and the nutrition label camera */
+export type RegisterTab = "manual" | CandidateTab | "ocr";

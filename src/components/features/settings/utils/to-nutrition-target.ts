@@ -3,6 +3,8 @@ import {
   type NutritionTarget,
 } from "@/types/settings";
 
+// The Supabase client has no generated types, so rows arrive untyped; the casts follow the table definitions in supabase/migrations
+
 /** A user_settings row, or the defaults when the user has not saved any targets yet */
 export const toNutritionTarget = (
   row: Record<string, unknown> | null,

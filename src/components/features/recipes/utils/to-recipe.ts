@@ -1,5 +1,7 @@
 import type { Recipe } from "../types/recipe";
 
+// The Supabase client has no generated types, so rows arrive untyped; the casts follow the table definitions in supabase/migrations
+
 /** A recipes row (with recipe_ingredients) as Supabase returns it */
 export const toRecipe = (row: Record<string, unknown>): Recipe => ({
   id: row.id as string,

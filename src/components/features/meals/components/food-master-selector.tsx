@@ -2,41 +2,21 @@
 // Client because the search box filters the list as you type
 
 import { Search } from "lucide-react";
-import { useState } from "react";
 import type { FoodMaster } from "@/components/features/food-masters/types/food-master";
 import { Input } from "@/components/ui/input";
 import { PfcDisplay } from "@/components/ui/pfc-display";
+import { useFoodMasterSelector } from "../hooks/use-food-master-selector";
 import type { MealItemFormValues } from "../types/meal";
-import { matchesSearch } from "../utils/matches-search";
 
-type FoodMasterSelectorProps = {
+type Props = {
   foodMasters: FoodMaster[];
   onSelect: (values: MealItemFormValues, foodMasterId: string) => void;
 };
 
 /** Select a food master item to add to the meal registration card */
-const FoodMasterSelector = ({
-  foodMasters,
-  onSelect,
-}: FoodMasterSelectorProps) => {
-  const [search, setSearch] = useState("");
-  const filteredFoodMasters = foodMasters.filter((fm) =>
-    matchesSearch([fm.name, fm.brand], search),
-  );
-
-  const handleSelect = (fm: FoodMaster) => {
-    onSelect(
-      {
-        name: fm.name,
-        calories: fm.calories,
-        protein: fm.protein,
-        fat: fm.fat,
-        carbs: fm.carbs,
-        cost: fm.defaultPrice ?? undefined,
-      },
-      fm.id,
-    );
-  };
+export const FoodMasterSelector = ({ foodMasters, onSelect }: Props) => {
+  const { search, setSearch, filteredFoodMasters, handleSelect } =
+    useFoodMasterSelector(foodMasters, onSelect);
 
   return (
     <div className="space-y-3">
@@ -86,5 +66,3 @@ const FoodMasterSelector = ({
     </div>
   );
 };
-
-export { FoodMasterSelector };

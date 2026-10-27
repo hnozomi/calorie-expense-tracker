@@ -1,6 +1,8 @@
 import type { FoodCategory } from "@/types";
 import type { FoodMaster } from "../types/food-master";
 
+// The Supabase client has no generated types, so rows arrive untyped; the casts follow the table definitions in supabase/migrations
+
 /** A food_masters row as Supabase returns it */
 export const toFoodMaster = (row: Record<string, unknown>): FoodMaster => ({
   id: row.id as string,

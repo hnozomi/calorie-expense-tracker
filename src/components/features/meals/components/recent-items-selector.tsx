@@ -5,16 +5,13 @@ import { History } from "lucide-react";
 import { PfcDisplay } from "@/components/ui/pfc-display";
 import type { RecentMealItem } from "../utils/recent-meal-items";
 
-type RecentItemsSelectorProps = {
+type Props = {
   recentItems: RecentMealItem[];
   onSelect: (item: RecentMealItem) => void;
 };
 
 /** List of recently registered items for one-tap re-adding */
-const RecentItemsSelector = ({
-  recentItems,
-  onSelect,
-}: RecentItemsSelectorProps) => {
+export const RecentItemsSelector = ({ recentItems, onSelect }: Props) => {
   if (recentItems.length === 0) {
     return (
       <div className="rounded-lg border border-dashed border-muted-foreground/25 py-6 text-center">
@@ -51,5 +48,3 @@ const RecentItemsSelector = ({
     </div>
   );
 };
-
-export { RecentItemsSelector };

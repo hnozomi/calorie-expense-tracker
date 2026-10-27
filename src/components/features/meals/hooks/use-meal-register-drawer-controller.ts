@@ -24,6 +24,7 @@ import {
   drawerMealTypeAtom,
   isDrawerOpenAtom,
 } from "../stores/meal-register-atom";
+import type { RegisterTab } from "../types/drawer-candidates";
 import type {
   MealItemDraft,
   MealItemFormValues,
@@ -46,9 +47,7 @@ export const useMealRegisterDrawerController = () => {
   const { date, showMealChange } = useDailyMealsContext();
   const refreshLegacyScreens = useRefreshLegacyScreens();
   const [isRegistering, startRegistering] = useTransition();
-  const [activeTab, setActiveTab] = useState<
-    "manual" | "recent" | "recipe" | "food_master" | "set_menu" | "ocr"
-  >("manual");
+  const [activeTab, setActiveTab] = useState<RegisterTab>("manual");
   const [isOcrOpen, setIsOcrOpen] = useState(false);
   const [ocrResult, setOcrResult] = useState<OcrNutritionResult | null>(null);
   const [ocrNoValueError, setOcrNoValueError] = useState<string | null>(null);
@@ -319,8 +318,23 @@ export const useMealRegisterDrawerController = () => {
     registerItems(draftItems);
   }, [draftItems, registerItems]);
 
+  const lastDraftItem = draftItems[draftItems.length - 1];
+
   return {
     activeTab,
+    lastDraftName: lastDraftItem?.name ?? null,
+    pendingNames:
+      pendingRegisterItems?.map((pending) => pending.values.name) ?? null,
+    totalDraftCalories: draftItems.reduce(
+      (sum, item) => sum + item.calories,
+      0,
+    ),
+    openOcrCamera: () => setIsOcrOpen(true),
+    closeOcrCamera: () => setIsOcrOpen(false),
+    openLibraryPicker: () => libraryInputRef.current?.click(),
+    handlePendingDialogOpenChange: (open: boolean) => {
+      if (!open) setPendingRegisterItems(null);
+    },
     draftItems,
     isDiscardConfirmOpen,
     isOcrOpen,

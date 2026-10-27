@@ -1,50 +1,23 @@
 "use client";
 // Client because the search box filters the list as you type
 
-import { useState } from "react";
-import { toast } from "sonner";
 import type { SetMenu } from "@/components/features/set-menus/types/set-menu";
 import { Input } from "@/components/ui/input";
 import { PfcDisplay } from "@/components/ui/pfc-display";
-import type { MealItemFormValues } from "../types/meal";
-import { matchesSearch } from "../utils/matches-search";
+import {
+  type SetMenuItemWithIds,
+  useSetMenuSelector,
+} from "../hooks/use-set-menu-selector";
 
-type SetMenuItemWithIds = MealItemFormValues & {
-  setMenuId?: string;
-  foodMasterId?: string;
-  recipeId?: string;
-};
-
-type SetMenuSelectorProps = {
+type Props = {
   setMenus: SetMenu[];
   onSelect: (items: SetMenuItemWithIds[]) => void;
 };
 
 /** List of set menus with items; selecting adds all items to draft */
-const SetMenuSelector = ({ setMenus, onSelect }: SetMenuSelectorProps) => {
-  const [search, setSearch] = useState("");
-  const filteredSetMenus = setMenus.filter((menu) =>
-    matchesSearch([menu.name], search),
-  );
-
-  const handleSelect = (menu: SetMenu) => {
-    if (menu.items.length === 0) {
-      toast.info("このセットメニューにはアイテムがありません");
-      return;
-    }
-    const items = menu.items.map((item) => ({
-      name: item.name,
-      calories: item.calories,
-      protein: item.protein,
-      fat: item.fat,
-      carbs: item.carbs,
-      cost: item.cost || undefined,
-      setMenuId: menu.id,
-      foodMasterId: item.foodMasterId ?? undefined,
-      recipeId: item.recipeId ?? undefined,
-    }));
-    onSelect(items);
-  };
+export const SetMenuSelector = ({ setMenus, onSelect }: Props) => {
+  const { search, setSearch, filteredSetMenus, handleSelect } =
+    useSetMenuSelector(setMenus, onSelect);
 
   return (
     <div className="space-y-2">
@@ -96,5 +69,3 @@ const SetMenuSelector = ({ setMenus, onSelect }: SetMenuSelectorProps) => {
     </div>
   );
 };
-
-export { SetMenuSelector };
