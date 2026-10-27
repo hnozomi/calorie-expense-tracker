@@ -17,3 +17,18 @@ export const getFoodMasters = async (): Promise<FoodMaster[]> => {
   if (error) throw error;
   return (data ?? []).map(toFoodMaster);
 };
+
+/** One food master for its edit screen, or null when the id is unknown or the master was deleted (the route returns 404) */
+export const getFoodMaster = async (id: string): Promise<FoodMaster | null> => {
+  "use cache: private";
+  cacheLife(SCREEN_CACHE);
+  const supabase = await createClient();
+  const { data, error } = await supabase
+    .from("food_masters")
+    .select("*")
+    .eq("id", id)
+    .is("deleted_at", null)
+    .maybeSingle();
+  if (error) throw error;
+  return data ? toFoodMaster(data) : null;
+};
