@@ -3,7 +3,9 @@ import {
   clickToReveal,
   fillStable,
   gotoHydrated,
+  isoWeekday,
   openSlotDrawer,
+  todayInTokyo,
   visibleField,
   visibleText,
 } from "./helpers";
@@ -57,10 +59,11 @@ test.describe("献立カレンダー", () => {
     });
 
     // Sync actuals on the plan screen. On Mondays "yesterday" belongs to the
-    // previous week, so move the calendar back one week first.
+    // previous week, so move the calendar back one week first. Monday is decided
+    // in Asia/Tokyo like the server's today, not by the machine's time zone.
     await gotoHydrated(page, "/plan");
     await expect(visibleText(page, "週間サマリー")).toBeVisible();
-    if (new Date().getDay() === 1) {
+    if (isoWeekday(todayInTokyo()) === 1) {
       // Since phase 3 the previous week is a link to /plan?week= (ui-tech §phase 3)
       await page.getByRole("link", { name: "前の週" }).click();
     }
@@ -137,23 +140,13 @@ test.describe("献立カレンダー", () => {
 
 type MealType = "breakfast" | "lunch" | "dinner" | "snack";
 
-/** The server decides today in Asia/Tokyo (getTodayInTokyo), so the test does the same */
-const todayInTokyo = (): string =>
-  new Intl.DateTimeFormat("en-CA", { timeZone: "Asia/Tokyo" }).format(
-    new Date(),
-  );
-
 const shiftDay = (date: string, days: number): string => {
   const [year, month, day] = date.split("-").map(Number);
   const shifted = new Date(Date.UTC(year, month - 1, day + days));
   return shifted.toISOString().slice(0, 10);
 };
 
-const mondayOf = (date: string): string => {
-  const [year, month, day] = date.split("-").map(Number);
-  const weekday = new Date(Date.UTC(year, month - 1, day)).getUTCDay() || 7;
-  return shiftDay(date, 1 - weekday);
-};
+const mondayOf = (date: string): string => shiftDay(date, 1 - isoWeekday(date));
 
 /** Put one plan straight into the DB */
 const insertPlan = async (

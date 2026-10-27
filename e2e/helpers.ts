@@ -89,3 +89,15 @@ export const loginViaUi = async (
     await expect(page).toHaveURL(/\/home/, { timeout: 10_000 });
   }).toPass({ timeout: 45_000 });
 };
+
+/** The server decides today in Asia/Tokyo (getTodayInTokyo), so the tests do the same */
+export const todayInTokyo = (): string =>
+  new Intl.DateTimeFormat("en-CA", { timeZone: "Asia/Tokyo" }).format(
+    new Date(),
+  );
+
+/** Monday = 1 ... Sunday = 7 for a YYYY-MM-DD day */
+export const isoWeekday = (date: string): number => {
+  const [year, month, day] = date.split("-").map(Number);
+  return new Date(Date.UTC(year, month - 1, day)).getUTCDay() || 7;
+};
