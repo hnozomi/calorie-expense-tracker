@@ -1,16 +1,14 @@
-"use client";
-
 import { Flame, Wallet } from "lucide-react";
 import Link from "next/link";
 import { Card, CardContent } from "@/components/ui/card";
-import { useNutritionTarget } from "@/hooks";
+import type { NutritionTarget } from "@/types";
 import { cn } from "@/utils";
-import { useDailySummary } from "../hooks/use-daily-summary";
 import type { DailySummaryRow } from "../types/meal";
 import { sumNutrition } from "../utils/nutrition-calc";
 
 type DailySummaryCardProps = {
-  date: string;
+  summaryRows: DailySummaryRow[];
+  target: NutritionTarget;
 };
 
 /** Circular progress ring for calorie target */
@@ -134,18 +132,11 @@ const PfcBar = ({
 };
 
 /** Display total calories, PFC, cost, and remaining intake for the day */
-const DailySummaryCard = ({ date }: DailySummaryCardProps) => {
-  const { data: summaryRows } = useDailySummary(date);
-  const { data: target } = useNutritionTarget();
+const DailySummaryCard = ({ summaryRows, target }: DailySummaryCardProps) => {
+  const nutrition = sumNutrition(summaryRows);
+  const totalCost = summaryRows.reduce((sum, row) => sum + row.totalCost, 0);
 
-  const rows: DailySummaryRow[] = summaryRows ?? [];
-  const nutrition = sumNutrition(rows);
-  const totalCost = rows.reduce((sum, row) => sum + row.totalCost, 0);
-
-  const targetCalories = target?.targetCalories ?? 0;
-  const targetProtein = target?.targetProtein ?? 0;
-  const targetFat = target?.targetFat ?? 0;
-  const targetCarbs = target?.targetCarbs ?? 0;
+  const { targetCalories, targetProtein, targetFat, targetCarbs } = target;
   const hasTarget = targetCalories > 0;
 
   const remainingCalories = Math.max(targetCalories - nutrition.calories, 0);

@@ -1,9 +1,7 @@
 "use client";
+// Client because it opens the register and edit drawers and runs the slot actions
 
-import { useAtomValue, useSetAtom } from "jotai";
 import { CalendarPlus, ChevronRight, CopyPlus, Plus } from "lucide-react";
-import { useState } from "react";
-import { toast } from "sonner";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -18,67 +16,28 @@ import {
 import { PfcDisplay } from "@/components/ui/pfc-display";
 import { MEAL_TYPE_LABELS, type MealType } from "@/types";
 import { cn, MEAL_TYPE_META } from "@/utils";
-import { useCopyPreviousDayMeal } from "../hooks/use-copy-previous-day-meal";
-import { useTransferMealToPlan } from "../hooks/use-transfer-meal-to-plan";
-import { selectedDateAtom } from "../stores/date-atom";
-import {
-  drawerMealTypeAtom,
-  isDrawerOpenAtom,
-} from "../stores/meal-register-atom";
-import type { MealItem } from "../types/meal";
+import { useMealSlot } from "../hooks/use-meal-slot";
+import type { DisplayedMealItem } from "../types/meal";
 import { MealItemEditModal } from "./meal-item-edit-modal";
 
 type MealSlotCardProps = {
   mealType: MealType;
-  items: MealItem[];
+  items: DisplayedMealItem[];
 };
 
 /** A single meal slot (breakfast/lunch/dinner/snack) showing its items */
 const MealSlotCard = ({ mealType, items }: MealSlotCardProps) => {
-  const setIsDrawerOpen = useSetAtom(isDrawerOpenAtom);
-  const setDrawerMealType = useSetAtom(drawerMealTypeAtom);
-  const selectedDate = useAtomValue(selectedDateAtom);
-  const [editingItem, setEditingItem] = useState<MealItem | null>(null);
-  const transferToPlan = useTransferMealToPlan();
-  const copyPreviousDay = useCopyPreviousDayMeal();
-
-  const openDrawer = () => {
-    setDrawerMealType(mealType);
-    setIsDrawerOpen(true);
-  };
-
-  /** Copy the previous day's items in this slot into the selected date */
-  const handleCopyPreviousDay = async () => {
-    try {
-      const copiedCount = await copyPreviousDay.mutateAsync({
-        date: selectedDate,
-        mealType,
-      });
-      if (copiedCount === 0) {
-        toast.info(`前日の${MEAL_TYPE_LABELS[mealType]}の記録がありません`);
-      } else {
-        toast.success(
-          `前日の${MEAL_TYPE_LABELS[mealType]}(${copiedCount}件)をコピーしました`,
-        );
-      }
-    } catch {
-      toast.error("コピーに失敗しました");
-    }
-  };
-
-  const handleTransferToPlan = async () => {
-    try {
-      await transferToPlan.mutateAsync({
-        targetDate: selectedDate,
-        mealType,
-      });
-      toast.success("献立に反映しました");
-    } catch {
-      toast.error("献立への反映に失敗しました");
-    }
-  };
-
-  const totalCalories = items.reduce((sum, item) => sum + item.calories, 0);
+  const {
+    editingItem,
+    isCopying,
+    isTransferring,
+    totalCalories,
+    openDrawer,
+    handleCopyPreviousDay,
+    handleTransferToPlan,
+    startEditing,
+    stopEditing,
+  } = useMealSlot(mealType, items);
   const meta = MEAL_TYPE_META[mealType];
   const Icon = meta.icon;
 
@@ -113,7 +72,7 @@ const MealSlotCard = ({ mealType, items }: MealSlotCardProps) => {
                   <button
                     type="button"
                     className="flex h-6 w-6 items-center justify-center rounded-md text-muted-foreground/60 transition-colors hover:bg-muted hover:text-foreground active:bg-muted/80"
-                    disabled={transferToPlan.isPending}
+                    disabled={isTransferring}
                     title="献立に反映"
                     aria-label="献立に反映"
                   >
@@ -156,10 +115,10 @@ const MealSlotCard = ({ mealType, items }: MealSlotCardProps) => {
                 type="button"
                 className="mt-1 flex w-full items-center justify-center gap-1.5 rounded-lg py-2 text-xs text-muted-foreground/80 transition-colors active:bg-muted/60 disabled:opacity-50"
                 onClick={handleCopyPreviousDay}
-                disabled={copyPreviousDay.isPending}
+                disabled={isCopying}
               >
                 <CopyPlus className="h-3.5 w-3.5" />
-                {copyPreviousDay.isPending ? "コピー中..." : "前日をコピー"}
+                {isCopying ? "コピー中..." : "前日をコピー"}
               </button>
             </>
           ) : (
@@ -168,8 +127,10 @@ const MealSlotCard = ({ mealType, items }: MealSlotCardProps) => {
                 <button
                   key={item.id}
                   type="button"
-                  className="flex w-full items-center justify-between gap-2 rounded-lg px-2.5 py-2 text-left text-sm transition-colors active:bg-muted/70"
-                  onClick={() => setEditingItem(item)}
+                  className="flex w-full items-center justify-between gap-2 rounded-lg px-2.5 py-2 text-left text-sm transition-colors active:bg-muted/70 disabled:opacity-60"
+                  // Still being saved: it has no id to edit yet
+                  disabled={item.isOptimistic}
+                  onClick={() => startEditing(item)}
                 >
                   <div className="min-w-0 flex-1">
                     <p className="truncate font-medium">{item.name}</p>
@@ -206,9 +167,8 @@ const MealSlotCard = ({ mealType, items }: MealSlotCardProps) => {
       <MealItemEditModal
         key={editingItem?.id}
         item={editingItem}
-        date={selectedDate}
         isOpen={!!editingItem}
-        onClose={() => setEditingItem(null)}
+        onClose={stopEditing}
       />
     </>
   );

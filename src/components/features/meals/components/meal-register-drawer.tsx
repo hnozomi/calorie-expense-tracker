@@ -1,4 +1,5 @@
 "use client";
+// Client because the drawer, its tabs and the OCR camera are interactive
 
 import {
   BookOpen,
@@ -9,6 +10,7 @@ import {
   ListChecks,
   PenLine,
 } from "lucide-react";
+import { Suspense } from "react";
 import { OcrCameraOverlay, OcrResultForm } from "@/components/features/ocr";
 import {
   AlertDialog,
@@ -31,15 +33,19 @@ import {
 import { MEAL_TYPE_LABELS } from "@/types";
 import { cn } from "@/utils";
 import { useMealRegisterDrawerController } from "../hooks/use-meal-register-drawer-controller";
-import { FoodMasterSelector } from "./food-master-selector";
+import type { DrawerCandidates } from "../types/drawer-candidates";
+import { CandidateListSkeleton } from "./candidate-list-skeleton";
+import { CandidateSelector } from "./candidate-selector";
 import { ManualInputForm } from "./manual-input-form";
 import { MealRegisterCard } from "./meal-register-card";
-import { RecentItemsSelector } from "./recent-items-selector";
-import { RecipeSelector } from "./recipe-selector";
-import { SetMenuSelector } from "./set-menu-selector";
+
+type Props = {
+  /** Read on the server with the home screen; the lists are ready by the time the drawer opens */
+  candidates: Promise<DrawerCandidates>;
+};
 
 /** Bottom drawer for adding meal items and batch registering */
-const MealRegisterDrawer = () => {
+const MealRegisterDrawer = ({ candidates }: Props) => {
   const {
     activeTab,
     draftItems,
@@ -54,7 +60,7 @@ const MealRegisterDrawer = () => {
     ocrPendingRef,
     ocrResult,
     pendingRegisterItems,
-    registerMutation,
+    isRegistering,
     setActiveTab,
     setIsDiscardConfirmOpen,
     setIsOcrOpen,
@@ -147,17 +153,17 @@ const MealRegisterDrawer = () => {
                   pendingItemRef={manualPendingRef}
                 />
               </div>
-              {activeTab === "recent" && (
-                <RecentItemsSelector onSelect={handleRecentAdd} />
-              )}
-              {activeTab === "recipe" && (
-                <RecipeSelector onSelect={handleRecipeAdd} />
-              )}
-              {activeTab === "food_master" && (
-                <FoodMasterSelector onSelect={handleFoodMasterAdd} />
-              )}
-              {activeTab === "set_menu" && (
-                <SetMenuSelector onSelect={handleSetMenuAdd} />
+              {activeTab !== "manual" && activeTab !== "ocr" && (
+                <Suspense fallback={<CandidateListSkeleton />}>
+                  <CandidateSelector
+                    tab={activeTab}
+                    candidates={candidates}
+                    onRecentSelect={handleRecentAdd}
+                    onRecipeSelect={handleRecipeAdd}
+                    onFoodMasterSelect={handleFoodMasterAdd}
+                    onSetMenuSelect={handleSetMenuAdd}
+                  />
+                </Suspense>
               )}
               <div className={cn(activeTab !== "ocr" && "hidden")}>
                 {ocrResult ? (
@@ -247,10 +253,10 @@ const MealRegisterDrawer = () => {
               </div>
               <Button
                 className="w-full"
-                disabled={registerMutation.isPending}
+                disabled={isRegistering}
                 onClick={handleRegister}
               >
-                {registerMutation.isPending
+                {isRegistering
                   ? "登録中..."
                   : `${draftItems.length}件まとめて登録する`}
               </Button>

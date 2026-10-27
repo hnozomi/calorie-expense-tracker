@@ -1,25 +1,30 @@
 "use client";
+// Client because the search box filters the list as you type
 
 import { Search } from "lucide-react";
 import { useState } from "react";
-import { useFoodMasters } from "@/components/features/food-masters/hooks/use-food-masters";
+import type { FoodMaster } from "@/components/features/food-masters/types/food-master";
 import { Input } from "@/components/ui/input";
 import { PfcDisplay } from "@/components/ui/pfc-display";
-import { Skeleton } from "@/components/ui/skeleton";
-import { useDebounce } from "@/hooks";
 import type { MealItemFormValues } from "../types/meal";
+import { matchesSearch } from "../utils/matches-search";
 
 type FoodMasterSelectorProps = {
+  foodMasters: FoodMaster[];
   onSelect: (values: MealItemFormValues, foodMasterId: string) => void;
 };
 
 /** Select a food master item to add to the meal registration card */
-const FoodMasterSelector = ({ onSelect }: FoodMasterSelectorProps) => {
+const FoodMasterSelector = ({
+  foodMasters,
+  onSelect,
+}: FoodMasterSelectorProps) => {
   const [search, setSearch] = useState("");
-  const debouncedSearch = useDebounce(search);
-  const { data: foodMasters, isLoading } = useFoodMasters(debouncedSearch);
+  const filteredFoodMasters = foodMasters.filter((fm) =>
+    matchesSearch([fm.name, fm.brand], search),
+  );
 
-  const handleSelect = (fm: NonNullable<typeof foodMasters>[number]) => {
+  const handleSelect = (fm: FoodMaster) => {
     onSelect(
       {
         name: fm.name,
@@ -46,12 +51,8 @@ const FoodMasterSelector = ({ onSelect }: FoodMasterSelectorProps) => {
       </div>
 
       <div className="space-y-1">
-        {isLoading ? (
-          ["fms1", "fms2", "fms3"].map((key) => (
-            <Skeleton key={key} className="h-14 rounded-lg" />
-          ))
-        ) : foodMasters && foodMasters.length > 0 ? (
-          foodMasters.map((fm) => (
+        {filteredFoodMasters.length > 0 ? (
+          filteredFoodMasters.map((fm) => (
             <button
               key={fm.id}
               type="button"

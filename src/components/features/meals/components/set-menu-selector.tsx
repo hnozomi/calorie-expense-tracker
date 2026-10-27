@@ -1,12 +1,13 @@
 "use client";
+// Client because the search box filters the list as you type
 
-import { Suspense, useState } from "react";
+import { useState } from "react";
 import { toast } from "sonner";
-import { useSetMenus } from "@/components/features/set-menus/hooks/use-set-menus";
+import type { SetMenu } from "@/components/features/set-menus/types/set-menu";
 import { Input } from "@/components/ui/input";
 import { PfcDisplay } from "@/components/ui/pfc-display";
-import { Skeleton } from "@/components/ui/skeleton";
 import type { MealItemFormValues } from "../types/meal";
+import { matchesSearch } from "../utils/matches-search";
 
 type SetMenuItemWithIds = MealItemFormValues & {
   setMenuId?: string;
@@ -15,22 +16,18 @@ type SetMenuItemWithIds = MealItemFormValues & {
 };
 
 type SetMenuSelectorProps = {
+  setMenus: SetMenu[];
   onSelect: (items: SetMenuItemWithIds[]) => void;
 };
 
 /** List of set menus with items; selecting adds all items to draft */
-const SetMenuSelectorInner = ({ onSelect }: SetMenuSelectorProps) => {
-  const { data: setMenus } = useSetMenus();
+const SetMenuSelector = ({ setMenus, onSelect }: SetMenuSelectorProps) => {
   const [search, setSearch] = useState("");
+  const filteredSetMenus = setMenus.filter((menu) =>
+    matchesSearch([menu.name], search),
+  );
 
-  const normalizedSearch = search.trim().toLowerCase();
-  const filteredSetMenus = normalizedSearch
-    ? setMenus.filter((menu) =>
-        menu.name.toLowerCase().includes(normalizedSearch),
-      )
-    : setMenus;
-
-  const handleSelect = (menu: NonNullable<typeof setMenus>[number]) => {
+  const handleSelect = (menu: SetMenu) => {
     if (menu.items.length === 0) {
       toast.info("このセットメニューにはアイテムがありません");
       return;
@@ -89,7 +86,7 @@ const SetMenuSelectorInner = ({ onSelect }: SetMenuSelectorProps) => {
         ) : (
           <div className="rounded-lg border border-dashed border-muted-foreground/25 py-6 text-center">
             <p className="text-sm text-muted-foreground">
-              {normalizedSearch
+              {search.trim()
                 ? "該当するセットメニューがありません"
                 : "セットメニューが未登録です"}
             </p>
@@ -97,23 +94,6 @@ const SetMenuSelectorInner = ({ onSelect }: SetMenuSelectorProps) => {
         )}
       </div>
     </div>
-  );
-};
-
-/** Wrapper with Suspense boundary for lazy loading */
-const SetMenuSelector = (props: SetMenuSelectorProps) => {
-  return (
-    <Suspense
-      fallback={
-        <div className="space-y-1">
-          {["sms1", "sms2", "sms3"].map((key) => (
-            <Skeleton key={key} className="h-14 rounded-lg" />
-          ))}
-        </div>
-      }
-    >
-      <SetMenuSelectorInner {...props} />
-    </Suspense>
   );
 };
 

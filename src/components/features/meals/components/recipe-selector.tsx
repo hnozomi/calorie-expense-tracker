@@ -1,26 +1,28 @@
 "use client";
+// Client because the search box filters the list as you type
 
 import { Search } from "lucide-react";
 import { useState } from "react";
-import { useRecipes } from "@/components/features/recipes/hooks/use-recipes";
+import type { Recipe } from "@/components/features/recipes/types/recipe";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { PfcDisplay } from "@/components/ui/pfc-display";
-import { Skeleton } from "@/components/ui/skeleton";
-import { useDebounce } from "@/hooks";
 import type { MealItemFormValues } from "../types/meal";
+import { matchesSearch } from "../utils/matches-search";
 
 type RecipeSelectorProps = {
+  recipes: Recipe[];
   onSelect: (values: MealItemFormValues, recipeId: string) => void;
 };
 
 /** Select a recipe to add to the meal registration card (per-person values) */
-const RecipeSelector = ({ onSelect }: RecipeSelectorProps) => {
+const RecipeSelector = ({ recipes, onSelect }: RecipeSelectorProps) => {
   const [search, setSearch] = useState("");
-  const debouncedSearch = useDebounce(search);
-  const { data: recipes, isLoading } = useRecipes(debouncedSearch);
+  const filteredRecipes = recipes.filter((recipe) =>
+    matchesSearch([recipe.name], search),
+  );
 
-  const handleSelect = (recipe: NonNullable<typeof recipes>[number]) => {
+  const handleSelect = (recipe: Recipe) => {
     const perPerson = recipe.servings || 1;
     const totalIngredientCost = recipe.ingredients.reduce(
       (sum, ing) => sum + ing.unitPrice * ing.quantity,
@@ -53,12 +55,8 @@ const RecipeSelector = ({ onSelect }: RecipeSelectorProps) => {
       </div>
 
       <div className="space-y-1">
-        {isLoading ? (
-          ["rs1", "rs2", "rs3"].map((key) => (
-            <Skeleton key={key} className="h-14 rounded-lg" />
-          ))
-        ) : recipes && recipes.length > 0 ? (
-          recipes.map((recipe) => (
+        {filteredRecipes.length > 0 ? (
+          filteredRecipes.map((recipe) => (
             <button
               key={recipe.id}
               type="button"

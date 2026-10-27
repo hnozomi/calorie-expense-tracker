@@ -1,48 +1,45 @@
 "use client";
+// Client because the date picker moves with the router
 
 import { ChevronLeft, ChevronRight } from "lucide-react";
+import Link from "next/link";
 import { Button } from "@/components/ui/button";
-import { useSelectedDateNavigation } from "@/hooks";
-import {
-  cn,
-  formatDisplayDate,
-  getTodayString,
-  isValidDateString,
-} from "@/utils";
-import { selectedDateAtom } from "../stores/date-atom";
+import { cn } from "@/utils";
+import { useDateNavigator } from "../hooks/use-date-navigator";
 
-/** Navigate between dates with arrows, a native date picker, and a jump-to-today shortcut */
-const DateNavigator = () => {
+type Props = {
+  date: string;
+  today: string;
+};
+
+/** Move between days with arrows, a native date picker, and a jump-to-today shortcut */
+export const DateNavigator = ({ date, today }: Props) => {
   const {
-    value: selectedDate,
-    isDefaultValue,
-    setDate,
-    shiftBackward,
-    shiftForward,
-  } = useSelectedDateNavigation(selectedDateAtom);
-  const displayDate = isDefaultValue ? "今日" : formatDisplayDate(selectedDate);
-
-  /** Apply a date chosen from the native picker */
-  const handleDatePicked = (event: React.ChangeEvent<HTMLInputElement>) => {
-    const picked = event.target.value;
-    if (picked && isValidDateString(picked)) setDate(picked);
-  };
+    isToday,
+    displayDate,
+    previousHref,
+    nextHref,
+    todayHref,
+    handleDatePicked,
+  } = useDateNavigator(date, today);
 
   return (
     <div className="relative flex items-center justify-center gap-3 py-3">
       <Button
+        asChild
         variant="ghost"
         size="icon-sm"
-        aria-label="前の日"
         className="rounded-full transition-colors hover:bg-muted"
-        onClick={shiftBackward}
       >
-        <ChevronLeft className="h-5 w-5" />
+        {/* The next and previous day are likely taps, and their data has a private cache, so prefetch them */}
+        <Link href={previousHref} prefetch aria-label="前の日">
+          <ChevronLeft className="h-5 w-5" />
+        </Link>
       </Button>
       <div
         className={cn(
           "relative flex min-w-[100px] items-center justify-center rounded-full px-4 py-1.5 text-sm font-semibold transition-colors",
-          isDefaultValue
+          isToday
             ? "bg-primary text-primary-foreground shadow-sm"
             : "bg-muted text-foreground",
         )}
@@ -52,32 +49,31 @@ const DateNavigator = () => {
         <input
           type="date"
           aria-label="日付を選択"
-          value={selectedDate}
+          value={date}
           onChange={handleDatePicked}
           className="absolute inset-0 h-full w-full cursor-pointer opacity-0"
         />
       </div>
       <Button
+        asChild
         variant="ghost"
         size="icon-sm"
-        aria-label="次の日"
         className="rounded-full transition-colors hover:bg-muted"
-        onClick={shiftForward}
       >
-        <ChevronRight className="h-5 w-5" />
+        <Link href={nextHref} prefetch aria-label="次の日">
+          <ChevronRight className="h-5 w-5" />
+        </Link>
       </Button>
-      {!isDefaultValue && (
+      {!isToday && (
         <Button
+          asChild
           variant="outline"
           size="sm"
           className="absolute right-3 h-7 rounded-full px-2.5 text-xs"
-          onClick={() => setDate(getTodayString())}
         >
-          今日へ
+          <Link href={todayHref}>今日へ</Link>
         </Button>
       )}
     </div>
   );
 };
-
-export { DateNavigator };
