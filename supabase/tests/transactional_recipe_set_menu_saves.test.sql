@@ -1,7 +1,7 @@
 -- save_recipe_with_ingredients / save_set_menu_with_items: save the parent and its
 -- children in one call, replace the children on update, and refuse ids the caller does not own
 begin;
-select plan(15);
+select plan(18);
 
 insert into auth.users (id, email) values
   ('00000000-0000-4000-8000-000000000001', 'user-a@example.com'),
@@ -120,6 +120,30 @@ select results_eq(
      where recipe_id = current_setting('test.recipe_id')::uuid order by ingredient_name $$,
   $$ values ('a'::text, 1::numeric, 'g'::text, 10::numeric), ('b', 2, 'g', 20) $$,
   'saving a deleted recipe leaves its ingredients as they were'
+);
+
+-- A soft-deleted set menu is not saved either (keep_deleted_set_menus_unsaved): same error as an unknown id
+update set_menus set deleted_at = now() where id = current_setting('test.menu_id')::uuid;
+select throws_ok(
+  format($$ select save_set_menu_with_items(%L::uuid, 'after delete', 999, 9, 9, 9, 99,
+    '[{"name":"z","recipe_id":null,"food_master_id":null,"calories":999,"protein":9,"fat":9,"carbs":9,"cost":99,"serving_quantity":3}]'::jsonb) $$,
+         current_setting('test.menu_id')),
+  'P0001', 'set menu not found',
+  'saving a deleted set menu fails'
+);
+select is(
+  (select count(*) from set_menus
+    where id = current_setting('test.menu_id')::uuid
+      and name = 'menu2' and total_calories = 400 and total_protein = 20 and total_fat = 10
+      and total_carbs = 50 and total_cost = 600 and deleted_at is not null),
+  1::bigint,
+  'saving a deleted set menu leaves the set menu row as it was'
+);
+select results_eq(
+  $$ select name, calories, cost, serving_quantity, sort_order from set_menu_items
+     where set_menu_id = current_setting('test.menu_id')::uuid order by sort_order $$,
+  $$ values ('only'::text, 400::numeric, 600::numeric, 1::numeric, 0::integer) $$,
+  'saving a deleted set menu leaves its items as they were'
 );
 
 select * from finish();

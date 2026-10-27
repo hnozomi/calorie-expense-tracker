@@ -1,18 +1,10 @@
 import { cleanup, render, screen } from "@testing-library/react";
-import userEvent from "@testing-library/user-event";
-import { afterEach, describe, expect, it, vi } from "vitest";
+import { afterEach, describe, expect, it } from "vitest";
 import { WeeklyCalorieChart } from "@/components/features/report/components/weekly-calorie-chart";
 import type { DailyReportEntry } from "@/components/features/report/types/weekly-report";
 
-/** Mock next/navigation */
-const mockPush = vi.fn();
-vi.mock("next/navigation", () => ({
-  useRouter: () => ({ push: mockPush }),
-}));
-
 afterEach(() => {
   cleanup();
-  mockPush.mockClear();
 });
 
 /** Create 7 daily entries for testing */
@@ -52,38 +44,45 @@ describe("WeeklyCalorieChart", () => {
     }
   });
 
-  it("renders 7 clickable bars", () => {
+  // Phase 5: the bars are links (a pushed route could not be opened like any other screen, CLAUDE.md Performance)
+  it("S-09: renders the 7 bars as links to the daily view", () => {
     render(
       <WeeklyCalorieChart entries={createEntries()} averageCalories={0} />,
     );
-    const buttons = screen.getAllByRole("button");
-    expect(buttons).toHaveLength(7);
+    const links = screen.getAllByRole("link", { name: /タップで日別画面へ/ });
+    expect(links).toHaveLength(7);
   });
 
-  it("navigates to daily view on bar click", async () => {
-    const user = userEvent.setup();
+  it("S-09: tapping a bar opens that day's daily view (/home?date=, AC-R-3)", () => {
     render(
       <WeeklyCalorieChart
         entries={createEntries([2000, 1800, 1600, 1500, 1700, 2200, 1900])}
         averageCalories={1814}
       />,
     );
-    const buttons = screen.getAllByRole("button");
-    await user.click(buttons[0]);
-    expect(mockPush).toHaveBeenCalledWith("/home?date=2026-03-16");
+    expect(
+      screen.getByRole("link", { name: /^月曜日 2000kcal/ }),
+    ).toHaveAttribute("href", "/home?date=2026-03-16");
   });
 
-  it("navigates to the correct date for each bar", async () => {
-    const user = userEvent.setup();
+  it("S-09: each bar links to its own day, the last one to Sunday", () => {
     render(
       <WeeklyCalorieChart
         entries={createEntries([100, 200, 300, 400, 500, 600, 700])}
         averageCalories={400}
       />,
     );
-    const buttons = screen.getAllByRole("button");
-    await user.click(buttons[6]);
-    expect(mockPush).toHaveBeenCalledWith("/home?date=2026-03-22");
+    const links = screen.getAllByRole("link", { name: /タップで日別画面へ/ });
+    expect(links.map((link) => link.getAttribute("href"))).toEqual([
+      "/home?date=2026-03-16",
+      "/home?date=2026-03-17",
+      "/home?date=2026-03-18",
+      "/home?date=2026-03-19",
+      "/home?date=2026-03-20",
+      "/home?date=2026-03-21",
+      "/home?date=2026-03-22",
+    ]);
+    expect(links[6]).toHaveAccessibleName(/^日曜日 700kcal/);
   });
 
   it("handles all-zero calories without error", () => {

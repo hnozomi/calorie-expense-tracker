@@ -41,7 +41,7 @@ const confirmLogout = async () => {
   const user = userEvent.setup();
   render(
     <>
-      <AccountSection />
+      <AccountSection email="e2e@example.com" />
       <Toaster />
     </>,
   );
@@ -94,8 +94,40 @@ describe("AccountSection logout", () => {
     expect(screen.getByRole("button", { name: "ログアウト" })).toBeEnabled();
   });
 
-  it("AC-R-1: shows the signed-in email", async () => {
-    render(<AccountSection />);
-    expect(await screen.findByText("e2e@example.com")).toBeInTheDocument();
+  // Phase 5: the email is read on the server (getAccountEmail) and passed in, not read in the browser (AC-R-2)
+  it("AC-R-1: shows the signed-in email it was given, without asking Supabase from the browser", () => {
+    render(<AccountSection email="e2e@example.com" />);
+    expect(screen.getByText("e2e@example.com")).toBeInTheDocument();
+    expect(getUser).not.toHaveBeenCalled();
+  });
+
+  it("S-10: without an email (it could not be read) only the logout button is shown", () => {
+    render(<AccountSection email={null} />);
+    expect(screen.queryByText("ログイン中")).not.toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "ログアウト" })).toBeEnabled();
+  });
+
+  // The Auth project is shared by several apps; the default (global) scope would sign the account out of all of them
+  it("ui-tech フェーズ5: logging out ends only this browser's session (scope: local)", async () => {
+    signOut.mockResolvedValue({ error: null });
+    await confirmLogout();
+
+    await waitFor(() => expect(signOut).toHaveBeenCalledTimes(1));
+    expect(signOut).toHaveBeenCalledWith({ scope: "local" });
+  });
+
+  it("AC-R-1: cancelling the confirm dialog does not sign out", async () => {
+    const user = userEvent.setup();
+    render(<AccountSection email="e2e@example.com" />);
+    await user.click(screen.getByRole("button", { name: "ログアウト" }));
+    const dialog = await screen.findByRole("alertdialog", {
+      name: "ログアウトしますか？",
+    });
+    await user.click(
+      within(dialog).getByRole("button", { name: "キャンセル" }),
+    );
+
+    expect(signOut).not.toHaveBeenCalled();
+    expect(assign).not.toHaveBeenCalled();
   });
 });
