@@ -2,8 +2,8 @@
 
 import { useState } from "react";
 import type { Recipe } from "@/components/features/recipes/types/recipe";
+import { matchesSearch } from "@/utils/matches-search";
 import type { MealItemFormValues } from "../types/meal";
-import { matchesSearch } from "../utils/matches-search";
 
 /** Search narrows the recipes as you type and a tap adds one person's share */
 export const useRecipeSelector = (

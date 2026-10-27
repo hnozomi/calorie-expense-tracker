@@ -3,7 +3,6 @@
 import { startTransition, use, useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
 import type { FoodMaster } from "@/components/features/food-masters/types/food-master";
-import { matchesSearch } from "@/components/features/meals/utils/matches-search";
 import {
   deleteMealPlan,
   saveMealPlan,
@@ -17,6 +16,7 @@ import type { SetMenu } from "@/components/features/set-menus/types/set-menu";
 import { callAction } from "@/lib/action-result";
 import { useRefreshLegacyScreens } from "@/lib/legacy-bridge";
 import type { MealType } from "@/types";
+import { matchesSearch } from "@/utils/matches-search";
 import { useWeeklyPlansContext } from "./use-weekly-plans-context";
 
 type SaveRefs = {

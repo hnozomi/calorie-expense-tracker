@@ -14,6 +14,7 @@ export {
   isValidDateString,
   shiftDate,
 } from "./date";
+export { matchesSearch } from "./matches-search";
 export { MEAL_TYPE_META } from "./meal-type-meta";
 export {
   type ParsedDateParam,
