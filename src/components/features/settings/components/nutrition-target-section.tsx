@@ -8,7 +8,6 @@ import { SectionHeader } from "@/components/ui/section-header";
 import type { NutritionTarget } from "@/types";
 import { TargetField } from "./target-field";
 
-/** Section for setting daily calorie and PFC targets */
 type Props = {
   target: NutritionTarget;
 };

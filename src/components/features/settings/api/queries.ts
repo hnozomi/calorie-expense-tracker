@@ -1,9 +1,9 @@
 import "server-only";
 import { cacheLife } from "next/cache";
+import { toNutritionTarget } from "@/components/features/settings/utils/to-nutrition-target";
 import { SCREEN_CACHE } from "@/lib/screen-cache";
 import { createClient } from "@/lib/supabase/server";
 import type { NutritionTarget } from "@/types/settings";
-import { toNutritionTarget } from "../utils/to-nutrition-target";
 
 // Users who never saved targets have no row; they get the defaults
 export const getNutritionTarget = async (): Promise<NutritionTarget> => {

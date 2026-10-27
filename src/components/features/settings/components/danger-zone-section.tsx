@@ -30,7 +30,7 @@ export const DangerZoneSection = () => {
     handleConfirmTextChange,
     handleOpenChange,
     openDialog,
-    handleDelete,
+    handleDeleteClick,
   } = useDangerZone();
 
   return (
@@ -72,6 +72,7 @@ export const DangerZoneSection = () => {
               </p>
               <Input
                 placeholder={DELETE_ALL_CONFIRMATION_TEXT}
+                autoComplete="off"
                 value={confirmText}
                 onChange={handleConfirmTextChange}
               />
@@ -79,11 +80,7 @@ export const DangerZoneSection = () => {
             <AlertDialogFooter>
               <AlertDialogCancel>キャンセル</AlertDialogCancel>
               <AlertDialogAction
-                onClick={(event) => {
-                  // Prevent the dialog's default auto-close so failures keep it open
-                  event.preventDefault();
-                  handleDelete();
-                }}
+                onClick={handleDeleteClick}
                 disabled={!canDelete}
                 className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
               >

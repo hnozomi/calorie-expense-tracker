@@ -19,6 +19,7 @@ export const TargetField = ({ id, label, value, error, onChange }: Props) => (
       type="number"
       inputMode="decimal"
       step="any"
+      enterKeyHint="done"
       value={value}
       onChange={onChange}
       aria-invalid={!!error}

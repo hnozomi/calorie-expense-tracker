@@ -1,5 +1,4 @@
-import type { SupabaseClient } from "@supabase/supabase-js";
-import { formatDateToString, getTodayInTokyo, getTodayString } from "@/utils";
+import { getTodayString } from "@/utils";
 
 export type CsvExportType = "meals" | "recipes" | "food_masters" | "set_menus";
 
@@ -23,22 +22,9 @@ type CsvExportDefinition = {
   filenamePrefix: string;
   headers: CsvHeader[];
   successMessage: string;
-  fetchRows: (
-    supabase: SupabaseClient,
-    period: CsvExportPeriod,
-  ) => Promise<CsvRow[]>;
 };
 
 const todaySuffix = () => getTodayString();
-
-// The rows are read on the server (UTC), so "this month" is decided in Asia/Tokyo, like "today" elsewhere
-/** First and last day of the month shifted by offsetMonths from now */
-const getMonthRange = (offsetMonths: number) => {
-  const [year, month] = getTodayInTokyo().split("-").map(Number);
-  const start = new Date(year, month - 1 + offsetMonths, 1);
-  const end = new Date(year, month + offsetMonths, 0);
-  return { start: formatDateToString(start), end: formatDateToString(end) };
-};
 
 const mealExportDefinition: CsvExportDefinition = {
   filenamePrefix: "meshilog_meals",
@@ -54,33 +40,6 @@ const mealExportDefinition: CsvExportDefinition = {
     { key: "cost", label: "食費(円)" },
     { key: "source_type", label: "登録元" },
   ],
-  fetchRows: async (supabase, period) => {
-    let query = supabase
-      .from("meal_items")
-      .select("*, meals!inner(date, meal_type)")
-      .order("created_at", { ascending: false });
-
-    if (period !== "all") {
-      const range = getMonthRange(period === "this_month" ? 0 : -1);
-      query = query.gte("meals.date", range.start).lte("meals.date", range.end);
-    }
-
-    const { data, error } = await query;
-
-    if (error) throw error;
-
-    return (data ?? []).map((item) => ({
-      date: (item.meals as { date: string }).date,
-      meal_type: (item.meals as { meal_type: string }).meal_type,
-      name: item.name,
-      calories: item.calories,
-      protein: item.protein,
-      fat: item.fat,
-      carbs: item.carbs,
-      cost: item.cost,
-      source_type: item.source_type,
-    }));
-  },
 };
 
 const recipeExportDefinition: CsvExportDefinition = {
@@ -95,17 +54,6 @@ const recipeExportDefinition: CsvExportDefinition = {
     { key: "carbs", label: "炭水化物(g)" },
     { key: "notes", label: "メモ" },
   ],
-  fetchRows: async (supabase) => {
-    const { data, error } = await supabase
-      .from("recipes")
-      .select("*")
-      .is("deleted_at", null)
-      .order("created_at", { ascending: false });
-
-    if (error) throw error;
-
-    return data ?? [];
-  },
 };
 
 const foodMasterExportDefinition: CsvExportDefinition = {
@@ -122,17 +70,6 @@ const foodMasterExportDefinition: CsvExportDefinition = {
     { key: "default_price", label: "デフォルト価格(円)" },
     { key: "notes", label: "メモ" },
   ],
-  fetchRows: async (supabase) => {
-    const { data, error } = await supabase
-      .from("food_masters")
-      .select("*")
-      .is("deleted_at", null)
-      .order("created_at", { ascending: false });
-
-    if (error) throw error;
-
-    return data ?? [];
-  },
 };
 
 const setMenuExportDefinition: CsvExportDefinition = {
@@ -147,27 +84,6 @@ const setMenuExportDefinition: CsvExportDefinition = {
     { key: "total_cost", label: "合計食費(円)" },
     { key: "item_count", label: "アイテム数" },
   ],
-  fetchRows: async (supabase) => {
-    const { data, error } = await supabase
-      .from("set_menus")
-      .select("*, set_menu_items(*)")
-      .is("deleted_at", null)
-      .order("created_at", { ascending: false });
-
-    if (error) throw error;
-
-    return (data ?? []).map((setMenu) => ({
-      name: setMenu.name,
-      total_calories: setMenu.total_calories,
-      total_protein: setMenu.total_protein,
-      total_fat: setMenu.total_fat,
-      total_carbs: setMenu.total_carbs,
-      total_cost: setMenu.total_cost,
-      item_count: Array.isArray(setMenu.set_menu_items)
-        ? setMenu.set_menu_items.length
-        : 0,
-    }));
-  },
 };
 
 export const csvExportDefinitions = {

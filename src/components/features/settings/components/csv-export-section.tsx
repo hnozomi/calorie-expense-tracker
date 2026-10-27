@@ -18,16 +18,20 @@ const EXPORT_ITEMS = [
   { type: "set_menus" as const, label: "セットメニュー" },
 ] as const;
 
+// Object.entries widens the keys to string; they are the CsvExportPeriod keys of the labels
 const PERIOD_OPTIONS = Object.entries(CSV_EXPORT_PERIOD_LABELS) as [
   CsvExportPeriod,
   string,
 ][];
 
-/** Section for CSV export buttons with a period selector for meal data */
 export const CsvExportSection = () => {
-  const { exportingType, mealPeriod, setMealPeriod, exportByType } =
-    useCsvExport();
-  const isExporting = exportingType !== null;
+  const {
+    isExporting,
+    isExportingType,
+    mealPeriod,
+    setMealPeriod,
+    exportByType,
+  } = useCsvExport();
 
   return (
     <section className="space-y-3">
@@ -58,7 +62,6 @@ export const CsvExportSection = () => {
 
         <div className="grid grid-cols-2 gap-2.5">
           {EXPORT_ITEMS.map(({ type, label }) => {
-            const isCurrentExporting = exportingType === type;
             return (
               <Button
                 key={type}
@@ -67,13 +70,13 @@ export const CsvExportSection = () => {
                 onClick={() => exportByType(type)}
                 disabled={isExporting}
               >
-                {isCurrentExporting ? (
+                {isExportingType(type) ? (
                   <Loader2 className="h-5 w-5 animate-spin text-primary/70" />
                 ) : (
                   <FileSpreadsheet className="h-5 w-5 text-primary/70" />
                 )}
                 <span className="text-xs font-medium">
-                  {isCurrentExporting ? "エクスポート中..." : label}
+                  {isExportingType(type) ? "エクスポート中..." : label}
                 </span>
               </Button>
             );

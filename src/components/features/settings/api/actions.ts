@@ -1,10 +1,8 @@
 "use server";
 
 import { z } from "zod/v4";
-import {
-  type CsvRow,
-  csvExportDefinitions,
-} from "@/components/features/settings/csv-export-config";
+import { fetchCsvRows } from "@/components/features/settings/api/csv-rows";
+import type { CsvRow } from "@/components/features/settings/csv-export-config";
 import type { ActionResult } from "@/lib/action-result";
 import { revalidateAllScreens } from "@/lib/revalidate-screens";
 import { createClient } from "@/lib/supabase/server";
@@ -83,8 +81,9 @@ export const exportCsvRows = async (
 
   const supabase = await createClient();
   try {
-    const rows = await csvExportDefinitions[parsed.data.type].fetchRows(
+    const rows = await fetchCsvRows(
       supabase,
+      parsed.data.type,
       parsed.data.period,
     );
     return { ok: true, rows };

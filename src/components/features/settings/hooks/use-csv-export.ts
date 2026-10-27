@@ -45,5 +45,11 @@ export const useCsvExport = () => {
     });
   };
 
-  return { exportingType, mealPeriod, setMealPeriod, exportByType };
+  return {
+    isExporting: exportingType !== null,
+    isExportingType: (type: CsvExportType) => exportingType === type,
+    mealPeriod,
+    setMealPeriod,
+    exportByType,
+  };
 };

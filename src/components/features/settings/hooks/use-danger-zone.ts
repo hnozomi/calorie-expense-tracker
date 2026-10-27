@@ -45,6 +45,10 @@ export const useDangerZone = () => {
       setConfirmText("");
       setIsOpen(true);
     },
-    handleDelete,
+    // The dialog's default auto-close is prevented so a failure keeps it open for a retry
+    handleDeleteClick: (event: React.MouseEvent) => {
+      event.preventDefault();
+      handleDelete();
+    },
   };
 };
