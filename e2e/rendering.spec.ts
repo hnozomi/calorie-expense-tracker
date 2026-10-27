@@ -92,6 +92,11 @@ test.describe("フェーズ1: 隠れて残る画面", () => {
       page.getByRole("heading", { name: "献立カレンダー" }),
     ).toBeVisible();
     await page.waitForLoadState("networkidle");
+    // Since phase 3 the plan's contents stream in under Suspense after the heading. The first visit to the plan
+    // tab may show its skeleton (AC-R-4 is about returning), so start watching once the contents are shown
+    await expect(visibleText(page, "週間サマリー")).toBeVisible({
+      timeout: 10_000,
+    });
 
     await watchForSkeleton(page);
     await page.getByRole("link", { name: "ホーム" }).click();
