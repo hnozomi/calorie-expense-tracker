@@ -72,6 +72,21 @@ describe("NutritionTargetSection (S-10 1日の目標)", () => {
     expect(carbsField()).toHaveValue(250);
   });
 
+  it("ui.md 入力: 4つの欄は数の入力(小数可)で、キーボードの決定は「完了」", () => {
+    renderWithQueryClient(<NutritionTargetSection target={target} />);
+
+    for (const field of [
+      caloriesField(),
+      proteinField(),
+      fatField(),
+      carbsField(),
+    ]) {
+      expect(field).toHaveAttribute("type", "number");
+      expect(field).toHaveAttribute("inputmode", "decimal");
+      expect(field).toHaveAttribute("enterkeyhint", "done");
+    }
+  });
+
   it("ST-2・AC-R-6: 保存すると打った値を数で送り、「目標値を保存しました」と知らせる", async () => {
     saveNutritionTarget.mockResolvedValue({ ok: true });
     const user = userEvent.setup();

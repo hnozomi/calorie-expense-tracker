@@ -95,7 +95,7 @@ describe("AccountSection logout", () => {
   });
 
   // Phase 5: the email is read on the server (getAccountEmail) and passed in, not read in the browser (AC-R-2)
-  it("AC-R-1: shows the signed-in email it was given, without asking Supabase from the browser", () => {
+  it("AC-R-2: shows the signed-in email it was given, without asking Supabase from the browser", () => {
     render(<AccountSection email="e2e@example.com" />);
     expect(screen.getByText("e2e@example.com")).toBeInTheDocument();
     expect(getUser).not.toHaveBeenCalled();

@@ -21,21 +21,21 @@ const createEntries = (
   }));
 
 describe("WeeklyCalorieChart", () => {
-  it("renders the average dashed line label when average > 0", () => {
+  it("S-09: renders the average dashed line label when average > 0", () => {
     render(
       <WeeklyCalorieChart entries={createEntries()} averageCalories={1500} />,
     );
     expect(screen.getByText("平均")).toBeInTheDocument();
   });
 
-  it("does not render average label when averageCalories is 0", () => {
+  it("S-09: does not render average label when averageCalories is 0", () => {
     render(
       <WeeklyCalorieChart entries={createEntries()} averageCalories={0} />,
     );
     expect(screen.queryByText("平均")).not.toBeInTheDocument();
   });
 
-  it("renders 7 day labels (月〜日)", () => {
+  it("S-09: renders 7 day labels (月〜日)", () => {
     render(
       <WeeklyCalorieChart entries={createEntries()} averageCalories={0} />,
     );
@@ -85,7 +85,7 @@ describe("WeeklyCalorieChart", () => {
     expect(links[6]).toHaveAccessibleName(/^日曜日 700kcal/);
   });
 
-  it("handles all-zero calories without error", () => {
+  it("S-09: handles all-zero calories without error", () => {
     render(
       <WeeklyCalorieChart entries={createEntries()} averageCalories={0} />,
     );

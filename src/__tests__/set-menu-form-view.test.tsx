@@ -280,6 +280,13 @@ describe("SetMenuFormView (S-06a セットメニュー登録/編集)", () => {
       expect(push).not.toHaveBeenCalled();
     });
 
+    it("ui.md 入力: 名前の欄は、キーボードの決定が「完了」で、ブラウザの入力候補を出さない", () => {
+      renderForm();
+
+      expect(nameField()).toHaveAttribute("enterkeyhint", "done");
+      expect(nameField()).toHaveAttribute("autocomplete", "off");
+    });
+
     it("02 バリデーション: 名前が空のまま登録すると、欄の下にエラーが出て(aria-describedby)保存しない", async () => {
       const u = user();
       renderForm();
@@ -500,7 +507,7 @@ describe("SetMenuFormView (S-06a セットメニュー登録/編集)", () => {
       expect(deleteSetMenu).not.toHaveBeenCalled();
     });
 
-    it("AC-R-7: 削除すると、そのセットメニューの id で消し、知らせて一覧に移る", async () => {
+    it("S-06a: 削除すると、そのセットメニューの id で消し、知らせて一覧に移る", async () => {
       deleteSetMenu.mockResolvedValue({ ok: true });
       const u = user();
       renderForm(createSetMenu());

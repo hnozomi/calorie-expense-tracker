@@ -6,7 +6,7 @@ import { e2eUser, serviceRoleRest, userIdOf } from "./local-supabase";
 // Note: user_settings has no DELETE RLS policy, so the setup wipe cannot
 // reset it; these tests must not assume a default value.
 test.describe("設定", () => {
-  test("栄養目標に不正値を入れるとエラーになり保存されない", async ({
+  test("AC-R-1(ST-1): 栄養目標に不正値を入れるとエラーになり保存されない", async ({
     page,
   }) => {
     await gotoHydrated(page, "/other/settings");
@@ -24,7 +24,9 @@ test.describe("設定", () => {
     );
   });
 
-  test("栄養目標を保存すると再読込後も維持される", async ({ page }) => {
+  test("AC-R-1(ST-2): 栄養目標を保存すると再読込後も維持される", async ({
+    page,
+  }) => {
     await gotoHydrated(page, "/other/settings");
 
     await fillStable(page, "カロリー (kcal)", "1800");
@@ -104,7 +106,9 @@ test.describe("設定", () => {
     });
   });
 
-  test("ログアウトすると保護ページに戻れない", async ({ page }) => {
+  test("AC-R-1(ST-3): ログアウトすると保護ページに戻れない", async ({
+    page,
+  }) => {
     await gotoHydrated(page, "/other/settings");
 
     await page.getByRole("button", { name: "ログアウト" }).click();

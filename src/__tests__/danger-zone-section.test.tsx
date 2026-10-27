@@ -74,6 +74,13 @@ describe("DangerZoneSection (S-10 全データを削除)", () => {
     expect(confirmField()).toHaveValue("");
   });
 
+  it("ui.md 入力: 確認の入力欄には、ブラウザの入力候補を出さない", async () => {
+    const user = userEvent.setup();
+    renderSection();
+    await openDialog(user);
+    expect(confirmField()).toHaveAttribute("autocomplete", "off");
+  });
+
   it("S-10: 何も入力していなければ「削除する」を押せない", async () => {
     const user = userEvent.setup();
     renderSection();
