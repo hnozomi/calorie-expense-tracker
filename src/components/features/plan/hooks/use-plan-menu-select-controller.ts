@@ -1,6 +1,6 @@
 "use client";
 
-import { startTransition, use, useEffect, useState } from "react";
+import { startTransition, use, useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
 import type { FoodMaster } from "@/components/features/food-masters/types/food-master";
 import { matchesSearch } from "@/components/features/meals/utils/matches-search";
@@ -52,6 +52,8 @@ export const usePlanMenuSelectController = ({
   const [manualFat, setManualFat] = useState("");
   const [manualCarbs, setManualCarbs] = useState("");
   const [manualCost, setManualCost] = useState("");
+  // The dialog closes on the first tap, but a fast double tap reaches the handler twice before it re-renders
+  const isSubmittingRef = useRef(false);
 
   useEffect(() => {
     setManualName(existingPlan?.plannedName ?? "");
@@ -64,6 +66,8 @@ export const usePlanMenuSelectController = ({
 
   /** Close at once and show the plan in the cell while it is saved */
   const handleSave = (values: MealPlanFormValues, refs?: SaveRefs) => {
+    if (isSubmittingRef.current) return;
+    isSubmittingRef.current = true;
     const recipeId = refs?.recipeId ?? null;
     const foodMasterId = refs?.foodMasterId ?? null;
     const setMenuId = refs?.setMenuId ?? null;
@@ -102,6 +106,7 @@ export const usePlanMenuSelectController = ({
           setMenuId,
         }),
       );
+      isSubmittingRef.current = false;
       if (!result.ok) {
         toast.error(`「${values.plannedName}」の保存に失敗しました`);
         onReopen();
@@ -187,13 +192,15 @@ export const usePlanMenuSelectController = ({
   };
 
   const handleDelete = () => {
-    if (!existingPlan) return;
+    if (!existingPlan || isSubmittingRef.current) return;
+    isSubmittingRef.current = true;
     onClose();
     startTransition(async () => {
       showPlanChange({ type: "remove", planId: existingPlan.id });
       const result = await callAction(() =>
         deleteMealPlan({ id: existingPlan.id }),
       );
+      isSubmittingRef.current = false;
       if (!result.ok) {
         toast.error(`「${existingPlan.plannedName}」の削除に失敗しました`);
         onReopen();

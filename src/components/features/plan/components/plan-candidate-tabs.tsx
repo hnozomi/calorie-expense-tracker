@@ -51,7 +51,7 @@ export const PlanCandidateTabs = ({
         />
         <PlanCandidateList
           candidates={recipes}
-          caloriesOf={(recipe) => recipe.calories / recipe.servings}
+          caloriesOf={(recipe) => recipe.calories / (recipe.servings || 1)}
           emptyMessage={
             recipeSearch ? "該当するレシピがありません" : "レシピが未登録です"
           }
