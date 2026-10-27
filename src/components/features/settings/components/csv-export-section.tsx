@@ -1,15 +1,15 @@
 "use client";
+// Client because the period picker and export buttons are interactive
 
 import { Download, FileSpreadsheet, Loader2 } from "lucide-react";
-import { useState } from "react";
-import { Button } from "@/components/ui/button";
-import { SectionHeader } from "@/components/ui/section-header";
-import { cn } from "@/utils";
 import {
   CSV_EXPORT_PERIOD_LABELS,
   type CsvExportPeriod,
-} from "../csv-export-config";
-import { useCsvExport } from "../hooks/use-csv-export";
+} from "@/components/features/settings/csv-export-config";
+import { useCsvExport } from "@/components/features/settings/hooks/use-csv-export";
+import { Button } from "@/components/ui/button";
+import { SectionHeader } from "@/components/ui/section-header";
+import { cn } from "@/utils";
 
 const EXPORT_ITEMS = [
   { type: "meals" as const, label: "食事記録" },
@@ -24,9 +24,9 @@ const PERIOD_OPTIONS = Object.entries(CSV_EXPORT_PERIOD_LABELS) as [
 ][];
 
 /** Section for CSV export buttons with a period selector for meal data */
-const CsvExportSection = () => {
-  const { exportingType, exportByType } = useCsvExport();
-  const [mealPeriod, setMealPeriod] = useState<CsvExportPeriod>("all");
+export const CsvExportSection = () => {
+  const { exportingType, mealPeriod, setMealPeriod, exportByType } =
+    useCsvExport();
   const isExporting = exportingType !== null;
 
   return (
@@ -64,9 +64,7 @@ const CsvExportSection = () => {
                 key={type}
                 variant="outline"
                 className="h-auto flex-col gap-1.5 bg-background/80 py-3"
-                onClick={() =>
-                  exportByType(type, type === "meals" ? mealPeriod : "all")
-                }
+                onClick={() => exportByType(type)}
                 disabled={isExporting}
               >
                 {isCurrentExporting ? (
@@ -85,5 +83,3 @@ const CsvExportSection = () => {
     </section>
   );
 };
-
-export { CsvExportSection };

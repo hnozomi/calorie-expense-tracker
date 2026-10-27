@@ -1,7 +1,11 @@
 "use client";
+// Client because the confirm dialog and the typed confirmation are interactive
 
 import { AlertTriangle } from "lucide-react";
-import { useState } from "react";
+import {
+  DELETE_ALL_CONFIRMATION_TEXT,
+  useDangerZone,
+} from "@/components/features/settings/hooks/use-danger-zone";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -16,26 +20,18 @@ import {
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { SectionHeader } from "@/components/ui/section-header";
-import { useDeleteAllData } from "../hooks/use-delete-all-data";
 
-const CONFIRMATION_TEXT = "全データ削除";
-
-/** Danger zone section with two-step data deletion confirmation */
-const DangerZoneSection = () => {
-  const { isDeleting, deleteAllData } = useDeleteAllData();
-  const [confirmText, setConfirmText] = useState("");
-  const [isOpen, setIsOpen] = useState(false);
-
-  /** Handle confirmed deletion; keep the dialog open when deletion fails */
-  const handleDelete = async () => {
-    try {
-      await deleteAllData();
-      setConfirmText("");
-      setIsOpen(false);
-    } catch {
-      // Error toast is shown by the hook; leave the dialog open for retry
-    }
-  };
+export const DangerZoneSection = () => {
+  const {
+    confirmText,
+    isOpen,
+    isDeleting,
+    canDelete,
+    handleConfirmTextChange,
+    handleOpenChange,
+    openDialog,
+    handleDelete,
+  } = useDangerZone();
 
   return (
     <section className="space-y-3">
@@ -49,15 +45,12 @@ const DangerZoneSection = () => {
         <p className="text-xs text-muted-foreground">
           この操作を行うと、すべてのデータが完全に削除されます。元に戻すことはできません。
         </p>
-        <AlertDialog open={isOpen} onOpenChange={setIsOpen}>
+        <AlertDialog open={isOpen} onOpenChange={handleOpenChange}>
           <AlertDialogTrigger asChild>
             <Button
               variant="destructive"
               className="w-full gap-2"
-              onClick={() => {
-                setConfirmText("");
-                setIsOpen(true);
-              }}
+              onClick={openDialog}
             >
               <AlertTriangle className="h-4 w-4" />
               全データを削除
@@ -75,12 +68,12 @@ const DangerZoneSection = () => {
             </AlertDialogHeader>
             <div className="space-y-2 rounded-lg border border-destructive/20 bg-destructive/5 p-3">
               <p className="text-sm font-medium text-destructive">
-                確認のため「{CONFIRMATION_TEXT}」と入力してください
+                確認のため「{DELETE_ALL_CONFIRMATION_TEXT}」と入力してください
               </p>
               <Input
-                placeholder={CONFIRMATION_TEXT}
+                placeholder={DELETE_ALL_CONFIRMATION_TEXT}
                 value={confirmText}
-                onChange={(e) => setConfirmText(e.target.value)}
+                onChange={handleConfirmTextChange}
               />
             </div>
             <AlertDialogFooter>
@@ -91,7 +84,7 @@ const DangerZoneSection = () => {
                   event.preventDefault();
                   handleDelete();
                 }}
-                disabled={confirmText !== CONFIRMATION_TEXT || isDeleting}
+                disabled={!canDelete}
                 className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
               >
                 {isDeleting ? "削除中..." : "削除する"}
@@ -103,5 +96,3 @@ const DangerZoneSection = () => {
     </section>
   );
 };
-
-export { DangerZoneSection };

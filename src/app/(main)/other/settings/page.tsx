@@ -1,14 +1,22 @@
 import { Suspense } from "react";
-import { HydratedOnly } from "@/components/features/layout";
-import { SettingsSkeleton, SettingsView } from "@/components/features/settings";
+import { Header, PageContainer } from "@/components/features/layout";
+import {
+  SettingsContent,
+  SettingsSkeleton,
+} from "@/components/features/settings";
 
-/** Settings page */
-export default function SettingsPage() {
+/** S-10: Settings. The header shows at once; the targets and the account wait inside Suspense */
+const SettingsPage = () => {
   return (
-    <HydratedOnly fallback={<SettingsSkeleton />}>
-      <Suspense fallback={<SettingsSkeleton />}>
-        <SettingsView />
-      </Suspense>
-    </HydratedOnly>
+    <>
+      <Header title="設定" />
+      <PageContainer>
+        <Suspense fallback={<SettingsSkeleton />}>
+          <SettingsContent />
+        </Suspense>
+      </PageContainer>
+    </>
   );
-}
+};
+
+export default SettingsPage;

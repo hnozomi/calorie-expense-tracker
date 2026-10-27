@@ -6,10 +6,5 @@ export {
 export { useDebounce } from "./use-debounce";
 export { useHasHydrated } from "./use-has-hydrated";
 export { useIsShown } from "./use-is-shown";
-export { useListCacheSeed } from "./use-list-cache-seed";
-export {
-  useNutritionTarget,
-  useSaveNutritionTarget,
-} from "./use-nutrition-target";
 export { useSupabase } from "./use-supabase";
 export { useUnsavedChangesGuard } from "./use-unsaved-changes-guard";

@@ -1,9 +1,8 @@
 "use client";
-// Client because it reads the session and signs out in the browser
+// Client because signing out clears the browser session
 
 import { LogOut, User } from "lucide-react";
-import { useCallback, useEffect, useState } from "react";
-import { toast } from "sonner";
+import { useLogout } from "@/components/features/settings/hooks/use-logout";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -17,36 +16,14 @@ import {
 } from "@/components/ui/alert-dialog";
 import { Button } from "@/components/ui/button";
 import { SectionHeader } from "@/components/ui/section-header";
-import { useSupabase } from "@/hooks";
-import { clearServiceWorkerCache } from "@/lib/service-worker";
 
-/** Section displaying account info and logout button */
-const AccountSection = () => {
-  const supabase = useSupabase();
-  const [email, setEmail] = useState<string | null>(null);
-  const [isSigningOut, setIsSigningOut] = useState(false);
+type Props = {
+  /** Read on the server */
+  email: string | null;
+};
 
-  useEffect(() => {
-    supabase.auth.getUser().then(({ data: { user } }) => {
-      setEmail(user?.email ?? null);
-    });
-  }, [supabase]);
-
-  /** Sign out, clear cached server data, and redirect to login */
-  const handleSignOut = useCallback(async () => {
-    setIsSigningOut(true);
-    const { error } = await supabase.auth.signOut();
-    if (error) {
-      console.error("Failed to sign out:", error);
-      toast.error("ログアウトに失敗しました");
-      setIsSigningOut(false);
-      return;
-    }
-    clearServiceWorkerCache();
-    // A full page load, not router.push: visited screens stay in the DOM (hidden) and the query cache
-    // keeps their data until the page is loaded again, so the next user could see them
-    window.location.assign("/login");
-  }, [supabase]);
+export const AccountSection = ({ email }: Props) => {
+  const { isSigningOut, handleSignOut } = useLogout();
 
   return (
     <section className="space-y-3">
@@ -93,5 +70,3 @@ const AccountSection = () => {
     </section>
   );
 };
-
-export { AccountSection };

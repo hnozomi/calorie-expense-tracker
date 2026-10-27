@@ -1,5 +1,5 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
-import { formatDateToString, getTodayString } from "@/utils";
+import { formatDateToString, getTodayInTokyo, getTodayString } from "@/utils";
 
 export type CsvExportType = "meals" | "recipes" | "food_masters" | "set_menus";
 
@@ -31,11 +31,12 @@ type CsvExportDefinition = {
 
 const todaySuffix = () => getTodayString();
 
+// The rows are read on the server (UTC), so "this month" is decided in Asia/Tokyo, like "today" elsewhere
 /** First and last day of the month shifted by offsetMonths from now */
 const getMonthRange = (offsetMonths: number) => {
-  const now = new Date();
-  const start = new Date(now.getFullYear(), now.getMonth() + offsetMonths, 1);
-  const end = new Date(now.getFullYear(), now.getMonth() + offsetMonths + 1, 0);
+  const [year, month] = getTodayInTokyo().split("-").map(Number);
+  const start = new Date(year, month - 1 + offsetMonths, 1);
+  const end = new Date(year, month + offsetMonths, 0);
   return { start: formatDateToString(start), end: formatDateToString(end) };
 };
 

@@ -17,3 +17,13 @@ export const getNutritionTarget = async (): Promise<NutritionTarget> => {
   if (error) throw error;
   return toNutritionTarget(data);
 };
+
+/** The signed-in account's email, shown on the settings screen */
+export const getAccountEmail = async (): Promise<string | null> => {
+  "use cache: private";
+  cacheLife(SCREEN_CACHE);
+  const supabase = await createClient();
+  const { data } = await supabase.auth.getClaims();
+  const email = data?.claims.email;
+  return typeof email === "string" ? email : null;
+};
