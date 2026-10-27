@@ -1,99 +1,114 @@
-import { act, renderHook, waitFor } from "@testing-library/react";
+import {
+  act,
+  type RenderHookResult,
+  renderHook,
+  waitFor,
+} from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { usePlanMenuSelectController } from "@/components/features/plan/hooks/use-plan-menu-select-controller";
 import type { MealPlan } from "@/components/features/plan/types/meal-plan";
+import type { PlanCandidates } from "@/components/features/plan/types/plan-candidates";
+import {
+  candidatesOf,
+  createFoodMaster,
+  createPlan,
+  createRecipe,
+  createSetMenu,
+  createWeeklyPlansWrapper,
+} from "./helpers/weekly-plans";
 
-const mockSaveMutateAsync = vi.fn();
-vi.mock("@/components/features/plan/hooks/use-save-meal-plan", () => ({
-  useSaveMealPlan: () => ({
-    mutateAsync: mockSaveMutateAsync,
-    isPending: false,
-  }),
+const saveMealPlan = vi.fn();
+const deleteMealPlan = vi.fn();
+vi.mock("@/components/features/plan/api/actions", () => ({
+  saveMealPlan: (...args: unknown[]) => saveMealPlan(...args),
+  deleteMealPlan: (...args: unknown[]) => deleteMealPlan(...args),
+  transferPlansToMeals: vi.fn(),
+  syncMealsToPlans: vi.fn(),
 }));
 
-const mockDeleteMutateAsync = vi.fn();
-vi.mock("@/components/features/plan/hooks/use-delete-meal-plan", () => ({
-  useDeleteMealPlan: () => ({
-    mutateAsync: mockDeleteMutateAsync,
-    isPending: false,
-  }),
-}));
-
-vi.mock("@/components/features/recipes/hooks/use-recipes", () => ({
-  useRecipes: () => ({
-    data: [
-      {
-        id: "recipe-1",
-        name: "カレー",
-        servings: 2,
-        calories: 1200,
-        protein: 40,
-        fat: 30,
-        carbs: 160,
-        ingredients: [
-          {
-            id: "i1",
-            ingredientName: "ルー",
-            quantity: 1,
-            unit: "箱",
-            unitPrice: 200,
-          },
-        ],
-      },
-    ],
-  }),
-}));
-
-vi.mock("@/components/features/food-masters/hooks/use-food-masters", () => ({
-  useFoodMasters: () => ({ data: [] }),
-}));
-
-vi.mock("@/components/features/set-menus/hooks/use-set-menus", () => ({
-  useSetMenus: () => ({ data: [] }),
-}));
-
+const toastSuccess = vi.fn();
+const toastError = vi.fn();
 vi.mock("sonner", () => ({
-  toast: { success: vi.fn(), error: vi.fn(), info: vi.fn() },
+  toast: {
+    success: (...args: unknown[]) => toastSuccess(...args),
+    error: (...args: unknown[]) => toastError(...args),
+    info: vi.fn(),
+  },
 }));
 
 afterEach(() => {
   vi.clearAllMocks();
 });
 
-const createPlan = (overrides: Partial<MealPlan> = {}): MealPlan => ({
-  id: "plan-1",
-  userId: "user-1",
-  date: "2026-07-01",
-  mealType: "dinner",
-  plannedName: "既存メニュー",
-  recipeId: null,
-  foodMasterId: null,
-  setMenuId: null,
-  calories: 800,
-  protein: 20,
-  fat: 25,
-  carbs: 100,
-  estimatedCost: 500,
-  isTransferred: false,
-  createdAt: "2026-07-01T00:00:00Z",
-  ...overrides,
-});
+const existing = (overrides: Partial<MealPlan> = {}): MealPlan =>
+  createPlan({
+    id: "plan-1",
+    date: "2026-10-21",
+    mealType: "dinner",
+    plannedName: "既存メニュー",
+    calories: 800,
+    protein: 20,
+    fat: 25,
+    carbs: 100,
+    estimatedCost: 500,
+    ...overrides,
+  });
 
-const mockOnClose = vi.fn();
+const defaultCandidates = () =>
+  candidatesOf({
+    recipes: [createRecipe(), createRecipe({ id: "recipe-2", name: "親子丼" })],
+    foodMasters: [
+      createFoodMaster(),
+      createFoodMaster({ id: "fm-2", name: "豆腐", brand: "さとの雪" }),
+    ],
+    setMenus: [createSetMenu()],
+  });
 
-const renderController = (existingPlan?: MealPlan) =>
-  renderHook(() =>
-    usePlanMenuSelectController({
-      date: "2026-07-01",
-      mealType: "dinner",
-      existingPlan,
-      onClose: mockOnClose,
-    }),
-  );
+const onClose = vi.fn();
+const onReopen = vi.fn();
+
+/** The hook unwraps the candidates with use(), so the first render suspends until they resolve */
+const renderController = async (
+  existingPlan?: MealPlan,
+  candidates: Promise<PlanCandidates> = defaultCandidates(),
+) => {
+  const { Wrapper } = createWeeklyPlansWrapper({
+    weekStart: "2026-10-19",
+    today: "2026-10-20",
+    plans: existingPlan ? [existingPlan] : [],
+    candidates,
+  });
+  let rendered:
+    | RenderHookResult<ReturnType<typeof usePlanMenuSelectController>, unknown>
+    | undefined;
+  // Inside act, so React takes up the resolved candidates (see renderWithWeeklyPlansSettled)
+  await act(async () => {
+    rendered = renderHook(
+      () =>
+        usePlanMenuSelectController({
+          date: "2026-10-21",
+          mealType: "dinner",
+          existingPlan,
+          onClose,
+          onReopen,
+        }),
+      { wrapper: Wrapper },
+    );
+  });
+  if (!rendered) throw new Error("render did not run");
+  expect(rendered.result.current).not.toBeNull();
+  return rendered;
+};
+
+/** Let the standalone transition that runs the Server Action finish */
+const flush = () =>
+  act(async () => {
+    await new Promise((resolve) => setTimeout(resolve, 0));
+  });
 
 describe("usePlanMenuSelectController", () => {
-  it("既存プランがあると手動タブの全フィールド(PFC含む)がプリフィルされる", () => {
-    const { result } = renderController(createPlan());
+  it("既存プランがあると手動タブの全フィールド(PFC含む)がプリフィルされる", async () => {
+    const { result } = await renderController(existing());
 
     expect(result.current.manualName).toBe("既存メニュー");
     expect(result.current.manualCalories).toBe("800");
@@ -104,92 +119,250 @@ describe("usePlanMenuSelectController", () => {
   });
 
   it("メニュー名が空のまま手動保存すると保存は呼ばれない", async () => {
-    const { result } = renderController();
+    const { result } = await renderController();
 
-    await act(async () => result.current.handleSaveManual());
+    act(() => result.current.handleSaveManual());
+    await flush();
 
-    expect(mockSaveMutateAsync).not.toHaveBeenCalled();
+    expect(saveMealPlan).not.toHaveBeenCalled();
+    expect(onClose).not.toHaveBeenCalled();
+    expect(toastError).toHaveBeenCalledWith("メニュー名を入力してください");
   });
 
   it("新規の手動保存は入力値と参照なし(null)で保存される", async () => {
-    mockSaveMutateAsync.mockResolvedValue(undefined);
-    const { result } = renderController();
+    saveMealPlan.mockResolvedValue({ ok: true });
+    const { result } = await renderController();
     act(() => {
       result.current.setManualName("新メニュー");
       result.current.setManualCalories("600");
       result.current.setManualProtein("15");
     });
 
-    await act(async () => result.current.handleSaveManual());
+    act(() => result.current.handleSaveManual());
 
-    await waitFor(() => expect(mockSaveMutateAsync).toHaveBeenCalledTimes(1));
-    expect(mockSaveMutateAsync.mock.calls[0][0]).toMatchObject({
+    await waitFor(() => expect(saveMealPlan).toHaveBeenCalledTimes(1));
+    expect(saveMealPlan.mock.calls[0][0]).toMatchObject({
       id: undefined,
+      date: "2026-10-21",
+      mealType: "dinner",
       values: { plannedName: "新メニュー", calories: 600, protein: 15 },
       recipeId: null,
       foodMasterId: null,
       setMenuId: null,
     });
-    expect(mockOnClose).toHaveBeenCalled();
+    expect(onClose).toHaveBeenCalled();
+    await waitFor(() =>
+      expect(toastSuccess).toHaveBeenCalledWith("献立を保存しました"),
+    );
+    expect(onReopen).not.toHaveBeenCalled();
   });
 
   it("レシピ由来の既存プランを手動保存しても参照とPFCが保持される(過去バグH2)", async () => {
-    mockSaveMutateAsync.mockResolvedValue(undefined);
-    const { result } = renderController(
-      createPlan({ recipeId: "recipe-1", protein: 33 }),
+    saveMealPlan.mockResolvedValue({ ok: true });
+    const { result } = await renderController(
+      existing({ recipeId: "recipe-curry", protein: 33 }),
     );
     act(() => result.current.setManualName("名前だけ変更"));
 
-    await act(async () => result.current.handleSaveManual());
+    act(() => result.current.handleSaveManual());
 
-    await waitFor(() => expect(mockSaveMutateAsync).toHaveBeenCalledTimes(1));
-    expect(mockSaveMutateAsync.mock.calls[0][0]).toMatchObject({
+    await waitFor(() => expect(saveMealPlan).toHaveBeenCalledTimes(1));
+    expect(saveMealPlan.mock.calls[0][0]).toMatchObject({
       id: "plan-1",
       values: { plannedName: "名前だけ変更", protein: 33 },
-      recipeId: "recipe-1",
+      recipeId: "recipe-curry",
     });
   });
 
   it("レシピ選択は1人分に割った値とrecipeIdで保存される", async () => {
-    mockSaveMutateAsync.mockResolvedValue(undefined);
-    const { result } = renderController();
-    const recipe = result.current.recipes?.[0];
+    saveMealPlan.mockResolvedValue({ ok: true });
+    const { result } = await renderController();
+    const recipe = result.current.recipes.find(
+      (candidate) => candidate.id === "recipe-curry",
+    );
     if (!recipe) throw new Error("recipe fixture missing");
 
-    await act(async () => result.current.handleSelectRecipe(recipe));
+    act(() => result.current.handleSelectRecipe(recipe));
 
-    await waitFor(() => expect(mockSaveMutateAsync).toHaveBeenCalledTimes(1));
-    expect(mockSaveMutateAsync.mock.calls[0][0]).toMatchObject({
+    await waitFor(() => expect(saveMealPlan).toHaveBeenCalledTimes(1));
+    expect(saveMealPlan.mock.calls[0][0]).toMatchObject({
       values: {
         plannedName: "カレー",
         calories: 600, // 1200 / 2人分
         protein: 20,
-        estimatedCost: 100, // 200 / 2人分
+        estimatedCost: 100, // ルー 1箱 × ¥200 / 2人分
       },
-      recipeId: "recipe-1",
+      recipeId: "recipe-curry",
+      foodMasterId: null,
+      setMenuId: null,
     });
   });
 
   it("削除は既存プランのidで実行され、モーダルが閉じる", async () => {
-    mockDeleteMutateAsync.mockResolvedValue(undefined);
-    const { result } = renderController(createPlan());
+    deleteMealPlan.mockResolvedValue({ ok: true });
+    const { result } = await renderController(existing());
 
-    await act(async () => result.current.handleDelete());
+    act(() => result.current.handleDelete());
 
     await waitFor(() =>
-      expect(mockDeleteMutateAsync).toHaveBeenCalledWith("plan-1"),
+      expect(deleteMealPlan).toHaveBeenCalledWith({ id: "plan-1" }),
     );
-    expect(mockOnClose).toHaveBeenCalled();
+    expect(onClose).toHaveBeenCalled();
+    await waitFor(() =>
+      expect(toastSuccess).toHaveBeenCalledWith("献立を削除しました"),
+    );
   });
 
-  it("保存が失敗したときはモーダルを閉じない", async () => {
-    mockSaveMutateAsync.mockRejectedValue(new Error("network"));
-    const { result } = renderController();
+  // Phase 3 changed this (ui-tech §8 「押した後に失敗」): the dialog closes as soon as save is pressed, and a failure
+  // opens it again with what was typed, instead of keeping it open while the save runs
+  it("AC-R-5: 保存が失敗したときは、閉じたモーダルを打った値のまま開き直し、品名入りのエラーを出す", async () => {
+    saveMealPlan.mockResolvedValue({ ok: false });
+    const { result } = await renderController();
     act(() => result.current.setManualName("失敗するメニュー"));
 
-    await act(async () => result.current.handleSaveManual());
+    act(() => result.current.handleSaveManual());
 
-    await waitFor(() => expect(mockSaveMutateAsync).toHaveBeenCalledTimes(1));
-    expect(mockOnClose).not.toHaveBeenCalled();
+    expect(onClose).toHaveBeenCalledTimes(1);
+    await waitFor(() => expect(onReopen).toHaveBeenCalledTimes(1));
+    expect(toastError).toHaveBeenCalledWith(
+      "「失敗するメニュー」の保存に失敗しました",
+    );
+    expect(result.current.manualName).toBe("失敗するメニュー");
+    expect(toastSuccess).not.toHaveBeenCalled();
+  });
+
+  it("AC-R-5: 保存の送信そのものが失敗しても(通信が切れたなど)、エラーページにせず開き直す", async () => {
+    saveMealPlan.mockRejectedValue(new TypeError("Failed to fetch"));
+    const { result } = await renderController();
+    act(() => result.current.setManualName("通信失敗メニュー"));
+
+    act(() => result.current.handleSaveManual());
+
+    await waitFor(() => expect(onReopen).toHaveBeenCalledTimes(1));
+    expect(toastError).toHaveBeenCalledWith(
+      "「通信失敗メニュー」の保存に失敗しました",
+    );
+  });
+
+  it("AC-R-5: 削除が失敗したときは、モーダルを開き直し、品名入りのエラーを出す", async () => {
+    deleteMealPlan.mockResolvedValue({ ok: false });
+    const { result } = await renderController(existing());
+
+    act(() => result.current.handleDelete());
+
+    expect(onClose).toHaveBeenCalledTimes(1);
+    await waitFor(() => expect(onReopen).toHaveBeenCalledTimes(1));
+    expect(toastError).toHaveBeenCalledWith(
+      "「既存メニュー」の削除に失敗しました",
+    );
+  });
+
+  it("新規のセルでは削除しても何も消さない", async () => {
+    const { result } = await renderController();
+
+    act(() => result.current.handleDelete());
+    await flush();
+
+    expect(deleteMealPlan).not.toHaveBeenCalled();
+    expect(onClose).not.toHaveBeenCalled();
+  });
+
+  it("食品マスタ選択はマスタの値・既定の価格とfoodMasterIdで保存される", async () => {
+    saveMealPlan.mockResolvedValue({ ok: true });
+    const { result } = await renderController();
+
+    act(() => result.current.handleSelectFoodMaster(createFoodMaster()));
+
+    await waitFor(() => expect(saveMealPlan).toHaveBeenCalledTimes(1));
+    expect(saveMealPlan.mock.calls[0][0]).toMatchObject({
+      values: {
+        plannedName: "納豆",
+        calories: 90,
+        protein: 8,
+        fat: 5,
+        carbs: 6,
+        estimatedCost: 60,
+      },
+      recipeId: null,
+      foodMasterId: "fm-natto",
+      setMenuId: null,
+    });
+  });
+
+  it("価格の無い食品マスタは食費0で保存される", async () => {
+    saveMealPlan.mockResolvedValue({ ok: true });
+    const { result } = await renderController();
+
+    act(() =>
+      result.current.handleSelectFoodMaster(
+        createFoodMaster({ defaultPrice: null }),
+      ),
+    );
+
+    await waitFor(() => expect(saveMealPlan).toHaveBeenCalledTimes(1));
+    expect(saveMealPlan.mock.calls[0][0]).toMatchObject({
+      values: { estimatedCost: 0 },
+    });
+  });
+
+  it("セットメニュー選択はセットの合計とsetMenuIdで保存される", async () => {
+    saveMealPlan.mockResolvedValue({ ok: true });
+    const { result } = await renderController();
+
+    act(() => result.current.handleSelectSetMenu(createSetMenu()));
+
+    await waitFor(() => expect(saveMealPlan).toHaveBeenCalledTimes(1));
+    expect(saveMealPlan.mock.calls[0][0]).toMatchObject({
+      values: {
+        plannedName: "定食セット",
+        calories: 750,
+        protein: 30,
+        fat: 20,
+        carbs: 100,
+        estimatedCost: 650,
+      },
+      recipeId: null,
+      foodMasterId: null,
+      setMenuId: "set-teishoku",
+    });
+  });
+
+  it("レシピは名前で、食品マスタは名前とブランドで絞り込める", async () => {
+    const { result } = await renderController();
+
+    act(() => {
+      result.current.setRecipeSearch("親子");
+      result.current.setFmSearch("さとの");
+    });
+
+    expect(result.current.recipes.map((recipe) => recipe.name)).toEqual([
+      "親子丼",
+    ]);
+    expect(result.current.foodMasters.map((fm) => fm.name)).toEqual(["豆腐"]);
+  });
+
+  it("ui-tech §8: 候補が読めなかったときは、例外にせず一覧の失敗として伝え、手動入力は続けられる", async () => {
+    saveMealPlan.mockResolvedValue({ ok: true });
+    const { result } = await renderController(
+      undefined,
+      candidatesOf({ hasError: true }),
+    );
+
+    expect(result.current.hasCandidateError).toBe(true);
+    expect(result.current.recipes).toEqual([]);
+
+    act(() => result.current.setManualName("手動メニュー"));
+    act(() => result.current.handleSaveManual());
+    await waitFor(() => expect(saveMealPlan).toHaveBeenCalledTimes(1));
+  });
+
+  it("ダイアログを閉じる操作でonCloseが呼ばれる", async () => {
+    const { result } = await renderController();
+
+    act(() => result.current.handleOpenChange(true));
+    expect(onClose).not.toHaveBeenCalled();
+
+    act(() => result.current.handleOpenChange(false));
+    expect(onClose).toHaveBeenCalledTimes(1);
   });
 });
