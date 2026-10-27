@@ -2,19 +2,14 @@
 
 import { useAtom, useStore } from "jotai";
 import { useRouter } from "next/navigation";
-import {
-  useCallback,
-  useLayoutEffect,
-  useRef,
-  useState,
-  useTransition,
-} from "react";
+import { useCallback, useRef, useState, useTransition } from "react";
 import { toast } from "sonner";
 import {
   hasOcrValues,
   type OcrNutritionResult,
   useOcr,
 } from "@/components/features/ocr";
+import { useIsShown } from "@/hooks";
 import { callAction } from "@/lib/action-result";
 import { useRefreshLegacyScreens } from "@/lib/legacy-bridge";
 import type { SourceType } from "@/types";
@@ -74,8 +69,8 @@ export const useMealRegisterDrawerController = () => {
     setActiveTab("manual");
   }, [setIsOpen, setDraftItems]);
 
-  // The home screen stays mounted (hidden) after moving to another tab; close the drawer so it is not open on return
-  useLayoutEffect(() => () => setIsOpen(false), [setIsOpen]);
+  // Close the drawer when the home screen is hidden by moving to another tab, so it is not open on return
+  const isShown = useIsShown(() => setIsOpen(false));
 
   /** Collect valid form entries that were typed but never added to the card */
   const collectPendingFormItems = useCallback((): PendingFormItem[] => {
@@ -275,7 +270,8 @@ export const useMealRegisterDrawerController = () => {
           if (store.get(draftItemsAtom).length > 0) return;
           setDrawerMealType(mealType);
           setDraftItems(items);
-          setIsOpen(true);
+          // After a move to another tab the drafts wait in the drawer instead of popping up on return
+          if (isShown()) setIsOpen(true);
           return;
         }
         toast.success(`${items.length}件の食事を登録しました`);
@@ -292,6 +288,7 @@ export const useMealRegisterDrawerController = () => {
       setIsOpen,
       showMealChange,
       store,
+      isShown,
     ],
   );
 

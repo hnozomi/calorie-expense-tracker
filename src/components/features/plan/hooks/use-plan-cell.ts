@@ -1,7 +1,8 @@
 "use client";
 
-import { useLayoutEffect, useState } from "react";
+import { useState } from "react";
 import type { MealPlan } from "@/components/features/plan/types/meal-plan";
+import { useIsShown } from "@/hooks";
 
 /** Which plan the cell's dialog edits (none for a new one), and whether it is open */
 export const usePlanCell = () => {
@@ -10,9 +11,8 @@ export const usePlanCell = () => {
   // dialogs made the whole grid wait for them
   const [hasOpenedModal, setHasOpenedModal] = useState(false);
   const [selectedPlan, setSelectedPlan] = useState<MealPlan | undefined>();
-
-  // The plan screen stays mounted (hidden) after moving to another tab; close the dialog so it is not open on return
-  useLayoutEffect(() => () => setIsModalOpen(false), []);
+  // Close the dialog when the plan screen is hidden by moving to another tab, so it is not open on return
+  const isShown = useIsShown(() => setIsModalOpen(false));
 
   const openFor = (plan: MealPlan | undefined) => {
     setSelectedPlan(plan);
@@ -27,6 +27,9 @@ export const usePlanCell = () => {
     handleOpenNew: () => openFor(undefined),
     handleOpenEdit: (plan: MealPlan) => openFor(plan),
     closeModal: () => setIsModalOpen(false),
-    reopenModal: () => setIsModalOpen(true),
+    // A save can fail after the user moved to another tab; reopen only while the screen is shown
+    reopenModal: () => {
+      if (isShown()) setIsModalOpen(true);
+    },
   };
 };
