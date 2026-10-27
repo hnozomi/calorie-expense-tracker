@@ -3,7 +3,7 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { z } from "zod/v4";
 import type { ActionResult } from "@/lib/action-result";
-import { revalidateApp } from "@/lib/revalidate";
+import { revalidateAllScreens } from "@/lib/revalidate-screens";
 import { createClient } from "@/lib/supabase/server";
 import { getSignedInUserId } from "@/lib/supabase/user";
 import { MEAL_TYPES, SOURCE_TYPES } from "@/types";
@@ -109,7 +109,7 @@ export const registerMealItems = async (
     })),
   );
   if (!isSaved) return { ok: false };
-  await revalidateApp();
+  revalidateAllScreens();
   return { ok: true };
 };
 
@@ -120,7 +120,7 @@ export const updateMealItem = async (input: unknown): Promise<ActionResult> => {
   const { itemId, values } = parsed.data;
 
   const supabase = await createClient();
-  const { error } = await supabase
+  const { data, error } = await supabase
     .from("meal_items")
     .update({
       name: values.name,
@@ -130,9 +130,11 @@ export const updateMealItem = async (input: unknown): Promise<ActionResult> => {
       carbs: values.carbs,
       cost: values.cost ?? null,
     })
-    .eq("id", itemId);
-  if (error) return { ok: false };
-  await revalidateApp();
+    .eq("id", itemId)
+    .select("id");
+  // No row means it was deleted meanwhile (or is not this user's); saying "saved" would be wrong
+  if (error || data.length === 0) return { ok: false };
+  revalidateAllScreens();
   return { ok: true };
 };
 
@@ -141,12 +143,13 @@ export const deleteMealItem = async (input: unknown): Promise<ActionResult> => {
   if (!parsed.success) return { ok: false };
 
   const supabase = await createClient();
-  const { error } = await supabase
+  const { data, error } = await supabase
     .from("meal_items")
     .delete()
-    .eq("id", parsed.data.itemId);
-  if (error) return { ok: false };
-  await revalidateApp();
+    .eq("id", parsed.data.itemId)
+    .select("id");
+  if (error || data.length === 0) return { ok: false };
+  revalidateAllScreens();
   return { ok: true };
 };
 
@@ -194,7 +197,7 @@ export const copyPreviousDayMeal = async (
     })),
   );
   if (!isSaved) return { ok: false };
-  await revalidateApp();
+  revalidateAllScreens();
   return { ok: true, copiedCount: previousItems.length };
 };
 
@@ -211,6 +214,6 @@ export const transferMealToPlan = async (
     p_meal_type: parsed.data.mealType,
   });
   if (error) return { ok: false };
-  await revalidateApp();
+  revalidateAllScreens();
   return { ok: true };
 };

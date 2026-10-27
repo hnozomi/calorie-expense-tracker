@@ -72,7 +72,9 @@ export const getDailyMeals = async (date: string): Promise<DailyMealGroup> => {
     .from("meals")
     .select("id, meal_type, meal_items(*)")
     .eq("date", date)
-    .order("created_at", { ascending: true });
+    .order("created_at", { ascending: true })
+    // Items in a slot keep the order they were registered in, as the optimistic list appends them
+    .order("sort_order", { referencedTable: "meal_items", ascending: true });
   if (error) throw error;
 
   const meals = data ?? [];
