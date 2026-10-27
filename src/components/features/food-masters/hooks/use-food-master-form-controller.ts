@@ -1,4 +1,5 @@
 "use client";
+// Client because it holds the form state and calls Server Actions from the browser
 
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useRouter } from "next/navigation";
@@ -18,6 +19,8 @@ import { foodMasterFormSchema } from "@/components/features/food-masters/types/f
 import type { OcrNutritionResult } from "@/components/features/ocr";
 import { useUnsavedChangesGuard } from "@/hooks";
 import { callAction } from "@/lib/action-result";
+import { useRefreshLegacyScreens } from "@/lib/legacy-bridge";
+import { FOOD_CATEGORIES, type FoodCategory } from "@/types";
 
 const EMPTY_FOOD_MASTER_FORM_VALUES: FoodMasterFormValues = {
   name: "",
@@ -47,6 +50,7 @@ export const useFoodMasterFormController = (
   prefill: Partial<FoodMasterFormValues>,
 ) => {
   const router = useRouter();
+  const refreshLegacyScreens = useRefreshLegacyScreens();
   const isNew = existing === undefined;
   const [isSaving, startSaving] = useTransition();
   const [isDeleting, startDeleting] = useTransition();
@@ -97,6 +101,9 @@ export const useFoodMasterFormController = (
         return;
       }
       toast.success(isNew ? "食品を登録しました" : "変更を保存しました");
+      // A new master's screen starts empty again; an edited one keeps the saved values as its clean state
+      form.reset(isNew ? undefined : values);
+      refreshLegacyScreens();
       router.push("/other/food-masters");
     });
   });
@@ -112,14 +119,18 @@ export const useFoodMasterFormController = (
         return;
       }
       toast.success("食品を削除しました");
+      refreshLegacyScreens();
       router.push("/other/food-masters");
     });
   };
 
   // Leaving with unsaved edits asks first (back button and the header's back arrow)
-  const backGuard = useUnsavedChangesGuard(form.formState.isDirty, () =>
-    router.push("/other/food-masters"),
-  );
+  // The screen stays mounted (hidden) after leaving, so discarded input would still be there when it is
+  // opened again; put the form back to its initial values on the way out
+  const backGuard = useUnsavedChangesGuard(form.formState.isDirty, () => {
+    form.reset();
+    router.push("/other/food-masters");
+  });
 
   return {
     form,
@@ -133,7 +144,19 @@ export const useFoodMasterFormController = (
     isOcrOpen,
     isSaving,
     setIsDeleteConfirmOpen,
+    openDeleteConfirm: () => setIsDeleteConfirmOpen(true),
+    closeDeleteConfirm: () => setIsDeleteConfirmOpen(false),
     setIsOcrOpen,
+    openOcr: () => setIsOcrOpen(true),
+    closeOcr: () => setIsOcrOpen(false),
+    // The select hands back a plain string; only a known category is written to the form
+    handleCategoryChange: (value: string) => {
+      const category = FOOD_CATEGORIES.find((known) => known === value);
+      if (category)
+        form.setValue("category", category as FoodCategory, {
+          shouldValidate: true,
+        });
+    },
     handleDelete,
     handleOcrResult,
     handleSave,

@@ -1,4 +1,5 @@
 "use client";
+// Client because it holds the form state and calls Server Actions from the browser
 
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useRouter } from "next/navigation";
@@ -19,6 +20,7 @@ import type {
 import { recipeFormSchema } from "@/components/features/recipes/types/recipe";
 import { useUnsavedChangesGuard } from "@/hooks";
 import { callAction } from "@/lib/action-result";
+import { useRefreshLegacyScreens } from "@/lib/legacy-bridge";
 
 export type EditableIngredient = IngredientFormValues & { tempId: string };
 
@@ -63,6 +65,7 @@ const createEmptyIngredient = (): EditableIngredient => ({
 /** existing is read on the server; undefined on the new-recipe screen */
 export const useRecipeFormController = (existing: Recipe | undefined) => {
   const router = useRouter();
+  const refreshLegacyScreens = useRefreshLegacyScreens();
   const isNew = existing === undefined;
   const [isSaving, startSaving] = useTransition();
   const [isDeleting, startDeleting] = useTransition();
@@ -136,6 +139,13 @@ export const useRecipeFormController = (existing: Recipe | undefined) => {
         return;
       }
       toast.success(isNew ? "レシピを登録しました" : "変更を保存しました");
+      // A new recipe's screen starts empty again; an edited one keeps the saved values as its clean state
+      if (isNew) resetToInitial();
+      else {
+        form.reset(values);
+        setHasIngredientEdits(false);
+      }
+      refreshLegacyScreens();
       router.push("/recipes");
     });
   });
@@ -149,14 +159,26 @@ export const useRecipeFormController = (existing: Recipe | undefined) => {
         return;
       }
       toast.success("レシピを削除しました");
+      refreshLegacyScreens();
       router.push("/recipes");
     });
   };
 
   // Leaving with unsaved edits asks first (back button and the header's back arrow)
+  // The screen stays mounted (hidden) after leaving, so discarded or saved input would still be there when
+  // it is opened again; put the form back to its initial values on the way out
+  const resetToInitial = () => {
+    form.reset();
+    setIngredients(existing?.ingredients.map(toIngredientDraft) ?? []);
+    setHasIngredientEdits(false);
+  };
+
   const backGuard = useUnsavedChangesGuard(
     form.formState.isDirty || hasIngredientEdits,
-    () => router.push("/recipes"),
+    () => {
+      resetToInitial();
+      router.push("/recipes");
+    },
   );
 
   return {
@@ -171,6 +193,8 @@ export const useRecipeFormController = (existing: Recipe | undefined) => {
     isSaving,
     totalIngredientCost,
     setIsDeleteConfirmOpen,
+    openDeleteConfirm: () => setIsDeleteConfirmOpen(true),
+    closeDeleteConfirm: () => setIsDeleteConfirmOpen(false),
     handleAddIngredient,
     handleDelete,
     handleIngredientChange,
