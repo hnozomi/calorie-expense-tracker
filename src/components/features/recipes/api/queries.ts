@@ -1,10 +1,10 @@
+import "server-only";
 import { cacheLife } from "next/cache";
 import { SCREEN_CACHE } from "@/lib/screen-cache";
 import { createClient } from "@/lib/supabase/server";
 import type { Recipe } from "../types/recipe";
 import { toRecipe } from "../utils/to-recipe";
 
-/** Recipes that are not deleted, by name */
 export const getRecipes = async (): Promise<Recipe[]> => {
   "use cache: private";
   cacheLife(SCREEN_CACHE);

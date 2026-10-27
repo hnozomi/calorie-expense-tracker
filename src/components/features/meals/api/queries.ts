@@ -1,8 +1,9 @@
+import "server-only";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { cacheLife } from "next/cache";
 import { SCREEN_CACHE } from "@/lib/screen-cache";
 import { createClient } from "@/lib/supabase/server";
-import type { MealType, SourceType } from "@/types";
+import type { DbDailySummaryRow, MealType, SourceType } from "@/types";
 import type { DailyMealGroup, DailySummaryRow } from "../types/meal";
 import {
   collectMasterIds,
@@ -14,10 +15,10 @@ import {
   type RecentMealItem,
 } from "../utils/recent-meal-items";
 
+// The Supabase client has no generated types, so rows arrive untyped; the casts follow the table definitions in supabase/migrations
 const RECENT_FETCH_LIMIT = 100;
 const RECENT_DISPLAY_LIMIT = 20;
 
-/** Batch-fetch food masters and recipes, returning lookup maps */
 const fetchMasters = async (
   supabase: SupabaseClient,
   foodMasterIds: Set<string>,
@@ -62,7 +63,7 @@ const fetchMasters = async (
   return { foodMasterMap, recipeMap };
 };
 
-/** A day's meals by slot, with master-linked items showing the master's current values */
+// Items linked to a master show the master's current values, so fixing a master fixes past days too
 export const getDailyMeals = async (date: string): Promise<DailyMealGroup> => {
   "use cache: private";
   cacheLife(SCREEN_CACHE);
@@ -88,7 +89,6 @@ export const getDailyMeals = async (date: string): Promise<DailyMealGroup> => {
   return groupDailyMeals(meals, foodMasterMap, recipeMap);
 };
 
-/** Calories, PFC and cost per slot for a day (get_daily_summary RPC) */
 export const getDailySummary = async (
   date: string,
 ): Promise<DailySummaryRow[]> => {
@@ -101,19 +101,19 @@ export const getDailySummary = async (
   if (error) throw error;
 
   return (data ?? []).map(
-    (row: Record<string, unknown>): DailySummaryRow => ({
+    (row: DbDailySummaryRow): DailySummaryRow => ({
+      // meal_type is a check-constrained text column holding one of MEAL_TYPES
       mealType: row.meal_type as MealType,
-      calories: row.total_calories as number,
-      protein: row.total_protein as number,
-      fat: row.total_fat as number,
-      carbs: row.total_carbs as number,
-      totalCost: row.total_cost as number,
-      itemCount: row.item_count as number,
+      calories: row.total_calories,
+      protein: row.total_protein,
+      fat: row.total_fat,
+      carbs: row.total_carbs,
+      totalCost: row.total_cost,
+      itemCount: row.item_count,
     }),
   );
 };
 
-/** Recently registered items, newest first and one per name, for one-tap re-adding */
 export const getRecentMealItems = async (): Promise<RecentMealItem[]> => {
   "use cache: private";
   cacheLife(SCREEN_CACHE);

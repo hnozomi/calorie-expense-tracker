@@ -1,10 +1,11 @@
+import "server-only";
 import { cacheLife } from "next/cache";
 import { SCREEN_CACHE } from "@/lib/screen-cache";
 import { createClient } from "@/lib/supabase/server";
 import type { NutritionTarget } from "@/types/settings";
 import { toNutritionTarget } from "../utils/to-nutrition-target";
 
-/** The user's nutrition targets, or the defaults before any are saved */
+// Users who never saved targets have no row; they get the defaults
 export const getNutritionTarget = async (): Promise<NutritionTarget> => {
   "use cache: private";
   cacheLife(SCREEN_CACHE);

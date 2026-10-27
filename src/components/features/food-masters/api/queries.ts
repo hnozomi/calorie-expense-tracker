@@ -1,10 +1,10 @@
+import "server-only";
 import { cacheLife } from "next/cache";
 import { SCREEN_CACHE } from "@/lib/screen-cache";
 import { createClient } from "@/lib/supabase/server";
 import type { FoodMaster } from "../types/food-master";
 import { toFoodMaster } from "../utils/to-food-master";
 
-/** Food masters that are not deleted, by name */
 export const getFoodMasters = async (): Promise<FoodMaster[]> => {
   "use cache: private";
   cacheLife(SCREEN_CACHE);
