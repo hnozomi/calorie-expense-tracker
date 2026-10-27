@@ -15,8 +15,13 @@ import {
 } from "../types/meal";
 import { useDailyMealsContext } from "./use-daily-meals-context";
 
-/** Edit or delete one meal item. The drawer closes at once and the slot shows the change while it is saved */
-export const useMealItemEdit = (item: MealItem | null, onClose: () => void) => {
+/** Edit or delete one meal item. The drawer closes at once and the slot shows the change while it is saved;
+ *  when saving fails, onSaveFailed reopens it with the typed values so nothing has to be typed again */
+export const useMealItemEdit = (
+  item: MealItem | null,
+  onClose: () => void,
+  onSaveFailed: (itemWithTypedValues: MealItem) => void,
+) => {
   const { showMealChange } = useDailyMealsContext();
   const refreshLegacyScreens = useRefreshLegacyScreens();
   const [isDeleteConfirmOpen, setIsDeleteConfirmOpen] = useState(false);
@@ -46,6 +51,7 @@ export const useMealItemEdit = (item: MealItem | null, onClose: () => void) => {
       );
       if (!result.ok) {
         toast.error(`「${item.name}」の更新に失敗しました`);
+        onSaveFailed({ ...item, ...values, cost: values.cost ?? null });
         return;
       }
       toast.success("変更を保存しました");
@@ -75,6 +81,11 @@ export const useMealItemEdit = (item: MealItem | null, onClose: () => void) => {
     form,
     isDeleteConfirmOpen,
     setIsDeleteConfirmOpen,
+    openDeleteConfirm: () => setIsDeleteConfirmOpen(true),
+    closeDeleteConfirm: () => setIsDeleteConfirmOpen(false),
+    handleOpenChange: (open: boolean) => {
+      if (!open) onClose();
+    },
     handleSave,
     handleDelete,
   };

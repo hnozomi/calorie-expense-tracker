@@ -13,20 +13,23 @@ import {
 import { SOURCE_TYPE_LABELS } from "@/types";
 import { useMealItemEdit } from "../hooks/use-meal-item-edit";
 import type { MealItem } from "../types/meal";
+import { DeleteItemSection } from "./delete-item-section";
 import { NutritionFormFields } from "./nutrition-form-fields";
 
-type MealItemEditModalProps = {
+type Props = {
   item: MealItem | null;
   isOpen: boolean;
   onClose: () => void;
+  onSaveFailed: (itemWithTypedValues: MealItem) => void;
 };
 
 /** Bottom drawer for editing or deleting an existing meal item */
-const MealItemEditModal = ({
+export const MealItemEditModal = ({
   item,
   isOpen,
   onClose,
-}: MealItemEditModalProps) => {
+  onSaveFailed,
+}: Props) => {
   const {
     form: {
       register,
@@ -34,15 +37,17 @@ const MealItemEditModal = ({
       formState: { errors },
     },
     isDeleteConfirmOpen,
-    setIsDeleteConfirmOpen,
+    openDeleteConfirm,
+    closeDeleteConfirm,
+    handleOpenChange,
     handleSave,
     handleDelete,
-  } = useMealItemEdit(item, onClose);
+  } = useMealItemEdit(item, onClose, onSaveFailed);
 
   if (!item) return null;
 
   return (
-    <Drawer open={isOpen} onOpenChange={(open) => !open && onClose()}>
+    <Drawer open={isOpen} onOpenChange={handleOpenChange}>
       <DrawerContent className="max-h-[80dvh]">
         <DrawerHeader className="flex-row items-center justify-between pb-2">
           <div>
@@ -70,40 +75,13 @@ const MealItemEditModal = ({
             />
           </form>
 
-          {/* Delete section */}
-          {isDeleteConfirmOpen ? (
-            <div className="mt-4 space-y-3 rounded-xl border border-destructive/30 bg-destructive/5 p-3">
-              <p className="text-sm font-medium">
-                「{item.name}」を削除しますか？
-              </p>
-              <div className="flex gap-2">
-                <Button
-                  variant="outline"
-                  size="sm"
-                  className="flex-1"
-                  onClick={() => setIsDeleteConfirmOpen(false)}
-                >
-                  キャンセル
-                </Button>
-                <Button
-                  variant="destructive"
-                  size="sm"
-                  className="flex-1"
-                  onClick={handleDelete}
-                >
-                  削除する
-                </Button>
-              </div>
-            </div>
-          ) : (
-            <button
-              type="button"
-              className="mt-4 w-full text-center text-sm text-destructive transition-colors hover:text-destructive/80 hover:underline"
-              onClick={() => setIsDeleteConfirmOpen(true)}
-            >
-              このアイテムを削除する
-            </button>
-          )}
+          <DeleteItemSection
+            itemName={item.name}
+            isConfirmOpen={isDeleteConfirmOpen}
+            onAsk={openDeleteConfirm}
+            onCancel={closeDeleteConfirm}
+            onDelete={handleDelete}
+          />
         </div>
 
         {/* Sticky footer */}
@@ -116,5 +94,3 @@ const MealItemEditModal = ({
     </Drawer>
   );
 };
-
-export { MealItemEditModal };
