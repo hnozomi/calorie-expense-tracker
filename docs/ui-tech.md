@@ -32,7 +32,7 @@
 | Jotai | 残す | Drawer の開閉と、登録前のカード(`meal-register-atom`)はブラウザだけの状態。日付の atom だけ消す |
 | tesseract.js・vaul・react-hook-form・zod | そのまま | ブラウザでしか動かない(OCR)か、作りに関わらない |
 
-新しいライブラリは足さない。
+新しいライブラリは `server-only` だけ足す(フェーズ 2。サーバーで読む関数とサーバー用の Supabase クライアントを、Client から import したらビルドで止めるため。ほかのアプリと同じ版)。
 
 ## 1. ルーティング
 
@@ -73,7 +73,11 @@ src/components/features/<feature>/
 | `src/utils/date.ts` | `getTodayInTokyo()`・`getThisMondayInTokyo()`・`getMondayOf()`(その日の週の月曜)を足す(サーバーで「今日」を決める) |
 | `src/utils/search-params.ts` | `parseDateParam`・`parseWeekParam`(形を確かめ、週は月曜に直す) |
 | `src/lib/revalidate.ts` | `revalidateApp()`(`revalidatePath("/", "layout")`)。全 Server Action が最後に呼ぶ |
-| `src/lib/legacy-bridge.ts` | 移行中だけ。`revalidateAfterLegacyMutation()`。まだ TanStack Query の画面と、移した画面の読み直しをつなぐ(下の「移行中のつなぎ」)。最後のフェーズで消す |
+| `src/lib/screen-cache.ts` | `SCREEN_CACHE`(`cacheLife` に渡す使い回しの時間) |
+| `src/lib/today.ts` | `getToday()`。`'use cache: private'` の中で今日(Asia/Tokyo)を決める |
+| `src/lib/action-result.ts` | `ActionResult`(Server Action の戻り値)と `callAction`(呼び出しの例外を `{ ok: false }` にする) |
+| `src/lib/supabase/user.ts` | `getSignedInUserId()`(`getClaims` の `sub`) |
+| `src/lib/legacy-bridge.ts` | 移行中だけ。`revalidateAfterLegacyMutation()` と `useRefreshLegacyScreens()`(フックだが、フェーズ 6 で消すので `src/hooks/` に移さない)。まだ TanStack Query の画面と、移した画面の読み直しをつなぐ(下の「移行中のつなぎ」)。最後のフェーズで消す |
 
 消すもの(最後のフェーズまでに): `src/app/(main)/loading.tsx`、`layout/hydrated-only.tsx`、`layout/tab-data-prefetcher.tsx`、`hooks/use-list-cache-seed.ts`、`hooks/use-has-hydrated.ts`、`hooks/use-supabase.ts`、`hooks/query-keys.ts`、`hooks/use-nutrition-target.ts`、`hooks/use-date-navigation.ts`、`lib/create-week-start-atom.ts`、各機能の `queries.ts`・`stores/*-atom.ts`(日・週のもの)・取得と更新の hooks(`use-daily-meals` `use-save-recipe` など)、`app/providers.tsx` の QueryClientProvider。
 
@@ -128,7 +132,7 @@ app/(main)/home/page.tsx                    Server。Header と <Suspense> を�
 
 - 永続化先: Supabase の `public` スキーマ(今のまま。テーブル・RPC は変えない)
 - 型: 各機能の `types/`(今のまま)。DB の行から型に直す関数は `queries.ts` から `api/queries.ts` に移す
-- 読む: `api/queries.ts`。`'use cache: private'` + `cacheLife({ stale: 300, revalidate: 300, expire: 3600 })`。データはこのアプリの中からしか変わらず、記録はスマホからだけ(別の端末で足すことが無い)ため 300 秒(規約)
+- 読む: `api/queries.ts`。`'use cache: private'` + `cacheLife(SCREEN_CACHE)`(`{ stale: 300 }`。`'use cache: private'` はサーバーに残らずブラウザだけに置かれるので、効くのは `stale` だけ。ほかのアプリと同じ)。データはこのアプリの中からしか変わらず、記録はスマホからだけ(別の端末で足すことが無い)ため 300 秒(規約)
 - 1回の表示で同じものを2か所から読むとき(目標値をホームの集計と Drawer で使う など)は、`cache` で包む
 - 書く: `api/actions.ts`。入力を `unknown` で受けて zod で確かめ、今の更新(`from().insert/update/delete`・RPC)をそのまま呼び、最後に `revalidateApp()`
 - 「今日」: サーバーで `getToday()`(`src/lib/today.ts`)。`'use cache: private'` の中で `getTodayInTokyo()`(`Intl.DateTimeFormat` に `timeZone: "Asia/Tokyo"`)を呼ぶ。searchParams を読んだ後でも、dev の事前描画は `new Date()` を止めるため(規約)。使い回す時間は画面のデータと同じなので、0時をまたいだ直後は最大その時間だけ前の日のままになる
@@ -141,7 +145,7 @@ app/(main)/home/page.tsx                    Server。Header と <Suspense> を�
 | 変えた側 | 古くなる側 | つなぎ方 |
 | --- | --- | --- |
 | まだの画面(TanStack Query の mutation) | 移した画面 | `providers.tsx` の `MutationCache` の `onSuccess` で、すべての mutation の成功後に `revalidateAfterLegacyMutation` を呼ぶ(mutation ごとに足さない)。`useMutation` でない全データ削除だけは直接呼ぶ |
-| 移した画面(Server Action) | まだの画面 | Action を呼ぶ Client のフックが、成功後に関係する queryKey を invalidate する |
+| 移した画面(Server Action) | まだの画面 | Action を呼ぶ Client のフックが、成功後に `useRefreshLegacyScreens` ですべての query を invalidate する(表示していない query は印を付けるだけで、読み直すのは表示したとき) |
 
 今も読み直していない組み合わせ(マスタを直してもホームの値が古い、食事を変えても週の集計が古い)は、`revalidateApp` で全部読み直すので直る(AC-R-6)。
 
@@ -162,7 +166,8 @@ app/(main)/home/page.tsx                    Server。Header と <Suspense> を�
 | データを待つ | 各ページの `<Suspense>` の fallback。今のスケルトン(`DailySkeleton` `PlanSkeleton` など)を使い回す。見出しは Suspense の外 |
 | 空(記録が無い日・献立が無い週・一覧が0件) | 今のまま部品の中 |
 | 読めなかった | `src/app/error.tsx`(今のまま)。Section で例外を握りつぶさない |
-| 押した後に失敗 | `useOptimistic` で元に戻り、今と同じ toast を出す |
+| 押した後に失敗 | `useOptimistic` で元に戻り、toast を出す。登録は下書きを残したまま Drawer を開き直し、編集は打った値のまま編集の Drawer を開き直す(入力を消さない)。toast は品名入り(「「X」の更新に失敗しました」)、登録は「登録に失敗しました。もう一度お試しください」 |
+| 前日をコピー | 楽観表示しない。前日の中身はブラウザに無く、出すには毎回前日も読むことになるため。押している間は「コピー中...」 |
 | 無い id・形の違う日付 | route の中で `notFound()` → `src/app/not-found.tsx` |
 
 ## 9. 検討した代替案
