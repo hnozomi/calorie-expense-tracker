@@ -90,3 +90,9 @@ export const getTodayInTokyo = (now: Date = new Date()): string =>
 /** Monday of the current week in Asia/Tokyo as YYYY-MM-DD */
 export const getThisMondayInTokyo = (now: Date = new Date()): string =>
   getMondayOf(getTodayInTokyo(now));
+
+/** Format a YYYY-MM-DD string as M/D (no zero padding) */
+export const formatMonthDay = (dateStr: string): string => {
+  const [, month, day] = dateStr.split("-");
+  return `${Number(month)}/${Number(day)}`;
+};

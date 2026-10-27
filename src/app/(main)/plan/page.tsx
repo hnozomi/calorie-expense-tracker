@@ -1,14 +1,19 @@
 import { Suspense } from "react";
-import { HydratedOnly } from "@/components/features/layout";
-import { PlanCalendarView, PlanSkeleton } from "@/components/features/plan";
+import { Header, PageContainer } from "@/components/features/layout";
+import { PlanSection, PlanSkeleton } from "@/components/features/plan";
 
-/** Meal plan calendar page */
-export default function PlanPage() {
+/** S-07: Plan calendar. The header shows at once; the week waits for ?week= inside Suspense */
+const PlanPage = ({ searchParams }: PageProps<"/plan">) => {
   return (
-    <HydratedOnly fallback={<PlanSkeleton />}>
-      <Suspense fallback={<PlanSkeleton />}>
-        <PlanCalendarView />
-      </Suspense>
-    </HydratedOnly>
+    <>
+      <Header title="献立カレンダー" />
+      <PageContainer>
+        <Suspense fallback={<PlanSkeleton />}>
+          <PlanSection searchParams={searchParams} />
+        </Suspense>
+      </PageContainer>
+    </>
   );
-}
+};
+
+export default PlanPage;

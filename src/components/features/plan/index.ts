@@ -1,2 +1,2 @@
-export { PlanCalendarView } from "./components/plan-calendar-view";
+export { PlanSection } from "./components/plan-section";
 export { PlanSkeleton } from "./components/plan-skeleton";

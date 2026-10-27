@@ -28,6 +28,14 @@ export const mealPlanFormSchema = z.object({
 
 export type MealPlanFormValues = z.infer<typeof mealPlanFormSchema>;
 
+/** A plan as the grid shows it: optimistic ones are still being saved */
+export type DisplayedMealPlan = MealPlan & { isOptimistic?: boolean };
+
+/** A change shown before the server confirms it */
+export type PlanChange =
+  | { type: "save"; plan: DisplayedMealPlan }
+  | { type: "remove"; planId: string };
+
 /** Daily summary row returned by get_weekly_summary RPC */
 export type WeeklySummaryRow = NutritionValues & {
   date: string;

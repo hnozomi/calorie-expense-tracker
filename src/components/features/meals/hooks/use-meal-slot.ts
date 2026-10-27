@@ -1,8 +1,9 @@
 "use client";
 
 import { useSetAtom } from "jotai";
-import { useLayoutEffect, useState, useTransition } from "react";
+import { useState, useTransition } from "react";
 import { toast } from "sonner";
+import { useIsShown } from "@/hooks";
 import { callAction } from "@/lib/action-result";
 import { useRefreshLegacyScreens } from "@/lib/legacy-bridge";
 import { MEAL_TYPE_LABELS, type MealType } from "@/types";
@@ -25,8 +26,8 @@ export const useMealSlot = (mealType: MealType, items: DisplayedMealItem[]) => {
   const [isTransferring, startTransfer] = useTransition();
   const label = MEAL_TYPE_LABELS[mealType];
 
-  // The home screen stays mounted (hidden) after moving to another tab; close the edit drawer so it is not open on return
-  useLayoutEffect(() => () => setEditingItem(null), []);
+  // Close the edit drawer when the home screen is hidden by moving to another tab, so it is not open on return
+  const isShown = useIsShown(() => setEditingItem(null));
 
   const openDrawer = () => {
     setDrawerMealType(mealType);
@@ -76,6 +77,10 @@ export const useMealSlot = (mealType: MealType, items: DisplayedMealItem[]) => {
     handleCopyPreviousDay,
     handleTransferToPlan,
     startEditing: setEditingItem,
+    // A save can fail after the user moved to another tab; reopen only while the screen is shown
+    reopenEditing: (item: MealItem) => {
+      if (isShown()) setEditingItem(item);
+    },
     stopEditing: () => setEditingItem(null),
   };
 };

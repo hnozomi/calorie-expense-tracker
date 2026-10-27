@@ -28,7 +28,11 @@ test.describe("買い物リスト", () => {
 
     // Plan it on next week's first empty cell (next week is always clean)
     await gotoHydrated(page, "/plan");
-    await page.getByRole("button", { name: "次の週" }).click();
+    // Since phase 3 the next week is a link to /plan?week= (ui-tech §phase 3)
+    await page.getByRole("link", { name: "次の週" }).click();
+    // Wait for the next week's grid: until it arrives, this week's grid is still on screen
+    await expect(page).toHaveURL(/\/plan\?week=\d{4}-\d{2}-\d{2}$/);
+    await expect(page.getByRole("link", { name: "今週へ" })).toBeVisible();
     await clickToReveal(
       page.getByRole("button", { name: "献立を追加" }).first(),
       page.getByRole("dialog"),

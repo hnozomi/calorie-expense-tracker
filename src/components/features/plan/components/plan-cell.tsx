@@ -1,36 +1,29 @@
 "use client";
+// Client because it opens the plan dialog for its cell
 
 import { Plus } from "lucide-react";
-import { Suspense, useState } from "react";
+import { Suspense } from "react";
+import { usePlanCell } from "@/components/features/plan/hooks/use-plan-cell";
+import type { DisplayedMealPlan } from "@/components/features/plan/types/meal-plan";
 import type { MealType } from "@/types";
-import type { MealPlan } from "../types/meal-plan";
 import { PlanMenuSelectModal } from "./plan-menu-select-modal";
 
-type PlanCellProps = {
+type Props = {
   date: string;
   mealType: MealType;
-  plans: MealPlan[];
+  plans: DisplayedMealPlan[];
 };
 
-/** A single cell in the plan calendar grid (one date + one meal type) */
-const PlanCell = ({ date, mealType, plans }: PlanCellProps) => {
-  const [isModalOpen, setIsModalOpen] = useState(false);
-  // Mount the modal (and its selector queries) only after the first open;
-  // 28 always-mounted modals made the page suspend on their set-menu query
-  const [hasOpenedModal, setHasOpenedModal] = useState(false);
-  const [selectedPlan, setSelectedPlan] = useState<MealPlan | undefined>();
-
-  const handleOpenNew = () => {
-    setSelectedPlan(undefined);
-    setHasOpenedModal(true);
-    setIsModalOpen(true);
-  };
-
-  const handleOpenEdit = (plan: MealPlan) => {
-    setSelectedPlan(plan);
-    setHasOpenedModal(true);
-    setIsModalOpen(true);
-  };
+export const PlanCell = ({ date, mealType, plans }: Props) => {
+  const {
+    isModalOpen,
+    hasOpenedModal,
+    selectedPlan,
+    handleOpenNew,
+    handleOpenEdit,
+    closeModal,
+    reopenModal,
+  } = usePlanCell();
 
   return (
     <>
@@ -39,7 +32,9 @@ const PlanCell = ({ date, mealType, plans }: PlanCellProps) => {
           <button
             key={plan.id}
             type="button"
-            className="block w-full truncate rounded-md bg-primary/8 px-1.5 py-2 text-left text-[11px] font-medium leading-tight text-foreground transition-colors hover:bg-primary/15"
+            className="block w-full truncate rounded-md bg-primary/8 px-1.5 py-2 text-left text-[11px] font-medium leading-tight text-foreground transition-colors hover:bg-primary/15 disabled:opacity-60"
+            // Still being saved: it has no id to edit yet
+            disabled={plan.isOptimistic}
             onClick={() => handleOpenEdit(plan)}
           >
             {plan.plannedName}
@@ -62,7 +57,8 @@ const PlanCell = ({ date, mealType, plans }: PlanCellProps) => {
         <Suspense fallback={null}>
           <PlanMenuSelectModal
             isOpen={isModalOpen}
-            onClose={() => setIsModalOpen(false)}
+            onClose={closeModal}
+            onReopen={reopenModal}
             date={date}
             mealType={mealType}
             existingPlan={selectedPlan}
@@ -72,5 +68,3 @@ const PlanCell = ({ date, mealType, plans }: PlanCellProps) => {
     </>
   );
 };
-
-export { PlanCell };

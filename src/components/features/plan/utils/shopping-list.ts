@@ -1,5 +1,5 @@
+import type { MealPlan } from "@/components/features/plan/types/meal-plan";
 import type { Recipe } from "@/components/features/recipes/types/recipe";
-import type { MealPlan } from "../types/meal-plan";
 
 /** One aggregated ingredient line on the shopping list */
 export type ShoppingListEntry = {

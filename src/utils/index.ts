@@ -4,6 +4,7 @@ export {
   buildWeekDays,
   formatDateToString,
   formatDisplayDate,
+  formatMonthDay,
   formatWeekLabel,
   getMondayOf,
   getThisMonday,

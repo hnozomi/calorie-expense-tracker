@@ -26,6 +26,7 @@ export const MealSlotCard = ({ mealType, items }: Props) => {
     handleTransferToPlan,
     startEditing,
     stopEditing,
+    reopenEditing,
   } = useMealSlot(mealType, items);
 
   return (
@@ -75,7 +76,7 @@ export const MealSlotCard = ({ mealType, items }: Props) => {
         item={editingItem}
         isOpen={!!editingItem}
         onClose={stopEditing}
-        onSaveFailed={startEditing}
+        onSaveFailed={reopenEditing}
       />
     </>
   );

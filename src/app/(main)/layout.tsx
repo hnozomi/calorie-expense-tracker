@@ -2,14 +2,13 @@ import { Suspense } from "react";
 import {
   BottomNavigation,
   BottomNavigationView,
-  TabDataPrefetcher,
 } from "@/components/features/layout";
 
 type Props = {
   children: React.ReactNode;
 };
 
-/** Authenticated pages layout: bottom navigation + sibling-tab data prefetch */
+/** Authenticated pages layout: bottom navigation */
 const MainLayout = ({ children }: Props) => {
   return (
     <div className="flex min-h-dvh flex-col">
@@ -18,7 +17,6 @@ const MainLayout = ({ children }: Props) => {
       <Suspense fallback={<BottomNavigationView />}>
         <BottomNavigation />
       </Suspense>
-      <TabDataPrefetcher />
     </div>
   );
 };

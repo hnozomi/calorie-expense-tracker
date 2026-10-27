@@ -1,360 +1,91 @@
 "use client";
 
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-  AlertDialogTrigger,
-} from "@/components/ui/alert-dialog";
-import { Button } from "@/components/ui/button";
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import type { MealType } from "@/types";
-import { MEAL_TYPE_LABELS } from "@/types";
-import { formatDisplayDate } from "@/utils";
-import { usePlanMenuSelectController } from "../hooks/use-plan-menu-select-controller";
-import type { MealPlan } from "../types/meal-plan";
+// Client because the dialog, its tabs and the manual form are interactive
 
-type PlanMenuSelectModalProps = {
+import { usePlanMenuSelectController } from "@/components/features/plan/hooks/use-plan-menu-select-controller";
+import type { MealPlan } from "@/components/features/plan/types/meal-plan";
+import { Dialog, DialogContent } from "@/components/ui/dialog";
+import { Tabs, TabsContent } from "@/components/ui/tabs";
+import type { MealType } from "@/types";
+import { DeletePlanButton } from "./delete-plan-button";
+import { PlanCandidateTabs } from "./plan-candidate-tabs";
+import { PlanManualForm } from "./plan-manual-form";
+import { PlanMenuDialogHeader } from "./plan-menu-dialog-header";
+import { PlanMenuTabsList } from "./plan-menu-tabs-list";
+
+type Props = {
   isOpen: boolean;
   onClose: () => void;
+  onReopen: () => void;
   date: string;
   mealType: MealType;
   existingPlan?: MealPlan;
 };
 
-/** Modal for selecting or editing a meal plan entry */
-const PlanMenuSelectModal = ({
+export const PlanMenuSelectModal = ({
   isOpen,
   onClose,
+  onReopen,
   date,
   mealType,
   existingPlan,
-}: PlanMenuSelectModalProps) => {
-  const {
-    deleteMutation,
-    foodMasters,
-    fmSearch,
-    manualCalories,
-    manualCarbs,
-    manualCost,
-    manualFat,
-    manualName,
-    manualProtein,
-    recipes,
-    recipeSearch,
-    saveMutation,
-    setFmSearch,
-    setManualCalories,
-    setManualCarbs,
-    setManualCost,
-    setManualFat,
-    setManualName,
-    setManualProtein,
-    setRecipeSearch,
-    setMenus,
-    handleDelete,
-    handleSaveManual,
-    handleSelectFoodMaster,
-    handleSelectRecipe,
-    handleSelectSetMenu,
-  } = usePlanMenuSelectController({
+}: Props) => {
+  const menu = usePlanMenuSelectController({
     date,
     mealType,
     existingPlan,
     onClose,
+    onReopen,
   });
 
-  const dateLabel = formatDisplayDate(date);
-
   return (
-    <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
+    <Dialog open={isOpen} onOpenChange={menu.handleOpenChange}>
       <DialogContent className="max-h-[85vh] overflow-y-auto sm:max-w-md">
-        <DialogHeader className="space-y-1">
-          <DialogTitle className="flex items-center gap-2 text-base">
-            <span className="rounded-md bg-primary/10 px-2 py-0.5 text-sm font-semibold text-primary">
-              {MEAL_TYPE_LABELS[mealType]}
-            </span>
-            <span className="text-muted-foreground">{dateLabel}</span>
-          </DialogTitle>
-          <DialogDescription className="text-xs">
-            献立のメニューを選択または入力してください
-          </DialogDescription>
-        </DialogHeader>
+        <PlanMenuDialogHeader date={date} mealType={mealType} />
 
         <Tabs defaultValue="manual" className="mt-1">
-          <TabsList className="grid w-full grid-cols-4">
-            <TabsTrigger value="manual" className="text-xs">
-              手動
-            </TabsTrigger>
-            <TabsTrigger value="recipe" className="text-xs">
-              レシピ
-            </TabsTrigger>
-            <TabsTrigger value="food_master" className="text-xs">
-              マスタ
-            </TabsTrigger>
-            <TabsTrigger value="set_menu" className="text-xs">
-              セット
-            </TabsTrigger>
-          </TabsList>
+          <PlanMenuTabsList />
 
-          {/* Manual input */}
-          <TabsContent value="manual" className="mt-4 space-y-4">
-            <div className="space-y-1.5">
-              <Label htmlFor="plan-manual-name" className="text-xs font-medium">
-                メニュー名
-              </Label>
-              <Input
-                id="plan-manual-name"
-                placeholder="例: ご飯と味噌汁"
-                value={manualName}
-                onChange={(e) => setManualName(e.target.value)}
-              />
-            </div>
-            <div className="grid grid-cols-2 gap-3">
-              <div className="space-y-1.5">
-                <Label
-                  htmlFor="plan-manual-calories"
-                  className="text-xs font-medium"
-                >
-                  カロリー (kcal)
-                </Label>
-                <Input
-                  id="plan-manual-calories"
-                  type="number"
-                  inputMode="decimal"
-                  step="any"
-                  placeholder="0"
-                  value={manualCalories}
-                  onChange={(e) => setManualCalories(e.target.value)}
-                />
-              </div>
-              <div className="space-y-1.5">
-                <Label
-                  htmlFor="plan-manual-cost"
-                  className="text-xs font-medium"
-                >
-                  食費 (円)
-                </Label>
-                <Input
-                  id="plan-manual-cost"
-                  type="number"
-                  inputMode="decimal"
-                  placeholder="0"
-                  value={manualCost}
-                  onChange={(e) => setManualCost(e.target.value)}
-                />
-              </div>
-            </div>
-            <div className="grid grid-cols-3 gap-3">
-              <div className="space-y-1.5">
-                <Label
-                  htmlFor="plan-manual-protein"
-                  className="text-xs font-medium"
-                >
-                  P (g)
-                </Label>
-                <Input
-                  id="plan-manual-protein"
-                  type="number"
-                  inputMode="decimal"
-                  step="any"
-                  placeholder="0"
-                  value={manualProtein}
-                  onChange={(e) => setManualProtein(e.target.value)}
-                />
-              </div>
-              <div className="space-y-1.5">
-                <Label
-                  htmlFor="plan-manual-fat"
-                  className="text-xs font-medium"
-                >
-                  F (g)
-                </Label>
-                <Input
-                  id="plan-manual-fat"
-                  type="number"
-                  inputMode="decimal"
-                  step="any"
-                  placeholder="0"
-                  value={manualFat}
-                  onChange={(e) => setManualFat(e.target.value)}
-                />
-              </div>
-              <div className="space-y-1.5">
-                <Label
-                  htmlFor="plan-manual-carbs"
-                  className="text-xs font-medium"
-                >
-                  C (g)
-                </Label>
-                <Input
-                  id="plan-manual-carbs"
-                  type="number"
-                  inputMode="decimal"
-                  step="any"
-                  placeholder="0"
-                  value={manualCarbs}
-                  onChange={(e) => setManualCarbs(e.target.value)}
-                />
-              </div>
-            </div>
-            <Button
-              className="w-full"
-              onClick={handleSaveManual}
-              disabled={saveMutation.isPending}
-            >
-              {saveMutation.isPending ? "保存中..." : "保存"}
-            </Button>
-          </TabsContent>
-
-          {/* Recipe selection */}
-          <TabsContent value="recipe" className="mt-4 space-y-3">
-            <Input
-              placeholder="レシピ名で検索..."
-              value={recipeSearch}
-              onChange={(e) => setRecipeSearch(e.target.value)}
-              className="h-9"
+          <TabsContent value="manual" className="mt-4">
+            <PlanManualForm
+              name={{ value: menu.manualName, onChange: menu.setManualName }}
+              calories={{
+                value: menu.manualCalories,
+                onChange: menu.setManualCalories,
+              }}
+              cost={{ value: menu.manualCost, onChange: menu.setManualCost }}
+              protein={{
+                value: menu.manualProtein,
+                onChange: menu.setManualProtein,
+              }}
+              fat={{ value: menu.manualFat, onChange: menu.setManualFat }}
+              carbs={{ value: menu.manualCarbs, onChange: menu.setManualCarbs }}
+              onSave={menu.handleSaveManual}
             />
-            <div className="max-h-52 divide-y divide-border/40 overflow-y-auto rounded-lg border border-border/60">
-              {recipes && recipes.length > 0 ? (
-                recipes.map((recipe) => (
-                  <button
-                    key={recipe.id}
-                    type="button"
-                    className="flex w-full items-center justify-between px-3 py-2.5 text-left text-sm transition-colors hover:bg-muted/60 disabled:pointer-events-none disabled:opacity-50"
-                    onClick={() => handleSelectRecipe(recipe)}
-                    disabled={saveMutation.isPending}
-                  >
-                    <span className="truncate font-medium">{recipe.name}</span>
-                    <span className="ml-2 whitespace-nowrap rounded-full bg-muted px-2 py-0.5 text-[10px] font-medium text-muted-foreground">
-                      {Math.round(recipe.calories / recipe.servings)} kcal
-                    </span>
-                  </button>
-                ))
-              ) : (
-                <p className="py-6 text-center text-sm text-muted-foreground">
-                  {recipeSearch
-                    ? "該当するレシピがありません"
-                    : "レシピが未登録です"}
-                </p>
-              )}
-            </div>
           </TabsContent>
 
-          {/* Food master selection */}
-          <TabsContent value="food_master" className="mt-4 space-y-3">
-            <Input
-              placeholder="食品名・ブランドで検索..."
-              value={fmSearch}
-              onChange={(e) => setFmSearch(e.target.value)}
-              className="h-9"
-            />
-            <div className="max-h-52 divide-y divide-border/40 overflow-y-auto rounded-lg border border-border/60">
-              {foodMasters && foodMasters.length > 0 ? (
-                foodMasters.map((fm) => (
-                  <button
-                    key={fm.id}
-                    type="button"
-                    className="flex w-full items-center justify-between px-3 py-2.5 text-left text-sm transition-colors hover:bg-muted/60 disabled:pointer-events-none disabled:opacity-50"
-                    onClick={() => handleSelectFoodMaster(fm)}
-                    disabled={saveMutation.isPending}
-                  >
-                    <span className="truncate font-medium">{fm.name}</span>
-                    <span className="ml-2 whitespace-nowrap rounded-full bg-muted px-2 py-0.5 text-[10px] font-medium text-muted-foreground">
-                      {Math.round(fm.calories)} kcal
-                    </span>
-                  </button>
-                ))
-              ) : (
-                <p className="py-6 text-center text-sm text-muted-foreground">
-                  {fmSearch
-                    ? "該当する食品がありません"
-                    : "食品マスタが未登録です"}
-                </p>
-              )}
-            </div>
-          </TabsContent>
-
-          {/* Set menu selection */}
-          <TabsContent value="set_menu" className="mt-4">
-            <div className="max-h-52 divide-y divide-border/40 overflow-y-auto rounded-lg border border-border/60">
-              {setMenus && setMenus.length > 0 ? (
-                setMenus.map((sm) => (
-                  <button
-                    key={sm.id}
-                    type="button"
-                    className="flex w-full items-center justify-between px-3 py-2.5 text-left text-sm transition-colors hover:bg-muted/60 disabled:pointer-events-none disabled:opacity-50"
-                    onClick={() => handleSelectSetMenu(sm)}
-                    disabled={saveMutation.isPending}
-                  >
-                    <span className="truncate font-medium">{sm.name}</span>
-                    <span className="ml-2 whitespace-nowrap rounded-full bg-muted px-2 py-0.5 text-[10px] font-medium text-muted-foreground">
-                      {Math.round(sm.totalCalories)} kcal
-                    </span>
-                  </button>
-                ))
-              ) : (
-                <p className="py-6 text-center text-sm text-muted-foreground">
-                  セットメニューが未登録です
-                </p>
-              )}
-            </div>
-          </TabsContent>
+          <PlanCandidateTabs
+            hasError={menu.hasCandidateError}
+            recipes={menu.recipes}
+            recipeSearch={menu.recipeSearch}
+            onRecipeSearchChange={menu.setRecipeSearch}
+            foodMasters={menu.foodMasters}
+            fmSearch={menu.fmSearch}
+            onFmSearchChange={menu.setFmSearch}
+            setMenus={menu.setMenus}
+            onSelectRecipe={menu.handleSelectRecipe}
+            onSelectFoodMaster={menu.handleSelectFoodMaster}
+            onSelectSetMenu={menu.handleSelectSetMenu}
+          />
         </Tabs>
 
-        {/* Delete button for existing plans */}
         {existingPlan && (
-          <div className="mt-3 border-t border-border/40 pt-3">
-            <AlertDialog>
-              <AlertDialogTrigger asChild>
-                <button
-                  type="button"
-                  className="w-full rounded-md py-2 text-center text-sm font-medium text-destructive transition-colors hover:bg-destructive/10"
-                  disabled={deleteMutation.isPending}
-                >
-                  {deleteMutation.isPending
-                    ? "削除中..."
-                    : "この献立を削除する"}
-                </button>
-              </AlertDialogTrigger>
-              <AlertDialogContent>
-                <AlertDialogHeader>
-                  <AlertDialogTitle>献立を削除しますか？</AlertDialogTitle>
-                  <AlertDialogDescription>
-                    「{existingPlan.plannedName}
-                    」を削除します。この操作は取り消せません。
-                  </AlertDialogDescription>
-                </AlertDialogHeader>
-                <AlertDialogFooter>
-                  <AlertDialogCancel>キャンセル</AlertDialogCancel>
-                  <AlertDialogAction
-                    onClick={handleDelete}
-                    className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-                  >
-                    削除する
-                  </AlertDialogAction>
-                </AlertDialogFooter>
-              </AlertDialogContent>
-            </AlertDialog>
-          </div>
+          <DeletePlanButton
+            plannedName={existingPlan.plannedName}
+            onDelete={menu.handleDelete}
+          />
         )}
       </DialogContent>
     </Dialog>
   );
 };
-
-export { PlanMenuSelectModal };
