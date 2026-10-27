@@ -1,7 +1,7 @@
 -- save_recipe_with_ingredients / save_set_menu_with_items: save the parent and its
 -- children in one call, replace the children on update, and refuse ids the caller does not own
 begin;
-select plan(12);
+select plan(15);
 
 insert into auth.users (id, email) values
   ('00000000-0000-4000-8000-000000000001', 'user-a@example.com'),
@@ -96,6 +96,30 @@ select is(
   (select count(*) from set_menu_items where set_menu_id = current_setting('test.menu_id')::uuid),
   1::bigint,
   'B''s attempt left A''s set menu items in place'
+);
+
+-- A soft-deleted recipe is not saved (edited elsewhere after it was deleted): same error as an unknown id
+update recipes set deleted_at = now() where id = current_setting('test.recipe_id')::uuid;
+select throws_ok(
+  format($$ select save_recipe_with_ingredients(%L::uuid, 'after delete', 3, 999, 9, 9, 9, 'changed',
+    '[{"ingredient_name":"z","quantity":9,"unit":"kg","unit_price":99}]'::jsonb) $$,
+         current_setting('test.recipe_id')),
+  'P0001', 'recipe not found',
+  'saving a deleted recipe fails'
+);
+select is(
+  (select count(*) from recipes
+    where id = current_setting('test.recipe_id')::uuid
+      and name = 'renamed' and servings = 1 and calories = 400 and protein = 20 and fat = 5 and carbs = 50
+      and notes = 'memo' and deleted_at is not null),
+  1::bigint,
+  'saving a deleted recipe leaves the recipe row as it was'
+);
+select results_eq(
+  $$ select ingredient_name, quantity, unit, unit_price from recipe_ingredients
+     where recipe_id = current_setting('test.recipe_id')::uuid order by ingredient_name $$,
+  $$ values ('a'::text, 1::numeric, 'g'::text, 10::numeric), ('b', 2, 'g', 20) $$,
+  'saving a deleted recipe leaves its ingredients as they were'
 );
 
 select * from finish();
