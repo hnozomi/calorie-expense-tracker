@@ -1,436 +1,86 @@
 "use client";
+// Client because it is a form (react-hook-form) with items edited in place and an unsaved-changes guard
 
-import {
-  ArrowLeft,
-  ClipboardList,
-  ListPlus,
-  Minus,
-  Plus,
-  Search,
-  Tag,
-  Trash2,
-  Utensils,
-  X,
-} from "lucide-react";
-import { useRouter } from "next/navigation";
+import { ArrowLeft } from "lucide-react";
+import type { FoodMaster } from "@/components/features/food-masters/types/food-master";
 import { Header, PageContainer } from "@/components/features/layout";
-import { Badge } from "@/components/ui/badge";
+import type { Recipe } from "@/components/features/recipes/types/recipe";
+import { useSetMenuFormController } from "@/components/features/set-menus/hooks/use-set-menu-form-controller";
+import type { SetMenu } from "@/components/features/set-menus/types/set-menu";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { NotFoundState } from "@/components/ui/not-found-state";
-import { PfcDot } from "@/components/ui/pfc-display";
-import { SectionHeader } from "@/components/ui/section-header";
-import { Skeleton } from "@/components/ui/skeleton";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { EditFormFooter } from "@/components/ui/edit-form-footer";
 import { UnsavedChangesDialog } from "@/components/ui/unsaved-changes-dialog";
-import { useUnsavedChangesGuard } from "@/hooks";
-import { useSetMenuFormController } from "../hooks/use-set-menu-form-controller";
+import { SetMenuAddItemsSection } from "./set-menu-add-items-section";
+import { SetMenuBasicSection } from "./set-menu-basic-section";
+import { SetMenuItemsSection } from "./set-menu-items-section";
 
-type SetMenuFormViewProps = {
-  id: string;
+type Props = {
+  /** Read on the server; undefined on the new screen */
+  existing?: SetMenu;
+  recipes: Recipe[];
+  foodMasters: FoodMaster[];
 };
 
-/** Form view for creating or editing a set menu */
-const SetMenuFormView = ({ id }: SetMenuFormViewProps) => {
-  const router = useRouter();
+export const SetMenuFormView = ({ existing, recipes, foodMasters }: Props) => {
+  const menu = useSetMenuFormController({ existing, recipes, foodMasters });
   const {
-    form: {
-      register,
-      formState: { errors },
-    },
-    existing,
-    foodMasters,
-    fmSearch,
-    hasUnsavedChanges,
-    isDeleteConfirmOpen,
-    isLoading,
-    isNew,
-    items,
-    recipes,
-    recipeSearch,
-    totals,
-    deleteMutation,
-    saveMutation,
-    setFmSearch,
-    setIsDeleteConfirmOpen,
-    setRecipeSearch,
-    handleAddFoodMaster,
-    handleAddRecipe,
-    handleAdjustQuantity,
-    handleDelete,
-    handleRemoveItem,
-    handleSave,
-  } = useSetMenuFormController(id);
-
-  const backGuard = useUnsavedChangesGuard(hasUnsavedChanges, () =>
-    router.push("/other/set-menus"),
-  );
-
-  if (!isNew && isLoading) {
-    return (
-      <>
-        <Header title="セットメニュー">
-          <Button
-            variant="ghost"
-            size="icon-sm"
-            onClick={() => router.push("/other/set-menus")}
-          >
-            <ArrowLeft className="h-5 w-5" />
-          </Button>
-        </Header>
-        <PageContainer>
-          <div className="space-y-5 p-4">
-            <Skeleton className="h-10 w-full rounded-lg" />
-            <Skeleton className="h-24 w-full rounded-lg" />
-            <Skeleton className="h-24 w-full rounded-lg" />
-            <Skeleton className="h-12 w-full rounded-lg" />
-          </div>
-        </PageContainer>
-      </>
-    );
-  }
-
-  if (!isNew && !existing) {
-    return (
-      <>
-        <Header title="セットメニュー">
-          <Button
-            variant="ghost"
-            size="icon-sm"
-            onClick={() => router.push("/other/set-menus")}
-          >
-            <ArrowLeft className="h-5 w-5" />
-          </Button>
-        </Header>
-        <PageContainer>
-          <NotFoundState
-            message="セットメニューが見つかりませんでした。削除された可能性があります。"
-            backLabel="一覧に戻る"
-            onBack={() => router.push("/other/set-menus")}
-          />
-        </PageContainer>
-      </>
-    );
-  }
+    register,
+    formState: { errors },
+  } = menu.form;
 
   return (
     <>
-      <Header title={isNew ? "セットメニューを登録" : "セットメニューを編集"}>
-        <Button variant="ghost" size="icon-sm" onClick={backGuard.requestExit}>
+      <Header
+        title={menu.isNew ? "セットメニューを登録" : "セットメニューを編集"}
+      >
+        <Button
+          variant="ghost"
+          size="icon-sm"
+          aria-label="セットメニューの一覧に戻る"
+          onClick={menu.backGuard.requestExit}
+        >
           <ArrowLeft className="h-5 w-5" />
         </Button>
       </Header>
       <PageContainer>
-        <form onSubmit={handleSave} className="space-y-5 p-4">
-          {/* ── 基本情報セクション ── */}
-          <section className="space-y-3">
-            <SectionHeader icon={Tag} label="基本情報" />
-            <div className="space-y-3 rounded-xl border border-border/60 bg-muted/30 p-3.5">
-              <div className="space-y-1.5">
-                <Label htmlFor="sm-name" className="text-xs">
-                  セットメニュー名 <span className="text-destructive">*</span>
-                </Label>
-                <Input
-                  id="sm-name"
-                  placeholder="例: 朝定食セット"
-                  {...register("name")}
-                />
-                {errors.name && (
-                  <p className="text-xs text-destructive">
-                    {errors.name.message}
-                  </p>
-                )}
-              </div>
-            </div>
-          </section>
-
-          {/* ── メニュー内容セクション ── */}
-          <section className="space-y-3">
-            <SectionHeader icon={ClipboardList} label="メニュー内容" />
-            <div className="space-y-3 rounded-xl border border-border/60 bg-muted/30 p-3.5">
-              {items.length > 0 ? (
-                <div className="space-y-2">
-                  {items.map((item) => (
-                    <div
-                      key={item.tempId}
-                      className="flex items-center gap-2 rounded-lg border border-border/60 bg-white p-3 shadow-sm dark:bg-background"
-                    >
-                      <div className="min-w-0 flex-1">
-                        <div className="flex items-center gap-1.5">
-                          <p className="truncate text-sm font-medium">
-                            {item.name}
-                          </p>
-                          <Badge
-                            variant="outline"
-                            className="shrink-0 text-[10px]"
-                          >
-                            {item.recipeId ? "レシピ" : "マスタ"}
-                          </Badge>
-                        </div>
-                        <div className="mt-0.5 flex items-center gap-2 text-xs text-muted-foreground">
-                          <span>
-                            {Math.round(item.calories * item.servingQuantity)}{" "}
-                            kcal
-                          </span>
-                          <span>·</span>
-                          <span>
-                            ¥{Math.round(item.cost * item.servingQuantity)}
-                          </span>
-                        </div>
-                      </div>
-                      <div className="flex items-center gap-1">
-                        <Button
-                          type="button"
-                          variant="outline"
-                          size="icon-sm"
-                          className="h-7 w-7"
-                          onClick={() =>
-                            handleAdjustQuantity(item.tempId, -0.5)
-                          }
-                          disabled={item.servingQuantity <= 0.5}
-                        >
-                          <Minus className="h-3 w-3" />
-                        </Button>
-                        <span className="w-8 text-center text-sm font-medium">
-                          {item.servingQuantity}
-                        </span>
-                        <Button
-                          type="button"
-                          variant="outline"
-                          size="icon-sm"
-                          className="h-7 w-7"
-                          onClick={() => handleAdjustQuantity(item.tempId, 0.5)}
-                        >
-                          <Plus className="h-3 w-3" />
-                        </Button>
-                      </div>
-                      <Button
-                        type="button"
-                        variant="ghost"
-                        size="icon-sm"
-                        className="h-7 w-7 text-muted-foreground hover:text-destructive"
-                        onClick={() => handleRemoveItem(item.tempId)}
-                      >
-                        <X className="h-3.5 w-3.5" />
-                      </Button>
-                    </div>
-                  ))}
-                </div>
-              ) : (
-                <p className="py-6 text-center text-sm text-muted-foreground">
-                  下の「アイテムを追加」からメニューを構成してください
-                </p>
-              )}
-
-              {/* Totals preview */}
-              {items.length > 0 && (
-                <div className="rounded-lg bg-muted/60 p-3">
-                  <p className="text-sm font-medium">
-                    合計: {Math.round(totals.calories)} kcal · ¥
-                    {Math.round(totals.cost)}
-                  </p>
-                  <div className="mt-1 flex items-center gap-3 text-xs text-muted-foreground">
-                    <span className="flex items-center gap-1">
-                      <PfcDot color="bg-blue-500" />
-                      P:
-                      {totals.protein.toFixed(1)}
-                    </span>
-                    <span className="flex items-center gap-1">
-                      <PfcDot color="bg-amber-500" />
-                      F:
-                      {totals.fat.toFixed(1)}
-                    </span>
-                    <span className="flex items-center gap-1">
-                      <PfcDot color="bg-green-500" />
-                      C:
-                      {totals.carbs.toFixed(1)}
-                    </span>
-                  </div>
-                </div>
-              )}
-            </div>
-          </section>
-
-          {/* ── アイテム追加セクション ── */}
-          <section className="space-y-3">
-            <SectionHeader icon={ListPlus} label="アイテムを追加" />
-            <div className="rounded-xl border border-border/60 bg-muted/30 p-3.5">
-              <Tabs defaultValue="recipe">
-                <TabsList className="w-full">
-                  <TabsTrigger value="recipe" className="flex-1">
-                    レシピから
-                  </TabsTrigger>
-                  <TabsTrigger value="food_master" className="flex-1">
-                    マスタから
-                  </TabsTrigger>
-                </TabsList>
-
-                <TabsContent value="recipe" className="mt-3">
-                  <div className="space-y-2">
-                    <div className="relative">
-                      <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-                      <Input
-                        placeholder="レシピ名で検索..."
-                        value={recipeSearch}
-                        onChange={(e) => setRecipeSearch(e.target.value)}
-                        className="pl-9"
-                      />
-                    </div>
-                    <div className="max-h-40 space-y-0.5 overflow-y-auto rounded-lg">
-                      {recipes && recipes.length > 0 ? (
-                        recipes.map((recipe) => (
-                          <button
-                            key={recipe.id}
-                            type="button"
-                            className="flex w-full items-center justify-between rounded-md px-3 py-2.5 text-left text-sm transition-colors hover:bg-muted"
-                            onClick={() => handleAddRecipe(recipe)}
-                          >
-                            <span className="truncate font-medium">
-                              {recipe.name}
-                            </span>
-                            <span className="ml-2 whitespace-nowrap text-xs text-muted-foreground">
-                              {Math.round(recipe.calories / recipe.servings)}{" "}
-                              kcal/人
-                            </span>
-                          </button>
-                        ))
-                      ) : (
-                        <p className="py-4 text-center text-sm text-muted-foreground">
-                          {recipeSearch
-                            ? "該当するレシピがありません"
-                            : "レシピが未登録です"}
-                        </p>
-                      )}
-                    </div>
-                  </div>
-                </TabsContent>
-
-                <TabsContent value="food_master" className="mt-3">
-                  <div className="space-y-2">
-                    <div className="relative">
-                      <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-                      <Input
-                        placeholder="食品名・ブランドで検索..."
-                        value={fmSearch}
-                        onChange={(e) => setFmSearch(e.target.value)}
-                        className="pl-9"
-                      />
-                    </div>
-                    <div className="max-h-40 space-y-0.5 overflow-y-auto rounded-lg">
-                      {foodMasters && foodMasters.length > 0 ? (
-                        foodMasters.map((fm) => (
-                          <button
-                            key={fm.id}
-                            type="button"
-                            className="flex w-full items-center justify-between rounded-md px-3 py-2.5 text-left text-sm transition-colors hover:bg-muted"
-                            onClick={() => handleAddFoodMaster(fm)}
-                          >
-                            <span className="truncate font-medium">
-                              {fm.name}
-                            </span>
-                            <span className="ml-2 whitespace-nowrap text-xs text-muted-foreground">
-                              {Math.round(fm.calories)} kcal
-                            </span>
-                          </button>
-                        ))
-                      ) : (
-                        <p className="py-4 text-center text-sm text-muted-foreground">
-                          {fmSearch
-                            ? "該当する食品がありません"
-                            : "食品マスタが未登録です"}
-                        </p>
-                      )}
-                    </div>
-                  </div>
-                </TabsContent>
-              </Tabs>
-            </div>
-          </section>
-
-          {/* ── 保存ボタン ── */}
-          <Button
-            type="submit"
-            className="w-full py-3 text-base font-semibold shadow-sm"
-            disabled={saveMutation.isPending || items.length === 0}
-          >
-            {saveMutation.isPending ? (
-              <span className="flex items-center gap-2">
-                <span className="h-4 w-4 animate-spin rounded-full border-2 border-primary-foreground/30 border-t-primary-foreground" />
-                保存中...
-              </span>
-            ) : isNew ? (
-              <span className="flex items-center gap-2">
-                <Utensils className="h-4 w-4" />
-                登録する
-              </span>
-            ) : (
-              "変更を保存"
-            )}
-          </Button>
-
-          {/* ── 削除ゾーン ── */}
-          {!isNew && (
-            <div className="pt-2">
-              {!isDeleteConfirmOpen ? (
-                <button
-                  type="button"
-                  className="flex w-full items-center justify-center gap-1.5 py-2 text-sm text-muted-foreground transition-colors hover:text-destructive"
-                  onClick={() => setIsDeleteConfirmOpen(true)}
-                >
-                  <Trash2 className="h-3.5 w-3.5" />
-                  このセットメニューを削除する
-                </button>
-              ) : (
-                <div className="space-y-3 rounded-xl border border-destructive/30 bg-destructive/5 p-4">
-                  <div className="flex items-start gap-3">
-                    <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-destructive/10">
-                      <Trash2 className="h-4 w-4 text-destructive" />
-                    </div>
-                    <div>
-                      <p className="text-sm font-medium">
-                        「{existing?.name}」を削除しますか？
-                      </p>
-                      <p className="mt-0.5 text-xs text-muted-foreground">
-                        過去の食事記録は影響を受けません。
-                      </p>
-                    </div>
-                  </div>
-                  <div className="flex gap-2">
-                    <Button
-                      type="button"
-                      variant="outline"
-                      size="sm"
-                      className="flex-1"
-                      onClick={() => setIsDeleteConfirmOpen(false)}
-                    >
-                      キャンセル
-                    </Button>
-                    <Button
-                      type="button"
-                      variant="destructive"
-                      size="sm"
-                      className="flex-1"
-                      disabled={deleteMutation.isPending}
-                      onClick={handleDelete}
-                    >
-                      {deleteMutation.isPending ? "削除中..." : "削除する"}
-                    </Button>
-                  </div>
-                </div>
-              )}
-            </div>
-          )}
+        <form onSubmit={menu.handleSave} className="space-y-5 p-4">
+          <SetMenuBasicSection register={register} errors={errors} />
+          <SetMenuItemsSection
+            items={menu.items}
+            totals={menu.totals}
+            onAdjustQuantity={menu.handleAdjustQuantity}
+            onRemove={menu.handleRemoveItem}
+          />
+          <SetMenuAddItemsSection
+            recipes={menu.recipes}
+            foodMasters={menu.foodMasters}
+            recipeSearch={menu.recipeSearch}
+            fmSearch={menu.fmSearch}
+            onRecipeSearchChange={menu.handleRecipeSearchChange}
+            onFmSearchChange={menu.handleFmSearchChange}
+            onAddRecipe={menu.handleAddRecipe}
+            onAddFoodMaster={menu.handleAddFoodMaster}
+          />
+          <EditFormFooter
+            isNew={menu.isNew}
+            deleteLabel="このセットメニューを削除する"
+            deleteDescription="過去の食事記録は影響を受けません。"
+            isSaving={menu.isSaving}
+            isDeleting={menu.isDeleting}
+            itemName={menu.existing?.name ?? ""}
+            isDeleteConfirmOpen={menu.isDeleteConfirmOpen}
+            onDeleteAsk={menu.openDeleteConfirm}
+            onDeleteCancel={menu.closeDeleteConfirm}
+            onDelete={menu.handleDelete}
+          />
         </form>
       </PageContainer>
 
       <UnsavedChangesDialog
-        isOpen={backGuard.isConfirmOpen}
-        onOpenChange={backGuard.setIsConfirmOpen}
-        onDiscard={backGuard.confirmExit}
+        isOpen={menu.backGuard.isConfirmOpen}
+        onOpenChange={menu.backGuard.setIsConfirmOpen}
+        onDiscard={menu.backGuard.confirmExit}
       />
     </>
   );
 };
-
-export { SetMenuFormView };
