@@ -184,6 +184,40 @@ test.describe("フェーズ4: 食品マスタ", () => {
     });
   });
 
+  test.describe("最初の HTML にデータが入っている", () => {
+    const name = "E2E初期HTMLマスタ";
+
+    test.beforeEach(async () => {
+      await insertFoodMaster({ name });
+    });
+
+    test.afterEach(async () => {
+      await deleteFoodMastersStartingWith(name);
+    });
+
+    test("AC-R-2: 一覧を開いた最初の HTML にマスタが入っていて、表示の後にブラウザから食品マスタを読まない", async ({
+      page,
+    }) => {
+      const response = await page.request.get("/other/food-masters");
+      expect(response.ok()).toBe(true);
+      expect(await response.text()).toContain(name);
+
+      const foodMasterReads: string[] = [];
+      page.on("request", (request) => {
+        const url = request.url();
+        if (/\/rest\/v1\/food_masters\b/.test(url)) {
+          foodMasterReads.push(url);
+        }
+      });
+      await gotoHydrated(page, "/other/food-masters");
+      await expect(
+        page.getByRole("link", { name: /E2E初期HTMLマスタ/ }),
+      ).toBeVisible();
+
+      expect(foodMasterReads).toEqual([]);
+    });
+  });
+
   test.describe("無い id は 404", () => {
     const name = "E2E削除マスタ";
 

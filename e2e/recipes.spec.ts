@@ -204,7 +204,7 @@ test.describe("フェーズ4: レシピ", () => {
       await deleteRecipesStartingWith(name);
     });
 
-    test("ui-tech §5: 編集の画面を開いている間に消されたレシピは、保存しても保存できたことにならず、画面に残る", async ({
+    test("ui-tech フェーズ 4: 編集の画面を開いている間に消されたレシピは、保存しても保存できたことにならず、画面に残る", async ({
       page,
     }) => {
       const id = await insertRecipe(name);

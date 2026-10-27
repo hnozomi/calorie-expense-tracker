@@ -27,3 +27,8 @@ if (typeof window.matchMedia === "undefined") {
     }),
   });
 }
+
+/** Polyfill scrollIntoView missing from jsdom (Radix Select scrolls the chosen option into view) */
+if (typeof Element.prototype.scrollIntoView === "undefined") {
+  Element.prototype.scrollIntoView = () => {};
+}
