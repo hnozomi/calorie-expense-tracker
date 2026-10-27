@@ -1,6 +1,10 @@
 import { ListPlus } from "lucide-react";
 import type { FoodMaster } from "@/components/features/food-masters/types/food-master";
 import type { Recipe } from "@/components/features/recipes/types/recipe";
+import {
+  foodMasterCaloriesLabel,
+  recipeCaloriesLabel,
+} from "@/components/features/set-menus/utils/display-values";
 import { SectionHeader } from "@/components/ui/section-header";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { SetMenuCandidateList } from "./set-menu-candidate-list";
@@ -45,9 +49,7 @@ export const SetMenuAddItemsSection = ({
             placeholder="レシピ名で検索..."
             emptyMessage="レシピが未登録です"
             searchEmptyMessage="該当するレシピがありません"
-            caloriesLabelOf={(recipe) =>
-              `${Math.round(recipe.calories / (recipe.servings || 1))} kcal/人`
-            }
+            caloriesLabelOf={recipeCaloriesLabel}
             onSearchChange={onRecipeSearchChange}
             onAdd={onAddRecipe}
           />
@@ -59,7 +61,7 @@ export const SetMenuAddItemsSection = ({
             placeholder="食品名・ブランドで検索..."
             emptyMessage="食品マスタが未登録です"
             searchEmptyMessage="該当する食品がありません"
-            caloriesLabelOf={(fm) => `${Math.round(fm.calories)} kcal`}
+            caloriesLabelOf={foodMasterCaloriesLabel}
             onSearchChange={onFmSearchChange}
             onAdd={onAddFoodMaster}
           />

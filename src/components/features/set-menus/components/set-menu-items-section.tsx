@@ -1,5 +1,6 @@
 import { ClipboardList } from "lucide-react";
 import type { SetMenuItemDraft } from "@/components/features/set-menus/types/set-menu";
+import { scaledItemValues } from "@/components/features/set-menus/utils/display-values";
 import { SectionHeader } from "@/components/ui/section-header";
 import { SetMenuItemRow } from "./set-menu-item-row";
 import { SetMenuTotals } from "./set-menu-totals";
@@ -27,6 +28,7 @@ export const SetMenuItemsSection = ({
               <SetMenuItemRow
                 key={item.tempId}
                 item={item}
+                scaled={scaledItemValues(item)}
                 onAdjustQuantity={onAdjustQuantity}
                 onRemove={onRemove}
               />

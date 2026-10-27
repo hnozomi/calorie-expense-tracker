@@ -5,11 +5,18 @@ import { Button } from "@/components/ui/button";
 
 type Props = {
   item: SetMenuItemDraft;
+  /** The item's values times its serving quantity */
+  scaled: { calories: number; cost: number };
   onAdjustQuantity: (tempId: string, delta: number) => void;
   onRemove: (tempId: string) => void;
 };
 
-export const SetMenuItemRow = ({ item, onAdjustQuantity, onRemove }: Props) => (
+export const SetMenuItemRow = ({
+  item,
+  scaled,
+  onAdjustQuantity,
+  onRemove,
+}: Props) => (
   <div className="flex items-center gap-2 rounded-lg border border-border/60 bg-white p-3 shadow-sm dark:bg-background">
     <div className="min-w-0 flex-1">
       <div className="flex items-center gap-1.5">
@@ -19,9 +26,9 @@ export const SetMenuItemRow = ({ item, onAdjustQuantity, onRemove }: Props) => (
         </Badge>
       </div>
       <div className="mt-0.5 flex items-center gap-2 text-xs text-muted-foreground">
-        <span>{Math.round(item.calories * item.servingQuantity)} kcal</span>
+        <span>{scaled.calories} kcal</span>
         <span>·</span>
-        <span>¥{Math.round(item.cost * item.servingQuantity)}</span>
+        <span>¥{scaled.cost}</span>
       </div>
     </div>
     <div className="flex items-center gap-1">

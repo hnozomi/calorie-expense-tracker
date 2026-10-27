@@ -21,6 +21,8 @@ export const SetMenuBasicSection = ({ register, errors }: Props) => (
         <Input
           id="sm-name"
           placeholder="例: 朝定食セット"
+          enterKeyHint="done"
+          autoComplete="off"
           aria-invalid={!!errors.name}
           aria-describedby={errors.name ? "sm-name-error" : undefined}
           {...register("name")}
