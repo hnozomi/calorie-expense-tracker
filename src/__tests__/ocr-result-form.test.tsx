@@ -16,6 +16,7 @@ const createOcrResult = (
   protein: 23.8,
   fat: 1.2,
   carbs: 0.3,
+  pieceCount: null,
   ...overrides,
 });
 

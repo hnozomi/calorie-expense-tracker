@@ -13,6 +13,7 @@ const createResult = (
   protein: null,
   fat: null,
   carbs: null,
+  pieceCount: null,
   ...overrides,
 });
 

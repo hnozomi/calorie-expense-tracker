@@ -21,6 +21,7 @@ const labelResult: OcrNutritionResult = {
   protein: 23.8,
   fat: 1.2,
   carbs: 0.3,
+  pieceCount: null,
 };
 
 const photo = new File(["photo"], "label.jpg", { type: "image/jpeg" });

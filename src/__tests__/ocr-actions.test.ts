@@ -24,6 +24,15 @@ const labelResult: OcrNutritionResult = {
   protein: 23.8,
   fat: 1.2,
   carbs: null,
+  pieceCount: null,
+};
+
+// What Claude returns for labelResult: the label values plus the two per-piece fields the action maps to pieceCount
+const { pieceCount: _pieceCount, ...labelValues } = labelResult;
+const parsedLabel = {
+  ...labelValues,
+  valuesArePerPiece: false,
+  piecesInPackage: null,
 };
 
 beforeEach(() => {
@@ -31,7 +40,7 @@ beforeEach(() => {
   rpc.mockResolvedValue({ data: true, error: null });
   parse.mockResolvedValue({
     stop_reason: "end_turn",
-    parsed_output: labelResult,
+    parsed_output: parsedLabel,
   });
 });
 
@@ -131,12 +140,100 @@ describe("readNutritionLabel (F-02 栄養表の読み取り)", () => {
     ])("F-02: 応答が end_turn 以外(%s)で終わったら失敗を返す", async (stopReason) => {
       parse.mockResolvedValue({
         stop_reason: stopReason,
-        parsed_output: labelResult,
+        parsed_output: parsedLabel,
       });
 
       const result = await readNutritionLabel(JPEG_DATA_URL);
 
       expect(result).toEqual({ ok: false, reason: "failed" });
+    });
+  });
+
+  describe("1個当たりの表示(何個入り)", () => {
+    it("F-02: 1個当たりかと何個入りかを Claude に答えさせる", async () => {
+      await readNutritionLabel(JPEG_DATA_URL);
+
+      const request = parse.mock.calls[0][0];
+      const schema = request.output_config.format.schema;
+      expect(schema.properties).toHaveProperty("valuesArePerPiece");
+      expect(schema.properties).toHaveProperty("piecesInPackage");
+      expect(schema.required).toEqual(
+        expect.arrayContaining(["valuesArePerPiece", "piecesInPackage"]),
+      );
+    });
+
+    it("F-02: 1個当たりで8個入りなら pieceCount は 8", async () => {
+      parse.mockResolvedValue({
+        stop_reason: "end_turn",
+        parsed_output: {
+          ...parsedLabel,
+          valuesArePerPiece: true,
+          piecesInPackage: 8,
+        },
+      });
+
+      const result = await readNutritionLabel(JPEG_DATA_URL);
+
+      expect(result).toEqual({
+        ok: true,
+        result: { ...labelResult, pieceCount: 8 },
+      });
+    });
+
+    it.each([
+      ["1個入り", 1],
+      ["個数が読めない", null],
+    ])("F-02: 1個当たりでも%sなら pieceCount は null", async (_label, pieces) => {
+      parse.mockResolvedValue({
+        stop_reason: "end_turn",
+        parsed_output: {
+          ...parsedLabel,
+          valuesArePerPiece: true,
+          piecesInPackage: pieces,
+        },
+      });
+
+      const result = await readNutritionLabel(JPEG_DATA_URL);
+
+      expect(result).toEqual({
+        ok: true,
+        result: { ...labelResult, pieceCount: null },
+      });
+    });
+
+    it("F-02: 値がパッケージ全体のものなら、8個入りでも pieceCount は null", async () => {
+      parse.mockResolvedValue({
+        stop_reason: "end_turn",
+        parsed_output: {
+          ...parsedLabel,
+          valuesArePerPiece: false,
+          piecesInPackage: 8,
+        },
+      });
+
+      const result = await readNutritionLabel(JPEG_DATA_URL);
+
+      expect(result).toEqual({
+        ok: true,
+        result: { ...labelResult, pieceCount: null },
+      });
+    });
+
+    it("F-02: Claude に答えさせた valuesArePerPiece と piecesInPackage は結果に含めない", async () => {
+      parse.mockResolvedValue({
+        stop_reason: "end_turn",
+        parsed_output: {
+          ...parsedLabel,
+          valuesArePerPiece: true,
+          piecesInPackage: 8,
+        },
+      });
+
+      const result = await readNutritionLabel(JPEG_DATA_URL);
+
+      if (!result.ok) throw new Error("expected a successful read");
+      expect(result.result).not.toHaveProperty("valuesArePerPiece");
+      expect(result.result).not.toHaveProperty("piecesInPackage");
     });
   });
 });
