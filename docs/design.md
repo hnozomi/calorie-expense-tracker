@@ -1,5 +1,7 @@
 # めしログ（MeshiLog）技術設計書
 
+> 2026-10 の描画の作り直しより前の作り(TanStack Query でブラウザから読む)の文書。今の作りは `docs/ui-tech.md` を見る。
+
 ## Context
 
 めしログは毎日の食事を記録してカロリー・PFC・食費を管理するパーソナルPWA。Notionの設計書（docs/配下）をベースに、既存のNext.js PWAテンプレート上に技術設計を行う。

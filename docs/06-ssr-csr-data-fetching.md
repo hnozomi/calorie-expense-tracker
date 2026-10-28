@@ -1,5 +1,7 @@
 # SSR/CSR データフェッチ設計ガイド
 
+> 2026-10 の描画の作り直しより前の作り(TanStack Query でブラウザから読む)の文書。今の作りは `docs/ui-tech.md` を見る。
+
 ## 概要
 
 Next.js App Router + TanStack Query における、サーバーサイドレンダリング（SSR）とクライアントサイドレンダリング（CSR）のデータフェッチの責務分離についてまとめる。

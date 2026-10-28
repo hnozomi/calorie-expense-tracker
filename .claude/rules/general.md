@@ -10,15 +10,15 @@ src/
   components/
     features/<feature>/       機能ごと
       components/             描画する部品
-      hooks/                  その機能のロジック(state、イベント処理、TanStack Query)
-      api/ または queries.ts  データの取得・更新
+      hooks/                  その機能のロジック(state、イベント処理、Server Action の呼び出し)
+      api/                    queries.ts(サーバーで読む)と actions.ts(Server Action)
       types/                  その機能の型
       stores/                 その機能の Jotai の atom
       utils/                  その機能の純粋な関数
       <feature>-page.tsx      ページ部品
       index.ts                公開するものの再 export
     ui/<component>/           汎用部品(shadcn/ui とその派生)
-  hooks/                      複数の機能で使う hooks(TanStack Query のキーは query-keys.ts)
+  hooks/                      複数の機能で使う hooks
   types/                      複数の機能で使う型(Supabase の型は database.ts)
   utils/                      機能に依存しない純粋な関数(`cn()` は utils/cn.ts)
   lib/supabase/               Supabase のクライアント
