@@ -15,7 +15,6 @@ import type { Recipe } from "@/components/features/recipes/types/recipe";
 import { totalIngredientCost } from "@/components/features/recipes/utils/recipe-cost";
 import type { SetMenu } from "@/components/features/set-menus/types/set-menu";
 import { callAction } from "@/lib/action-result";
-import { useRefreshLegacyScreens } from "@/lib/legacy-bridge";
 import type { MealType } from "@/types";
 import { matchesSearch } from "@/utils/matches-search";
 import { useWeeklyPlansContext } from "./use-weekly-plans-context";
@@ -44,7 +43,6 @@ export const usePlanMenuSelectController = ({
 }: UsePlanMenuSelectControllerParams) => {
   const { showPlanChange, candidates } = useWeeklyPlansContext();
   const { recipes, foodMasters, setMenus, hasError } = use(candidates);
-  const refreshLegacyScreens = useRefreshLegacyScreens();
   const [recipeSearch, setRecipeSearch] = useState("");
   const [fmSearch, setFmSearch] = useState("");
   const [manualName, setManualName] = useState("");
@@ -114,7 +112,6 @@ export const usePlanMenuSelectController = ({
         return;
       }
       toast.success("献立を保存しました");
-      refreshLegacyScreens();
     });
   };
 
@@ -204,7 +201,6 @@ export const usePlanMenuSelectController = ({
         return;
       }
       toast.success("献立を削除しました");
-      refreshLegacyScreens();
     });
   };
 

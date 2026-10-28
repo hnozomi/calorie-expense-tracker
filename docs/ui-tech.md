@@ -2,7 +2,7 @@
 
 開いた直後とタブの切り替えで待たされるのを直すため、全画面を共通の規約 `~/base/apps/.claude/rules/coding/rendering.md` の作りに移す。画面の見た目と操作は変えない。
 
-- 今の作りの洗い出し: `docs/rendering-migration-inventory.md`
+- 今の作りの洗い出し: `docs/rendering-migration-inventory.md`(フェーズ 6 で役目を終えて消した。git の履歴に残る)
 - 画面の仕様: このアプリには `docs/ui-design.md` が無い(規約より前に作った)。見た目と操作は今の画面と `docs/02-screen-interaction.md` を正とする
 - 要件: `docs/requirements.md` も無い。この作り直しで満たすことは下の「満たすこと」に書く。今の振る舞いは `docs/e2e-test-design.md` の E2E(A-1〜ST-3)が守る
 
@@ -73,7 +73,7 @@ src/components/features/<feature>/
 | `src/utils/date.ts` | `getTodayInTokyo()`・`getThisMondayInTokyo()`・`getMondayOf()`(その日の週の月曜)を足す(サーバーで「今日」を決める) |
 | `src/utils/search-params.ts` | `parseDateParam`・`parseWeekParam`(形を確かめ、週は月曜に直す) |
 | `src/lib/revalidate-screens.ts` | `revalidateAllScreens()`(`revalidatePath("/", "layout")`)。全 Server Action が書き込みの成功の後に呼ぶ |
-| `src/lib/revalidate.ts` | `revalidateApp()`。移行中のつなぎ専用(TanStack Query の画面から呼ぶ Server Action)。ログインを確かめてから `revalidateAllScreens()` |
+| `src/lib/revalidate.ts` | `revalidateApp()`。移行中のつなぎ専用(TanStack Query の画面から呼ぶ Server Action)。ログインを確かめてから `revalidateAllScreens()`。フェーズ 6 で `legacy-bridge.ts` と一緒に消した |
 | `src/lib/screen-cache.ts` | `SCREEN_CACHE`(`cacheLife` に渡す使い回しの時間) |
 | `src/lib/today.ts` | `getToday()`。`'use cache: private'` の中で今日(Asia/Tokyo)を決める |
 | `src/lib/action-result.ts` | `ActionResult`(Server Action の戻り値)と `callAction`(呼び出しの例外を `{ ok: false }` にする) |
@@ -279,8 +279,8 @@ app/(main)/home/page.tsx                    Server。Header と <Suspense> を�
 
 ### フェーズ 6: 片付けと測定
 
-- TanStack Query を外す(`providers.tsx`・`package.json`)。`legacy-bridge.ts`・`use-has-hydrated`・`hydrated-only`・`use-supabase`・`query-keys` を消す
-- `CLAUDE.md` の Performance を新しい作りに書き直す(`useListCacheSeed`・`router.push` の話を消す)
+- TanStack Query を外す(`providers.tsx`・`package.json`)。`legacy-bridge.ts`・`revalidate.ts`・`use-has-hydrated`・`hydrated-only`・`use-supabase`・`query-keys`・`use-date-navigation`・`create-week-start-atom` を消す(`use-supabase` を使っていたログイン・ログアウトは、`@/lib/supabase/client` の `createClient()` を直接呼ぶ。ブラウザでは1つのクライアントを使い回すため)
+- `CLAUDE.md` の Performance を新しい作りに書き直す(`useListCacheSeed` の話を消し、サーバーで読む作りを書き足す。`router.push` を使わない決まりは今も守るので残す)
 - `docs/performance-issues-and-fixes.md` に、作り直しの前後の数字を書く
 - `docs/rendering-migration-inventory.md` を消す(役目を終えるため)
 

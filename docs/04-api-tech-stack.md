@@ -1,5 +1,7 @@
 # API設計・技術スタック
 
+> 2026-10 の描画の作り直しより前の作り(TanStack Query でブラウザから読む)の文書。今の作りは `docs/ui-tech.md` を見る。
+
 ## API設計（Supabase RPC / REST）
 
 ### 食事記録

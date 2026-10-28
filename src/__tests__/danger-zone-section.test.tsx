@@ -1,9 +1,8 @@
-import { act, cleanup, screen } from "@testing-library/react";
+import { act, cleanup, render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { DangerZoneSection } from "@/components/features/settings/components/danger-zone-section";
 import { deferred } from "./helpers/daily-meals";
-import { renderWithQueryClient } from "./helpers/query-client";
 
 // Phase 5: deleting everything goes through the Server Action deleteAllData (the boundary here)
 const deleteAllData = vi.fn();
@@ -28,7 +27,7 @@ afterEach(() => {
   vi.clearAllMocks();
 });
 
-const renderSection = () => renderWithQueryClient(<DangerZoneSection />);
+const renderSection = () => render(<DangerZoneSection />);
 
 const openDialog = async (user: ReturnType<typeof userEvent.setup>) => {
   await user.click(screen.getByRole("button", { name: "全データを削除" }));

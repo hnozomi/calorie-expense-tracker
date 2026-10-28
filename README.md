@@ -8,7 +8,7 @@ PWA 対応の Next.js アプリケーションテンプレート。
 |----------|------|
 | Framework | Next.js (App Router) + TypeScript |
 | UI | shadcn/ui + Tailwind CSS v4 |
-| State | Jotai (client) + TanStack Query (server) |
+| State | Server Components + Server Actions (server data), Jotai (client) |
 | Forms | React Hook Form + Zod |
 | Backend | Supabase (optional) |
 | PWA | Custom Service Worker |

@@ -13,8 +13,8 @@ import { AccountSection } from "@/components/features/settings/components/accoun
 const signOut = vi.fn();
 const getUser = vi.fn();
 
-vi.mock("@/hooks", () => ({
-  useSupabase: () => ({ auth: { signOut, getUser } }),
+vi.mock("@/lib/supabase/client", () => ({
+  createClient: () => ({ auth: { signOut, getUser } }),
 }));
 
 const assign = vi.fn();

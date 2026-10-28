@@ -5,13 +5,11 @@ import { useState, useTransition } from "react";
 import { toast } from "sonner";
 import { deleteAllData } from "@/components/features/settings/api/actions";
 import { callAction } from "@/lib/action-result";
-import { useRefreshLegacyScreens } from "@/lib/legacy-bridge";
 
 export const DELETE_ALL_CONFIRMATION_TEXT = "全データ削除";
 
 /** Deleting everything needs the confirmation words typed; the dialog stays open on failure for a retry */
 export const useDangerZone = () => {
-  const refreshLegacyScreens = useRefreshLegacyScreens();
   const [confirmText, setConfirmText] = useState("");
   const [isOpen, setIsOpen] = useState(false);
   const [isDeleting, startDeleting] = useTransition();
@@ -19,8 +17,6 @@ export const useDangerZone = () => {
   const handleDelete = () => {
     startDeleting(async () => {
       const result = await callAction(() => deleteAllData());
-      // Even a failure may have emptied some tables, so the other screens re-read either way
-      refreshLegacyScreens();
       if (!result.ok) {
         toast.error(
           "データの削除に失敗しました。一部のデータのみ削除された可能性があります。もう一度お試しください。",

@@ -6,7 +6,6 @@ import { toast } from "sonner";
 import { z } from "zod/v4";
 import { saveNutritionTarget } from "@/components/features/settings/api/actions";
 import { callAction } from "@/lib/action-result";
-import { useRefreshLegacyScreens } from "@/lib/legacy-bridge";
 import type { NutritionTarget } from "@/types";
 
 /** Build a validated numeric target field that rejects blanks and out-of-range values */
@@ -34,7 +33,6 @@ type TargetFieldKey = keyof z.infer<typeof targetFormSchema>;
 
 /** The four target fields as typed, checked when saved; target is read on the server */
 export const useNutritionTargetForm = (target: NutritionTarget) => {
-  const refreshLegacyScreens = useRefreshLegacyScreens();
   const [isSaving, startSaving] = useTransition();
 
   const [calories, setCalories] = useState(String(target.targetCalories));
@@ -78,7 +76,6 @@ export const useNutritionTargetForm = (target: NutritionTarget) => {
         return;
       }
       toast.success("目標値を保存しました");
-      refreshLegacyScreens();
     });
   };
 

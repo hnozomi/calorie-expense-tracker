@@ -2,11 +2,12 @@
 
 import { useRouter } from "next/navigation";
 import { useCallback } from "react";
-import { useSupabase } from "@/hooks";
+import { createClient } from "@/lib/supabase/client";
 
 /** Provide sign-in/sign-up/sign-out actions for the auth forms */
 export const useAuth = () => {
-  const supabase = useSupabase();
+  // createBrowserClient returns one shared client per browser tab
+  const supabase = createClient();
   const router = useRouter();
 
   const signUp = useCallback(

@@ -20,7 +20,6 @@ import type {
 import { recipeFormSchema } from "@/components/features/recipes/types/recipe";
 import { useUnsavedChangesGuard } from "@/hooks";
 import { callAction } from "@/lib/action-result";
-import { useRefreshLegacyScreens } from "@/lib/legacy-bridge";
 
 export type EditableIngredient = IngredientFormValues & { tempId: string };
 
@@ -65,7 +64,6 @@ const createEmptyIngredient = (): EditableIngredient => ({
 /** existing is read on the server; undefined on the new-recipe screen */
 export const useRecipeFormController = (existing: Recipe | undefined) => {
   const router = useRouter();
-  const refreshLegacyScreens = useRefreshLegacyScreens();
   const isNew = existing === undefined;
   const [isSaving, startSaving] = useTransition();
   const [isDeleting, startDeleting] = useTransition();
@@ -145,7 +143,6 @@ export const useRecipeFormController = (existing: Recipe | undefined) => {
         form.reset(values);
         setHasIngredientEdits(false);
       }
-      refreshLegacyScreens();
       router.push("/recipes");
     });
   });
@@ -159,7 +156,6 @@ export const useRecipeFormController = (existing: Recipe | undefined) => {
         return;
       }
       toast.success("レシピを削除しました");
-      refreshLegacyScreens();
       router.push("/recipes");
     });
   };

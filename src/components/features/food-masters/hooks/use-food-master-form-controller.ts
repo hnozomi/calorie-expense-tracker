@@ -19,7 +19,6 @@ import { foodMasterFormSchema } from "@/components/features/food-masters/types/f
 import type { OcrNutritionResult } from "@/components/features/ocr";
 import { useUnsavedChangesGuard } from "@/hooks";
 import { callAction } from "@/lib/action-result";
-import { useRefreshLegacyScreens } from "@/lib/legacy-bridge";
 import { FOOD_CATEGORIES, type FoodCategory } from "@/types";
 
 const EMPTY_FOOD_MASTER_FORM_VALUES: FoodMasterFormValues = {
@@ -50,7 +49,6 @@ export const useFoodMasterFormController = (
   prefill: Partial<FoodMasterFormValues>,
 ) => {
   const router = useRouter();
-  const refreshLegacyScreens = useRefreshLegacyScreens();
   const isNew = existing === undefined;
   const [isSaving, startSaving] = useTransition();
   const [isDeleting, startDeleting] = useTransition();
@@ -103,7 +101,6 @@ export const useFoodMasterFormController = (
       toast.success(isNew ? "食品を登録しました" : "変更を保存しました");
       // A new master's screen starts empty again; an edited one keeps the saved values as its clean state
       form.reset(isNew ? undefined : values);
-      refreshLegacyScreens();
       router.push("/other/food-masters");
     });
   });
@@ -119,7 +116,6 @@ export const useFoodMasterFormController = (
         return;
       }
       toast.success("食品を削除しました");
-      refreshLegacyScreens();
       router.push("/other/food-masters");
     });
   };

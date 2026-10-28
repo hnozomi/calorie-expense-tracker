@@ -1,4 +1,3 @@
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { act, render } from "@testing-library/react";
 import { Suspense } from "react";
 import type { FoodMaster } from "@/components/features/food-masters/types/food-master";
@@ -108,35 +107,32 @@ export type WeeklyPlansOptions = {
 };
 
 /** The providers the plan screen puts around its client parts: the week's plans and candidates as PlanContent read them,
- *  a Suspense boundary for the parts that use() the candidates, and the TanStack Query client the legacy screens refresh through */
+ *  and a Suspense boundary for the parts that use() the candidates */
 export const createWeeklyPlansWrapper = ({
   weekStart = "2026-10-19",
   today = "2026-10-20",
   plans = [],
   candidates = candidatesOf(),
 }: WeeklyPlansOptions = {}) => {
-  const queryClient = new QueryClient();
   const Wrapper = ({ children }: { children: React.ReactNode }) => (
-    <QueryClientProvider client={queryClient}>
-      <WeeklyPlansProvider
-        weekStart={weekStart}
-        today={today}
-        plans={plans}
-        candidates={candidates}
-      >
-        <Suspense fallback={<p>候補を読み込み中</p>}>{children}</Suspense>
-      </WeeklyPlansProvider>
-    </QueryClientProvider>
+    <WeeklyPlansProvider
+      weekStart={weekStart}
+      today={today}
+      plans={plans}
+      candidates={candidates}
+    >
+      <Suspense fallback={<p>候補を読み込み中</p>}>{children}</Suspense>
+    </WeeklyPlansProvider>
   );
-  return { Wrapper, queryClient };
+  return { Wrapper };
 };
 
 export const renderWithWeeklyPlans = (
   ui: React.ReactElement,
   options: WeeklyPlansOptions = {},
 ) => {
-  const { Wrapper, queryClient } = createWeeklyPlansWrapper(options);
-  return { ...render(ui, { wrapper: Wrapper }), queryClient };
+  const { Wrapper } = createWeeklyPlansWrapper(options);
+  return render(ui, { wrapper: Wrapper });
 };
 
 /** Render and let React take up candidates that are already read. A promise React has not seen yet only

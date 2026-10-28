@@ -5,7 +5,6 @@ import { startTransition, useState } from "react";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 import { callAction } from "@/lib/action-result";
-import { useRefreshLegacyScreens } from "@/lib/legacy-bridge";
 import { deleteMealItem, updateMealItem } from "../api/actions";
 import {
   type MealItem,
@@ -23,7 +22,6 @@ export const useMealItemEdit = (
   onSaveFailed: (itemWithTypedValues: MealItem) => void,
 ) => {
   const { showMealChange } = useDailyMealsContext();
-  const refreshLegacyScreens = useRefreshLegacyScreens();
   const [isDeleteConfirmOpen, setIsDeleteConfirmOpen] = useState(false);
 
   const form = useForm<MealItemFormInput, undefined, MealItemFormValues>({
@@ -55,7 +53,6 @@ export const useMealItemEdit = (
         return;
       }
       toast.success("変更を保存しました");
-      refreshLegacyScreens();
     });
   };
 
@@ -73,7 +70,6 @@ export const useMealItemEdit = (
         return;
       }
       toast.success("削除しました");
-      refreshLegacyScreens();
     });
   };
 

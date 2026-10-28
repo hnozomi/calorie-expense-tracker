@@ -3,7 +3,7 @@
 ## Tech Stack
 - **Framework**: Next.js (App Router) + TypeScript
 - **UI**: shadcn/ui + Tailwind CSS v4
-- **State**: Jotai (client state) + TanStack Query (server state)
+- **State**: server data is read in Server Components (`'use cache: private'`) and written with Server Actions; Jotai holds browser-only state (the meal drawer)
 - **Forms**: React Hook Form + Zod
 - **Backend**: Supabase (DB + Auth) via `@supabase/ssr`
 - **PWA**: Custom implementation (no external library)
@@ -41,7 +41,7 @@ src/
 - Specs live in `e2e/` and run only against local Supabase: `supabase start` first (ports 593xx, see `supabase/config.toml`). `e2e/global.setup.ts` runs `supabase db reset --local` and creates the three E2E users every run (`e2eUser`, plus `e2eSwitchUsers` only for the logout flow, since logging out ends all of that user's sessions), and `e2e/local-supabase.ts` refuses a non-local URL. The app is started on port 3101 with the local URL and key.
 - Always use the helpers in `e2e/helpers.ts` (`gotoHydrated`, `fillStable`, `clickToReveal`, `loginViaUi`, which takes the user to sign in as): input and clicks before React hydration are silently lost on the dev server.
 - Find text and fields with `visibleText` / `visibleField`, not `page.getByText` / `page.getByLabel`: with `cacheComponents`, visited screens stay hidden in the DOM and match too.
-- `NEXT_PUBLIC_E2E=1` hides the TanStack Query devtools button and the Next.js dev indicator, both of which overlap the bottom nav and intercept taps.
+- `NEXT_PUBLIC_E2E=1` hides the Next.js dev indicator, which overlaps the bottom nav and intercepts taps.
 
 ## Deploy Checklist
 - **Before `git push`**: Always run `pnpm build` and confirm it succeeds. Turbopack dev server skips TypeScript type checking and does not prerender pages, so errors only caught by production build will silently break Vercel deployments.
@@ -67,7 +67,8 @@ Tests are statements of the spec. Rationale for these rules: `docs/testing/test-
 6. **If you cannot fix it, report it as failing** — never green it by weakening.
 
 ## Performance
-- Navigation must be instant: use `<Link>` (with explicit `prefetch` for dynamic routes), never `router.push` for user-initiated navigation (the one exception is the home date picker: an OS date input cannot be a link, and it pushes like the day arrows so back returns to the previous day). Do not add blocking work (e.g. auth round-trips) to the middleware path for RSC requests. Seed detail queries from cached list data (`useListCacheSeed`) instead of refetching. See `docs/performance-issues-and-fixes.md` for past incidents and the pre-merge checklist.
+- Screens are rendered on the server with `cacheComponents`: data is read in `api/queries.ts` (`'use cache: private'` + `cacheLife(SCREEN_CACHE)`) inside a Suspense boundary, and visited screens stay mounted (hidden) so returning to a tab shows them without a skeleton. Writes go through Server Actions in `api/actions.ts`, which call `revalidateAllScreens()` after a successful write; show the change at once with `useOptimistic` (see `docs/ui-tech.md`).
+- Navigation must be instant: use `<Link>` (with explicit `prefetch` for dynamic routes), never `router.push` for user-initiated navigation (the one exception is the home date picker: an OS date input cannot be a link, and it pushes like the day arrows so back returns to the previous day). Do not add blocking work (e.g. auth round-trips) to the middleware path for RSC requests. Do not read from the database in the browser after the page is shown (auth and OCR aside). See `docs/performance-issues-and-fixes.md` for past incidents, the before/after numbers of the rebuild, and the pre-merge checklist.
 
 ## Coding Rules
 See `.claude/rules/` for detailed coding rules.

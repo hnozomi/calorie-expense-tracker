@@ -1,15 +1,17 @@
-import { act, cleanup, screen, waitFor, within } from "@testing-library/react";
+import {
+  act,
+  cleanup,
+  render,
+  screen,
+  waitFor,
+  within,
+} from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { Activity } from "react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { FoodMasterFormView } from "@/components/features/food-masters/components/food-master-form-view";
 import type { FoodMaster } from "@/components/features/food-masters/types/food-master";
 import { deferred } from "./helpers/daily-meals";
-import {
-  areLegacyScreensFresh,
-  areLegacyScreensStale,
-  renderWithQueryClient,
-} from "./helpers/query-client";
 
 const push = vi.fn();
 vi.mock("next/navigation", () => ({
@@ -81,7 +83,7 @@ const flush = async () => {
 describe("FoodMasterFormView (S-08a 食品マスタ登録/編集)", () => {
   describe("新規", () => {
     it("S-08a: 新規の画面は「食品を登録」で、入力は空、削除の操作は無い", () => {
-      renderWithQueryClient(<FoodMasterFormView prefill={{}} />);
+      render(<FoodMasterFormView prefill={{}} />);
 
       expect(
         screen.getByRole("heading", { name: "食品を登録" }),
@@ -93,7 +95,7 @@ describe("FoodMasterFormView (S-08a 食品マスタ登録/編集)", () => {
     });
 
     it("S-08a: OCR から渡された値(prefill)が、新規の画面の入力に入っている", () => {
-      renderWithQueryClient(
+      render(
         <FoodMasterFormView
           prefill={{ name: "プロテインバー", calories: 200, protein: 15 }}
         />,
@@ -107,7 +109,7 @@ describe("FoodMasterFormView (S-08a 食品マスタ登録/編集)", () => {
     it("S-08a: OCR から渡された値は、そのまま登録できる", async () => {
       saveFoodMaster.mockResolvedValue({ ok: true });
       const u = user();
-      renderWithQueryClient(
+      render(
         <FoodMasterFormView
           prefill={{ name: "プロテインバー", calories: 200 }}
         />,
@@ -129,7 +131,7 @@ describe("FoodMasterFormView (S-08a 食品マスタ登録/編集)", () => {
     it("AC-R-5: 登録に成功すると、成功を知らせて食品マスタの一覧に移る", async () => {
       saveFoodMaster.mockResolvedValue({ ok: true });
       const u = user();
-      renderWithQueryClient(<FoodMasterFormView prefill={{}} />);
+      render(<FoodMasterFormView prefill={{}} />);
 
       await u.type(nameField(), "ゆで卵");
       await u.type(brandField(), "ローソン");
@@ -153,7 +155,7 @@ describe("FoodMasterFormView (S-08a 食品マスタ登録/編集)", () => {
 
     it("02 バリデーション: 食品名が空のまま登録すると、欄の下にエラーが出て保存しない", async () => {
       const u = user();
-      renderWithQueryClient(<FoodMasterFormView prefill={{}} />);
+      render(<FoodMasterFormView prefill={{}} />);
 
       await u.click(screen.getByRole("button", { name: /登録する/ }));
 
@@ -165,7 +167,7 @@ describe("FoodMasterFormView (S-08a 食品マスタ登録/編集)", () => {
 
     it("02 バリデーション: マイナスのカロリーでは保存しない", async () => {
       const u = user();
-      renderWithQueryClient(<FoodMasterFormView prefill={{}} />);
+      render(<FoodMasterFormView prefill={{}} />);
 
       await u.type(nameField(), "ゆで卵");
       await u.clear(caloriesField());
@@ -180,7 +182,7 @@ describe("FoodMasterFormView (S-08a 食品マスタ登録/編集)", () => {
 
     it("02 バリデーション: エラーの文は欄に結び付き(aria-describedby)、欄はエラーの状態(aria-invalid)になる", async () => {
       const u = user();
-      renderWithQueryClient(<FoodMasterFormView prefill={{}} />);
+      render(<FoodMasterFormView prefill={{}} />);
       expect(nameField()).not.toHaveAttribute("aria-invalid", "true");
 
       await u.clear(caloriesField());
@@ -214,7 +216,7 @@ describe("FoodMasterFormView (S-08a 食品マスタ登録/編集)", () => {
     it("S-08a: カテゴリは「カテゴリ」の欄で選べ、選んだカテゴリで登録する", async () => {
       saveFoodMaster.mockResolvedValue({ ok: true });
       const u = user();
-      renderWithQueryClient(<FoodMasterFormView prefill={{}} />);
+      render(<FoodMasterFormView prefill={{}} />);
 
       await u.type(nameField(), "メロンパン");
       await u.click(categoryField());
@@ -234,7 +236,7 @@ describe("FoodMasterFormView (S-08a 食品マスタ登録/編集)", () => {
 
     it("S-08a: 「栄養成分表示をカメラで読み取り」で、撮影の画面が開く", async () => {
       const u = user();
-      renderWithQueryClient(<FoodMasterFormView prefill={{}} />);
+      render(<FoodMasterFormView prefill={{}} />);
       expect(
         screen.queryByRole("heading", { name: "栄養表を撮影" }),
       ).not.toBeInTheDocument();
@@ -251,9 +253,7 @@ describe("FoodMasterFormView (S-08a 食品マスタ登録/編集)", () => {
 
   describe("編集", () => {
     it("S-08a: 編集の画面は「食品を編集」で、サーバーで読んだ値が入っている", () => {
-      renderWithQueryClient(
-        <FoodMasterFormView existing={createFoodMaster()} prefill={{}} />,
-      );
+      render(<FoodMasterFormView existing={createFoodMaster()} prefill={{}} />);
 
       expect(
         screen.getByRole("heading", { name: "食品を編集" }),
@@ -268,9 +268,7 @@ describe("FoodMasterFormView (S-08a 食品マスタ登録/編集)", () => {
     it("AC-R-5: 変更を保存すると、そのマスタの id で保存し、成功を知らせて一覧に移る", async () => {
       saveFoodMaster.mockResolvedValue({ ok: true });
       const u = user();
-      renderWithQueryClient(
-        <FoodMasterFormView existing={createFoodMaster()} prefill={{}} />,
-      );
+      render(<FoodMasterFormView existing={createFoodMaster()} prefill={{}} />);
 
       await u.clear(caloriesField());
       await u.type(caloriesField(), "120");
@@ -293,9 +291,7 @@ describe("FoodMasterFormView (S-08a 食品マスタ登録/編集)", () => {
       const pending = deferred<{ ok: boolean }>();
       saveFoodMaster.mockReturnValue(pending.promise);
       const u = user();
-      renderWithQueryClient(
-        <FoodMasterFormView existing={createFoodMaster()} prefill={{}} />,
-      );
+      render(<FoodMasterFormView existing={createFoodMaster()} prefill={{}} />);
 
       await u.click(screen.getByRole("button", { name: "変更を保存" }));
 
@@ -313,9 +309,7 @@ describe("FoodMasterFormView (S-08a 食品マスタ登録/編集)", () => {
     it("AC-R-5: 保存に失敗すると、エラーを出して画面に残り、打った値も消さない", async () => {
       saveFoodMaster.mockResolvedValue({ ok: false });
       const u = user();
-      renderWithQueryClient(
-        <FoodMasterFormView existing={createFoodMaster()} prefill={{}} />,
-      );
+      render(<FoodMasterFormView existing={createFoodMaster()} prefill={{}} />);
 
       await u.clear(caloriesField());
       await u.type(caloriesField(), "120");
@@ -330,9 +324,7 @@ describe("FoodMasterFormView (S-08a 食品マスタ登録/編集)", () => {
     it("AC-R-5: 呼び出しそのものが失敗しても(通信が切れた など)、画面を替えずにエラーを出す", async () => {
       saveFoodMaster.mockRejectedValue(new TypeError("Failed to fetch"));
       const u = user();
-      renderWithQueryClient(
-        <FoodMasterFormView existing={createFoodMaster()} prefill={{}} />,
-      );
+      render(<FoodMasterFormView existing={createFoodMaster()} prefill={{}} />);
 
       await u.click(screen.getByRole("button", { name: "変更を保存" }));
       await flush();
@@ -344,9 +336,7 @@ describe("FoodMasterFormView (S-08a 食品マスタ登録/編集)", () => {
     it("AC-R-5: 削除すると、名前入りの確認の後にそのマスタの id で消し、知らせて一覧に移る", async () => {
       deleteFoodMaster.mockResolvedValue({ ok: true });
       const u = user();
-      renderWithQueryClient(
-        <FoodMasterFormView existing={createFoodMaster()} prefill={{}} />,
-      );
+      render(<FoodMasterFormView existing={createFoodMaster()} prefill={{}} />);
 
       await u.click(screen.getByRole("button", { name: /この食品を削除する/ }));
       expect(
@@ -362,9 +352,7 @@ describe("FoodMasterFormView (S-08a 食品マスタ登録/編集)", () => {
 
     it("02 削除確認: キャンセルすると消さない", async () => {
       const u = user();
-      renderWithQueryClient(
-        <FoodMasterFormView existing={createFoodMaster()} prefill={{}} />,
-      );
+      render(<FoodMasterFormView existing={createFoodMaster()} prefill={{}} />);
 
       await u.click(screen.getByRole("button", { name: /この食品を削除する/ }));
       await u.click(screen.getByRole("button", { name: "キャンセル" }));
@@ -378,9 +366,7 @@ describe("FoodMasterFormView (S-08a 食品マスタ登録/編集)", () => {
     it("AC-R-5: 削除に失敗すると、エラーを出して画面に残る", async () => {
       deleteFoodMaster.mockResolvedValue({ ok: false });
       const u = user();
-      renderWithQueryClient(
-        <FoodMasterFormView existing={createFoodMaster()} prefill={{}} />,
-      );
+      render(<FoodMasterFormView existing={createFoodMaster()} prefill={{}} />);
 
       await u.click(screen.getByRole("button", { name: /この食品を削除する/ }));
       await u.click(screen.getByRole("button", { name: "削除する" }));
@@ -391,85 +377,10 @@ describe("FoodMasterFormView (S-08a 食品マスタ登録/編集)", () => {
     });
   });
 
-  // Plan and report still read through TanStack Query; after a Server Action their data must be read again (ui-tech §5)
-  describe("まだ移していない画面(献立・レポート)の読み直し(AC-R-6)", () => {
-    it("AC-R-6: 登録に成功すると、献立とレポートのデータを古い扱いにする", async () => {
-      saveFoodMaster.mockResolvedValue({ ok: true });
-      const u = user();
-      const { queryClient } = renderWithQueryClient(
-        <FoodMasterFormView prefill={{}} />,
-      );
-
-      await u.type(nameField(), "ゆで卵");
-      await u.click(screen.getByRole("button", { name: /登録する/ }));
-      await flush();
-
-      expect(areLegacyScreensStale(queryClient)).toBe(true);
-    });
-
-    it("AC-R-6: 変更の保存に成功すると、献立とレポートのデータを古い扱いにする", async () => {
-      saveFoodMaster.mockResolvedValue({ ok: true });
-      const u = user();
-      const { queryClient } = renderWithQueryClient(
-        <FoodMasterFormView existing={createFoodMaster()} prefill={{}} />,
-      );
-
-      await u.click(screen.getByRole("button", { name: "変更を保存" }));
-      await flush();
-
-      expect(areLegacyScreensStale(queryClient)).toBe(true);
-    });
-
-    it("AC-R-6: 保存に失敗したときは、献立とレポートのデータをそのままにする", async () => {
-      saveFoodMaster.mockResolvedValue({ ok: false });
-      const u = user();
-      const { queryClient } = renderWithQueryClient(
-        <FoodMasterFormView existing={createFoodMaster()} prefill={{}} />,
-      );
-
-      await u.click(screen.getByRole("button", { name: "変更を保存" }));
-      await flush();
-
-      expect(toastError).toHaveBeenCalledWith("保存に失敗しました");
-      expect(areLegacyScreensFresh(queryClient)).toBe(true);
-    });
-
-    it("AC-R-6: 削除に成功すると、献立とレポートのデータを古い扱いにする", async () => {
-      deleteFoodMaster.mockResolvedValue({ ok: true });
-      const u = user();
-      const { queryClient } = renderWithQueryClient(
-        <FoodMasterFormView existing={createFoodMaster()} prefill={{}} />,
-      );
-
-      await u.click(screen.getByRole("button", { name: /この食品を削除する/ }));
-      await u.click(screen.getByRole("button", { name: "削除する" }));
-      await flush();
-
-      expect(areLegacyScreensStale(queryClient)).toBe(true);
-    });
-
-    it("AC-R-6: 削除に失敗したときは、献立とレポートのデータをそのままにする", async () => {
-      deleteFoodMaster.mockResolvedValue({ ok: false });
-      const u = user();
-      const { queryClient } = renderWithQueryClient(
-        <FoodMasterFormView existing={createFoodMaster()} prefill={{}} />,
-      );
-
-      await u.click(screen.getByRole("button", { name: /この食品を削除する/ }));
-      await u.click(screen.getByRole("button", { name: "削除する" }));
-      await flush();
-
-      expect(toastError).toHaveBeenCalledWith("削除に失敗しました");
-      expect(areLegacyScreensFresh(queryClient)).toBe(true);
-    });
-  });
-
   describe("戻るときの未保存の確認(G-8)", () => {
     it("G-8: 何も変えていなければ、確認を出さずに一覧に戻る", async () => {
       const u = user();
-      renderWithQueryClient(
-        <FoodMasterFormView existing={createFoodMaster()} prefill={{}} />,
-      );
+      render(<FoodMasterFormView existing={createFoodMaster()} prefill={{}} />);
 
       await u.click(backButton());
 
@@ -478,9 +389,7 @@ describe("FoodMasterFormView (S-08a 食品マスタ登録/編集)", () => {
 
     it("G-8: 入力を変えて戻ると確認が出て、「編集を続ける」なら残り、「破棄して戻る」なら一覧に戻る", async () => {
       const u = user();
-      renderWithQueryClient(
-        <FoodMasterFormView existing={createFoodMaster()} prefill={{}} />,
-      );
+      render(<FoodMasterFormView existing={createFoodMaster()} prefill={{}} />);
 
       await u.type(nameField(), "大");
       await u.click(backButton());
@@ -516,7 +425,7 @@ describe("FoodMasterFormView (S-08a 食品マスタ登録/編集)", () => {
       </Activity>
     );
     const u = user();
-    const { rerender } = renderWithQueryClient(onScreen("visible"));
+    const { rerender } = render(onScreen("visible"));
 
     await u.clear(caloriesField());
     await u.type(caloriesField(), "130");

@@ -1,11 +1,10 @@
-import { act, cleanup, screen } from "@testing-library/react";
+import { act, cleanup, render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { CsvExportSection } from "@/components/features/settings/components/csv-export-section";
 import { NutritionTargetSection } from "@/components/features/settings/components/nutrition-target-section";
 import type { NutritionTarget } from "@/types";
 import { deferred } from "./helpers/daily-meals";
-import { renderWithQueryClient } from "./helpers/query-client";
 
 // The Server Actions, the toast and the browser's file download are the boundary here
 
@@ -64,7 +63,7 @@ const saveButton = () => screen.getByRole("button", { name: "保存" });
 
 describe("NutritionTargetSection (S-10 1日の目標)", () => {
   it("AC-R-2: サーバーで読んだ目標値が、4つの欄に入っている", () => {
-    renderWithQueryClient(<NutritionTargetSection target={target} />);
+    render(<NutritionTargetSection target={target} />);
 
     expect(caloriesField()).toHaveValue(2000);
     expect(proteinField()).toHaveValue(100);
@@ -73,7 +72,7 @@ describe("NutritionTargetSection (S-10 1日の目標)", () => {
   });
 
   it("ui.md 入力: 4つの欄は数の入力(小数可)で、キーボードの決定は「完了」", () => {
-    renderWithQueryClient(<NutritionTargetSection target={target} />);
+    render(<NutritionTargetSection target={target} />);
 
     for (const field of [
       caloriesField(),
@@ -90,7 +89,7 @@ describe("NutritionTargetSection (S-10 1日の目標)", () => {
   it("ST-2・AC-R-6: 保存すると打った値を数で送り、「目標値を保存しました」と知らせる", async () => {
     saveNutritionTarget.mockResolvedValue({ ok: true });
     const user = userEvent.setup();
-    renderWithQueryClient(<NutritionTargetSection target={target} />);
+    render(<NutritionTargetSection target={target} />);
 
     await user.clear(caloriesField());
     await user.type(caloriesField(), "1800");
@@ -111,7 +110,7 @@ describe("NutritionTargetSection (S-10 1日の目標)", () => {
 
   it("ST-1: カロリーに負の数を入れて保存すると、欄の下に「1以上で入力してください」が出て保存しない", async () => {
     const user = userEvent.setup();
-    renderWithQueryClient(<NutritionTargetSection target={target} />);
+    render(<NutritionTargetSection target={target} />);
 
     await user.clear(caloriesField());
     await user.type(caloriesField(), "-100");
@@ -126,7 +125,7 @@ describe("NutritionTargetSection (S-10 1日の目標)", () => {
 
   it("02 バリデーション: 空の欄は「入力してください」、上限を超えた欄は上限を出し、正しい欄にはエラーを出さない", async () => {
     const user = userEvent.setup();
-    renderWithQueryClient(<NutritionTargetSection target={target} />);
+    render(<NutritionTargetSection target={target} />);
 
     await user.clear(proteinField());
     await user.clear(fatField());
@@ -145,7 +144,7 @@ describe("NutritionTargetSection (S-10 1日の目標)", () => {
   it("02 バリデーション: 直して保存し直すと、前のエラーは消える", async () => {
     saveNutritionTarget.mockResolvedValue({ ok: true });
     const user = userEvent.setup();
-    renderWithQueryClient(<NutritionTargetSection target={target} />);
+    render(<NutritionTargetSection target={target} />);
 
     await user.clear(caloriesField());
     await user.type(caloriesField(), "0");
@@ -167,7 +166,7 @@ describe("NutritionTargetSection (S-10 1日の目標)", () => {
   it("AC-R-5: 保存に失敗すると「保存に失敗しました」を出し、打った値を消さない", async () => {
     saveNutritionTarget.mockResolvedValue({ ok: false });
     const user = userEvent.setup();
-    renderWithQueryClient(<NutritionTargetSection target={target} />);
+    render(<NutritionTargetSection target={target} />);
 
     await user.clear(caloriesField());
     await user.type(caloriesField(), "1700");
@@ -183,7 +182,7 @@ describe("NutritionTargetSection (S-10 1日の目標)", () => {
   it("AC-R-5: 呼び出しそのものが失敗しても(通信が切れた など)、「保存に失敗しました」を出す", async () => {
     saveNutritionTarget.mockRejectedValue(new TypeError("Failed to fetch"));
     const user = userEvent.setup();
-    renderWithQueryClient(<NutritionTargetSection target={target} />);
+    render(<NutritionTargetSection target={target} />);
 
     await user.click(saveButton());
     await flush();
@@ -195,7 +194,7 @@ describe("NutritionTargetSection (S-10 1日の目標)", () => {
     const pending = deferred<{ ok: boolean }>();
     saveNutritionTarget.mockReturnValue(pending.promise);
     const user = userEvent.setup();
-    renderWithQueryClient(<NutritionTargetSection target={target} />);
+    render(<NutritionTargetSection target={target} />);
 
     await user.click(saveButton());
 
@@ -225,7 +224,7 @@ describe("CsvExportSection (S-10 CSV エクスポート)", () => {
       rows: [{ name: "カレー", servings: 2 }],
     });
     const user = userEvent.setup();
-    renderWithQueryClient(<CsvExportSection />);
+    render(<CsvExportSection />);
 
     for (const [label, type] of [
       ["食事記録", "meals"],
@@ -258,7 +257,7 @@ describe("CsvExportSection (S-10 CSV エクスポート)", () => {
       ],
     });
     const user = userEvent.setup();
-    renderWithQueryClient(<CsvExportSection />);
+    render(<CsvExportSection />);
 
     await user.click(exportButton("レシピ"));
     await flush();
@@ -277,7 +276,7 @@ describe("CsvExportSection (S-10 CSV エクスポート)", () => {
   it("S-10: 食事記録は選んだ期間(今月・先月)で読み、ほかの3種類は期間を問わず全部を読む", async () => {
     exportCsvRows.mockResolvedValue({ ok: true, rows: [{ name: "x" }] });
     const user = userEvent.setup();
-    renderWithQueryClient(<CsvExportSection />);
+    render(<CsvExportSection />);
 
     expect(screen.getByRole("button", { name: "全期間" })).toHaveAttribute(
       "aria-pressed",
@@ -307,7 +306,7 @@ describe("CsvExportSection (S-10 CSV エクスポート)", () => {
   it("02 空状態: 0件のときはファイルを作らず「エクスポートするデータがありません」と知らせる", async () => {
     exportCsvRows.mockResolvedValue({ ok: true, rows: [] });
     const user = userEvent.setup();
-    renderWithQueryClient(<CsvExportSection />);
+    render(<CsvExportSection />);
 
     await user.click(exportButton("セットメニュー"));
     await flush();
@@ -321,7 +320,7 @@ describe("CsvExportSection (S-10 CSV エクスポート)", () => {
   it("AC-R-5: 読めなかったときは「エクスポートに失敗しました」を出し、ファイルを作らない", async () => {
     exportCsvRows.mockResolvedValue({ ok: false });
     const user = userEvent.setup();
-    renderWithQueryClient(<CsvExportSection />);
+    render(<CsvExportSection />);
 
     await user.click(exportButton("食品マスタ"));
     await flush();
@@ -334,7 +333,7 @@ describe("CsvExportSection (S-10 CSV エクスポート)", () => {
   it("AC-R-5: 呼び出しそのものが失敗しても、「エクスポートに失敗しました」を出す", async () => {
     exportCsvRows.mockRejectedValue(new TypeError("Failed to fetch"));
     const user = userEvent.setup();
-    renderWithQueryClient(<CsvExportSection />);
+    render(<CsvExportSection />);
 
     await user.click(exportButton("食事記録"));
     await flush();
@@ -346,7 +345,7 @@ describe("CsvExportSection (S-10 CSV エクスポート)", () => {
     const pending = deferred<{ ok: boolean; rows: unknown[] }>();
     exportCsvRows.mockReturnValue(pending.promise);
     const user = userEvent.setup();
-    renderWithQueryClient(<CsvExportSection />);
+    render(<CsvExportSection />);
 
     await user.click(exportButton("レシピ"));
 
