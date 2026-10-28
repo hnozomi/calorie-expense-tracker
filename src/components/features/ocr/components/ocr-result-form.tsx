@@ -1,15 +1,13 @@
 "use client";
+// Client because it holds the editable form and the eaten-count stepper
 
-import { zodResolver } from "@hookform/resolvers/zod";
-import { useEffect } from "react";
-import { useForm } from "react-hook-form";
 import { NutritionFormFields } from "@/components/features/meals/components/nutrition-form-fields";
-import {
-  type MealItemFormInput,
-  type MealItemFormValues,
-  mealItemFormSchema,
-  type PendingMealItemCollector,
+import type {
+  MealItemFormValues,
+  PendingMealItemCollector,
 } from "@/components/features/meals/types/meal";
+import { OcrPieceCountStepper } from "@/components/features/ocr/components/ocr-piece-count-stepper";
+import { useOcrResultForm } from "@/components/features/ocr/hooks/use-ocr-result-form";
 import type { OcrNutritionResult } from "@/components/features/ocr/types/ocr";
 import { Button } from "@/components/ui/button";
 
@@ -30,43 +28,15 @@ const OcrResultForm = ({
 }: OcrResultFormProps) => {
   const {
     register,
-    handleSubmit,
-    getValues,
-    watch,
-    formState: { errors },
-  } = useForm<MealItemFormInput, undefined, MealItemFormValues>({
-    resolver: zodResolver(mealItemFormSchema),
-    defaultValues: {
-      name: ocrResult.name ?? "",
-      calories: ocrResult.calories ?? 0,
-      protein: ocrResult.protein ?? 0,
-      fat: ocrResult.fat ?? 0,
-      carbs: ocrResult.carbs ?? 0,
-    },
-  });
-
-  useEffect(() => {
-    if (!pendingItemRef) return;
-    pendingItemRef.current = () => {
-      const parsed = mealItemFormSchema.safeParse(getValues());
-      if (!parsed.success || !parsed.data.name.trim()) return null;
-      return parsed.data;
-    };
-    return () => {
-      pendingItemRef.current = null;
-    };
-  }, [pendingItemRef, getValues]);
-
-  const nameValue = watch("name");
-  const canAdd = typeof nameValue === "string" && nameValue.trim().length > 0;
-
-  /** Add the corrected values and close the soft keyboard so the card is visible */
-  const handleAdd = (values: MealItemFormValues) => {
-    onAdd(values);
-    if (document.activeElement instanceof HTMLElement) {
-      document.activeElement.blur();
-    }
-  };
+    errors,
+    canAdd,
+    pieceCount,
+    eatenCount,
+    perPieceCalories,
+    handleEatenCountChange,
+    handleAdd,
+    handleSaveToMaster,
+  } = useOcrResultForm({ ocrResult, onAdd, onSaveToMaster, pendingItemRef });
 
   return (
     <div className="space-y-3">
@@ -74,7 +44,16 @@ const OcrResultForm = ({
         OCR結果を確認・修正してください
       </p>
 
-      <form onSubmit={handleSubmit(handleAdd)} className="space-y-3">
+      {pieceCount !== null && (
+        <OcrPieceCountStepper
+          pieceCount={pieceCount}
+          perPieceCalories={perPieceCalories}
+          eatenCount={eatenCount}
+          onEatenCountChange={handleEatenCountChange}
+        />
+      )}
+
+      <form onSubmit={handleAdd} className="space-y-3">
         <NutritionFormFields
           register={register}
           errors={errors}
@@ -86,14 +65,7 @@ const OcrResultForm = ({
         </Button>
       </form>
 
-      <Button
-        variant="outline"
-        className="w-full"
-        onClick={() => {
-          const values = mealItemFormSchema.parse(getValues());
-          onSaveToMaster(values);
-        }}
-      >
+      <Button variant="outline" className="w-full" onClick={handleSaveToMaster}>
         食品マスタに保存
       </Button>
     </div>

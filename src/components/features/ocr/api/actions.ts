@@ -30,7 +30,11 @@ const nutritionLabelSchema = z.object({
   protein: z.number().nullable(),
   fat: z.number().nullable(),
   carbs: z.number().nullable(),
+  valuesArePerPiece: z.boolean(),
+  piecesInPackage: z.number().int().nullable(),
 });
+
+type NutritionLabel = z.infer<typeof nutritionLabelSchema>;
 
 const PROMPT = `This photo shows a Japanese food package, price sticker, or nutrition facts label.
 Read the product name and the nutrition values exactly as printed.
@@ -40,7 +44,21 @@ Read the product name and the nutrition values exactly as printed.
 - fat: 脂質 in grams.
 - carbs: 炭水化物 in grams. If only 糖質 and 食物繊維 are shown, add them; if only 糖質 is shown, use it.
 Use the values as printed for the unit the label states; do not multiply them.
+- valuesArePerPiece: true when the values are for one piece (1個当たり, 1本当たり, 1枚当たり, 1貫当たり) of a pack holding several pieces.
+- piecesInPackage: how many pieces the pack holds (e.g. 内容量 8個), or null if not shown.
 Use null for anything not shown or not legible. Do not guess.`;
+
+const toOcrResult = ({
+  valuesArePerPiece,
+  piecesInPackage,
+  ...values
+}: NutritionLabel): OcrNutritionResult => ({
+  ...values,
+  pieceCount:
+    valuesArePerPiece && piecesInPackage !== null && piecesInPackage >= 2
+      ? piecesInPackage
+      : null,
+});
 
 const readLabel = async (
   imageDataUrl: string,
@@ -71,8 +89,10 @@ const readLabel = async (
     ],
   });
 
-  if (response.stop_reason !== "end_turn") return null;
-  return response.parsed_output;
+  if (response.stop_reason !== "end_turn" || !response.parsed_output) {
+    return null;
+  }
+  return toOcrResult(response.parsed_output);
 };
 
 /** Read the nutrition values from a photo with Claude, within the user's daily scan limit */
