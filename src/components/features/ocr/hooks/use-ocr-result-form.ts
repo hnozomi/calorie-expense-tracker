@@ -81,10 +81,16 @@ export const useOcrResultForm = ({
     }
   });
 
-  /** A food master holds one piece, so the eaten amount is divided back by the count */
+  /** A food master holds one piece, so the eaten amount and its cost are divided back by the count */
   const handleSaveToMaster = () => {
     const values = mealItemFormSchema.parse(getValues());
-    onSaveToMaster(scaleNutrition(values, 1 / eatenCount));
+    onSaveToMaster({
+      ...scaleNutrition(values, 1 / eatenCount),
+      cost:
+        values.cost === undefined
+          ? undefined
+          : Math.round(values.cost / eatenCount),
+    });
   };
 
   return {
