@@ -51,6 +51,18 @@ const expectFields = (expected: {
   expect(fields.carbs).toHaveValue(expected.carbs);
 };
 
+const costField = () => screen.getByLabelText("食費 (円)");
+
+const typeCost = async (
+  user: ReturnType<typeof userEvent.setup>,
+  cost: string,
+) => {
+  await user.type(costField(), cost);
+};
+
+const saveToMasterButton = () =>
+  screen.getByRole("button", { name: "食品マスタに保存" });
+
 const decreaseButton = () =>
   screen.getByRole("button", { name: "食べた数を減らす" });
 const increaseButton = () =>
@@ -91,6 +103,16 @@ describe("OcrResultForm の食べた数 (F-02 1個当たりの表示)", () => {
         fat: 2.1,
         carbs: 4.3,
       });
+    });
+
+    it("F-02: 食品マスタに保存すると、食費も入力のまま送る", async () => {
+      const { user, onSaveToMaster } = renderForm(wholePackResult);
+
+      await typeCost(user, "431");
+      await user.click(saveToMasterButton());
+
+      expect(onSaveToMaster).toHaveBeenCalledOnce();
+      expect(onSaveToMaster.mock.calls[0][0]).toMatchObject({ cost: 431 });
     });
   });
 
@@ -206,6 +228,62 @@ describe("OcrResultForm の食べた数 (F-02 1個当たりの表示)", () => {
         protein: 1.5,
         fat: 2.1,
         carbs: 4.3,
+      });
+    });
+
+    describe("食費", () => {
+      it("F-02: 8個食べて食品マスタに保存すると、食費を8で割り円に丸めた1個分を送る", async () => {
+        const { user, onSaveToMaster } = renderForm();
+
+        await typeCost(user, "431");
+        await user.click(saveToMasterButton());
+
+        expect(onSaveToMaster).toHaveBeenCalledOnce();
+        // 431 / 8 = 53.875
+        expect(onSaveToMaster.mock.calls[0][0]).toMatchObject({ cost: 54 });
+      });
+
+      it("F-02: 3個食べて食品マスタに保存すると、食費を3で割り円に丸めた1個分を送る", async () => {
+        const { user, onSaveToMaster } = renderForm();
+
+        for (let i = 0; i < 5; i++) {
+          await user.click(decreaseButton());
+        }
+        await typeCost(user, "100");
+        await user.click(saveToMasterButton());
+
+        expect(onSaveToMaster).toHaveBeenCalledOnce();
+        // 100 / 3 = 33.33...
+        expect(onSaveToMaster.mock.calls[0][0]).toMatchObject({
+          calories: 40,
+          cost: 33,
+        });
+      });
+
+      it("F-02: 食費が空のまま食品マスタに保存すると、食費は0を食べた数で割った0を送る", async () => {
+        const { user, onSaveToMaster } = renderForm();
+
+        await user.click(saveToMasterButton());
+
+        expect(onSaveToMaster).toHaveBeenCalledOnce();
+        // The shared mealItemFormSchema (z.coerce.number) turns an empty cost field into 0 for every meal form
+        expect(onSaveToMaster.mock.calls[0][0]).toMatchObject({ cost: 0 });
+      });
+
+      it("F-02: カードに追加すると、食費は食べた数で割らず入力のまま送る", async () => {
+        const { user, onAdd } = renderForm();
+
+        await user.click(decreaseButton());
+        await typeCost(user, "431");
+        await user.click(screen.getByRole("button", { name: "カードに追加" }));
+
+        await waitFor(() => {
+          expect(onAdd).toHaveBeenCalledOnce();
+        });
+        expect(onAdd.mock.calls[0][0]).toMatchObject({
+          calories: 280,
+          cost: 431,
+        });
       });
     });
   });
