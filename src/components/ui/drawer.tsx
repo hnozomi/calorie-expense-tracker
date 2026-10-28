@@ -61,7 +61,8 @@ function DrawerContent({
         )}
         {...props}
       >
-        {/* vaul's Handle, not a plain div: drawers with handleOnly can only be dragged from it */}
+        {/* vaul's Handle, not a plain div: drawers with handleOnly can only be dragged from it
+            (it does not respond to touch on iPhone, so prefer data-vaul-no-drag on the body) */}
         <DrawerPrimitive.Handle className="mx-auto mt-3 h-1 w-10 shrink-0 rounded-full bg-muted-foreground/30" />
         {children}
       </DrawerPrimitive.Content>
