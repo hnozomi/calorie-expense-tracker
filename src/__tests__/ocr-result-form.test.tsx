@@ -2,7 +2,7 @@ import { cleanup, render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { OcrResultForm } from "@/components/features/ocr/components/ocr-result-form";
-import type { OcrNutritionResult } from "@/components/features/ocr/utils/ocr-parser";
+import type { OcrNutritionResult } from "@/components/features/ocr/types/ocr";
 
 afterEach(() => {
   cleanup();
@@ -16,6 +16,7 @@ const createOcrResult = (
   protein: 23.8,
   fat: 1.2,
   carbs: 0.3,
+  pieceCount: null,
   ...overrides,
 });
 

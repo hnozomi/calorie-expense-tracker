@@ -3,6 +3,10 @@ import packageJson from "./package.json";
 
 const nextConfig: NextConfig = {
   cacheComponents: true,
+  experimental: {
+    // OCR sends the resized photo (a JPEG data URL of up to ~2MB) to a Server Action; the default limit is 1MB
+    serverActions: { bodySizeLimit: "4mb" },
+  },
   partialPrefetching: true,
   // The dev indicator overlays the bottom nav and intercepts taps in E2E runs
   devIndicators: process.env.NEXT_PUBLIC_E2E === "1" ? false : undefined,

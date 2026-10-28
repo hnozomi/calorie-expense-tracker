@@ -107,12 +107,15 @@ src/
 │   │   │   ├── components/
 │   │   │   │   ├── ocr-camera-overlay.tsx
 │   │   │   │   └── ocr-result-form.tsx
+│   │   │   ├── api/
+│   │   │   │   └── actions.ts                # 写真を Claude Haiku 5.5 に読ませる（1日の回数上限つき）
 │   │   │   ├── hooks/
-│   │   │   │   └── use-ocr.ts                # Tesseract.js統合
-│   │   │   ├── stores/
-│   │   │   │   └── ocr-atom.ts               # カメラ開閉、解析結果
+│   │   │   │   └── use-ocr.ts                # 縮小して Server Action を呼ぶ
+│   │   │   ├── types/
+│   │   │   │   └── ocr.ts
 │   │   │   ├── utils/
-│   │   │   │   └── ocr-parser.ts             # 正規表現ベース栄養素パーサー
+│   │   │   │   ├── has-ocr-values.ts
+│   │   │   │   └── resize-image.ts           # 長辺 1568px の JPEG にする
 │   │   │   └── index.ts
 │   │   │
 │   │   ├── recipes/                  # ── レシピ（S-04, S-05） ──

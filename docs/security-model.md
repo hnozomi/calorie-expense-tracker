@@ -15,7 +15,7 @@ Supabaseの行レベルセキュリティ（RLS）とRPC関数の権限方針を
 テーブルは「直接 `user_id` を持つ親テーブル」と「親を経由してオーナーシップを判定する子テーブル」の2種類に分かれる。
 
 ### 親テーブル（`user_id` を直接持つ）
-対象: `meals`, `recipes`, `food_masters`, `set_menus`, `meal_plans`, `user_settings`
+対象: `meals`, `recipes`, `food_masters`, `set_menus`, `meal_plans`, `user_settings`, `ocr_scans`（`ocr_scans` は SELECT と INSERT だけ。数えるための記録なので更新・削除はさせない）
 
 ```sql
 USING ((select auth.uid()) = user_id)
@@ -50,6 +50,7 @@ USING (EXISTS (
 | `save_recipe_with_ingredients(...)` | INVOKER | 不許可 | 許可 | 同上（トランザクション保証のためRPC化） |
 | `save_set_menu_with_items(...)` | INVOKER | 不許可 | 許可 | 同上 |
 | `sync_meals_to_plans(DATE, DATE)` | INVOKER | 不許可 | 許可 | 同上 |
+| `claim_ocr_scan(INTEGER)` | INVOKER | 不許可 | 許可 | OCR の回数を1件記録する。日本時間の今日の回数が上限以上なら記録せず false |
 | `update_updated_at()` | INVOKER（トリガー用） | — | — | `updated_at` 自動更新トリガー。直接呼び出し対象ではない |
 
 **原則**:
