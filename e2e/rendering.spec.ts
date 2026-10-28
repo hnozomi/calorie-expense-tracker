@@ -109,6 +109,82 @@ test.describe("フェーズ1: 隠れて残る画面", () => {
   });
 });
 
+test.describe("フェーズ6: 4つのタブ", () => {
+  const recipeName = "E2Eタブ巡回カレー";
+  let recipeId: string | undefined;
+
+  test.beforeEach(async ({ page }, testInfo) => {
+    // A cache of this test's own (dev keeps "use cache: private" results across requests), so the recipe put
+    // straight into the DB is not hidden behind a list another test opened earlier (docs/e2e-test-design.md §5)
+    await page.setExtraHTTPHeaders({ "x-e2e-test-id": testInfo.testId });
+    const userId = await userIdOf(e2eUser.email);
+    const response = await serviceRoleRest("recipes", {
+      method: "POST",
+      body: JSON.stringify({
+        user_id: userId,
+        name: recipeName,
+        servings: 1,
+        calories: 500,
+      }),
+    });
+    const [recipe] = (await response.json()) as { id: string }[];
+    recipeId = recipe.id;
+  });
+
+  test.afterEach(async () => {
+    if (recipeId) {
+      await serviceRoleRest(`recipes?id=eq.${recipeId}`, { method: "DELETE" });
+      recipeId = undefined;
+    }
+  });
+
+  // Each tab's own contents, which stream in under Suspense after the header (the other tab has no Suspense)
+  const tabs = [
+    {
+      name: "ホーム",
+      contents: (page: Page) =>
+        page.getByRole("region", { name: "朝食の記録" }),
+    },
+    {
+      name: "献立",
+      contents: (page: Page) => visibleText(page, "週間サマリー"),
+    },
+    {
+      name: "レシピ",
+      contents: (page: Page) =>
+        page.getByRole("link", { name: new RegExp(recipeName) }),
+    },
+    {
+      name: "その他",
+      contents: (page: Page) => page.getByRole("link", { name: /設定/ }),
+    },
+  ] as const;
+
+  test("AC-R-4: 4つのタブを順に開いてから、もう一度順に回ると、どのタブもスケルトンを挟まずに出る", async ({
+    page,
+  }) => {
+    await gotoHydrated(page, "/home");
+    await expect(tabs[0].contents(page)).toBeVisible({ timeout: 10_000 });
+
+    // First round: a tab opened for the first time may show its skeleton, so wait until its contents have streamed in
+    for (const tab of tabs.slice(1)) {
+      await page.getByRole("link", { name: tab.name, exact: true }).click();
+      await expect(tab.contents(page)).toBeVisible({ timeout: 10_000 });
+      await page.waitForLoadState("networkidle");
+    }
+
+    await watchForSkeleton(page);
+    for (const tab of tabs) {
+      await page.getByRole("link", { name: tab.name, exact: true }).click();
+      await expect(tab.contents(page)).toBeVisible();
+    }
+    await page.waitForLoadState("networkidle");
+
+    // A full page load would drop the watcher (undefined), which fails this too
+    expect(await skeletonWasSeen(page)).toBe(false);
+  });
+});
+
 test.describe("フェーズ1: ログアウト", () => {
   // This flow is about logging in and out, so it starts signed out and uses users of its own:
   // signing out revokes every session of the user, which would break the shared e2eUser
