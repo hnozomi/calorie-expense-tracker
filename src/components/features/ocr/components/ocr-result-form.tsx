@@ -10,8 +10,8 @@ import {
   mealItemFormSchema,
   type PendingMealItemCollector,
 } from "@/components/features/meals/types/meal";
+import type { OcrNutritionResult } from "@/components/features/ocr/types/ocr";
 import { Button } from "@/components/ui/button";
-import type { OcrNutritionResult } from "../utils/ocr-parser";
 
 type OcrResultFormProps = {
   ocrResult: OcrNutritionResult;

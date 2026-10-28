@@ -1,11 +1,12 @@
 "use client";
 
 import { useCallback, useState } from "react";
-import {
-  type OcrNutritionResult,
-  parseNutritionText,
-} from "../utils/ocr-parser";
-import { preprocessImage } from "../utils/ocr-preprocess";
+import { readNutritionLabel } from "@/components/features/ocr/api/actions";
+import type {
+  OcrFailureReason,
+  OcrNutritionResult,
+} from "@/components/features/ocr/types/ocr";
+import { resizeImageToDataUrl } from "@/components/features/ocr/utils/resize-image";
 
 type OcrState = {
   isProcessing: boolean;
@@ -13,7 +14,12 @@ type OcrState = {
   error: string | null;
 };
 
-/** Hook for OCR processing with image preprocessing and Tesseract.js */
+const ERROR_MESSAGES: Record<OcrFailureReason, string> = {
+  limit: "今日の読み取り回数の上限に達しました。手動タブで入力してください",
+  failed: "読み取りに失敗しました。時間をおいてもう一度試してください",
+};
+
+/** Hook that shrinks a photo and has the server read its nutrition values */
 export const useOcr = () => {
   const [state, setState] = useState<OcrState>({
     isProcessing: false,
@@ -21,42 +27,29 @@ export const useOcr = () => {
     error: null,
   });
 
-  /** Preprocess image, then run Tesseract OCR and parse nutrition data */
-  const processImage = useCallback(async (imageSource: File | string) => {
+  const processImage = useCallback(async (file: File) => {
     setState({ isProcessing: true, result: null, error: null });
 
+    let reason: OcrFailureReason = "failed";
     try {
-      // Preprocess: grayscale, contrast, binarization, upscale
-      const preprocessedDataUrl = await preprocessImage(imageSource);
-
-      // Dynamic import to avoid loading Tesseract.js on initial page load
-      const { createWorker, PSM } = await import("tesseract.js");
-      const worker = await createWorker("jpn+eng");
-
-      // PSM SINGLE_BLOCK: Assume a single uniform block of text (best for nutrition labels)
-      await worker.setParameters({
-        tessedit_pageseg_mode: PSM.SINGLE_BLOCK,
-      });
-
-      const {
-        data: { text },
-      } = await worker.recognize(preprocessedDataUrl);
-      await worker.terminate();
-
-      const result = parseNutritionText(text);
-      setState({ isProcessing: false, result, error: null });
-      return result;
+      const imageDataUrl = await resizeImageToDataUrl(file);
+      const response = await readNutritionLabel(imageDataUrl);
+      if (response.ok) {
+        setState({ isProcessing: false, result: response.result, error: null });
+        return response.result;
+      }
+      reason = response.reason;
     } catch {
-      setState({
-        isProcessing: false,
-        result: null,
-        error: "OCR処理に失敗しました",
-      });
-      return null;
+      // The image could not be decoded, or the action call itself failed (offline, a stale tab after a deploy)
     }
+    setState({
+      isProcessing: false,
+      result: null,
+      error: ERROR_MESSAGES[reason],
+    });
+    return null;
   }, []);
 
-  /** Reset OCR state */
   const reset = useCallback(() => {
     setState({ isProcessing: false, result: null, error: null });
   }, []);

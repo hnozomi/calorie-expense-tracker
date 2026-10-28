@@ -2,9 +2,10 @@
 
 import { Camera, ImageIcon, X } from "lucide-react";
 import { useRef, useState } from "react";
+import { useOcr } from "@/components/features/ocr/hooks/use-ocr";
+import type { OcrNutritionResult } from "@/components/features/ocr/types/ocr";
+import { hasOcrValues } from "@/components/features/ocr/utils/has-ocr-values";
 import { Button } from "@/components/ui/button";
-import { useOcr } from "../hooks/use-ocr";
-import { hasOcrValues, type OcrNutritionResult } from "../utils/ocr-parser";
 
 type OcrCameraOverlayProps = {
   isOpen: boolean;
