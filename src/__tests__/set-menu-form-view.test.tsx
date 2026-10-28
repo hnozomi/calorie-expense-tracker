@@ -1,4 +1,11 @@
-import { act, cleanup, screen, waitFor, within } from "@testing-library/react";
+import {
+  act,
+  cleanup,
+  render,
+  screen,
+  waitFor,
+  within,
+} from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { Activity } from "react";
 import { afterEach, describe, expect, it, vi } from "vitest";
@@ -7,7 +14,6 @@ import type { Recipe } from "@/components/features/recipes/types/recipe";
 import { SetMenuFormView } from "@/components/features/set-menus/components/set-menu-form-view";
 import type { SetMenu } from "@/components/features/set-menus/types/set-menu";
 import { deferred } from "./helpers/daily-meals";
-import { renderWithQueryClient } from "./helpers/query-client";
 
 const push = vi.fn();
 vi.mock("next/navigation", () => ({
@@ -124,7 +130,7 @@ const createSetMenu = (overrides: Partial<SetMenu> = {}): SetMenu => ({
 });
 
 const renderForm = (existing?: SetMenu) =>
-  renderWithQueryClient(
+  render(
     <SetMenuFormView
       existing={existing}
       recipes={[recipe]}
@@ -605,7 +611,7 @@ describe("SetMenuFormView (S-06a セットメニュー登録/編集)", () => {
       </Activity>
     );
     const u = user();
-    const { rerender } = renderWithQueryClient(onScreen("visible", setMenu));
+    const { rerender } = render(onScreen("visible", setMenu));
 
     await u.clear(nameField());
     await u.type(nameField(), "和朝食");

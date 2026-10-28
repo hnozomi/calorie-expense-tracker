@@ -1,7 +1,6 @@
-import { cleanup, screen } from "@testing-library/react";
+import { cleanup, render, screen } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { SettingsContent } from "@/components/features/settings/components/settings-content";
-import { renderWithQueryClient } from "./helpers/query-client";
 
 // Phase 5 replaced SettingsView (a client view reading through TanStack Query) with SettingsContent, a server part
 // that reads the targets and the email and hands them to the sections. The DB reads and the Server Actions are the
@@ -20,9 +19,8 @@ vi.mock("@/components/features/settings/api/actions", () => ({
   exportCsvRows: vi.fn(),
 }));
 
-vi.mock("@/hooks", async (importOriginal) => ({
-  ...(await importOriginal<typeof import("@/hooks")>()),
-  useSupabase: () => ({ auth: { signOut: vi.fn() } }),
+vi.mock("@/lib/supabase/client", () => ({
+  createClient: () => ({ auth: { signOut: vi.fn() } }),
 }));
 
 beforeEach(() => {
@@ -42,8 +40,7 @@ afterEach(() => {
   vi.clearAllMocks();
 });
 
-const renderContent = async () =>
-  renderWithQueryClient(await SettingsContent());
+const renderContent = async () => render(await SettingsContent());
 
 describe("SettingsContent (S-10 設定)", () => {
   it("AC-R-2: 1日の目標の欄に、サーバーで読んだ目標値が最初から入っている", async () => {

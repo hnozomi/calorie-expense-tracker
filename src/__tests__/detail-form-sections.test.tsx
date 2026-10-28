@@ -1,10 +1,9 @@
-import { cleanup, screen } from "@testing-library/react";
+import { cleanup, render, screen } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { FoodMasterFormSection } from "@/components/features/food-masters/components/food-master-form-section";
 import type { FoodMaster } from "@/components/features/food-masters/types/food-master";
 import { RecipeFormSection } from "@/components/features/recipes/components/recipe-form-section";
 import type { Recipe } from "@/components/features/recipes/types/recipe";
-import { renderWithQueryClient } from "./helpers/query-client";
 
 // The route's 404 (notFound) and the DB reads are the boundary here
 class NotFoundError extends Error {}
@@ -92,7 +91,7 @@ const foodMasterSection = (
 
 describe("RecipeFormSection (/recipes/[id])", () => {
   it("S-05: /recipes/new は新規の画面で、DB を読まない", async () => {
-    renderWithQueryClient(await recipeSection("new"));
+    render(await recipeSection("new"));
 
     expect(
       screen.getByRole("heading", { name: "レシピを登録" }),
@@ -103,7 +102,7 @@ describe("RecipeFormSection (/recipes/[id])", () => {
   it("N-2: 有る id はサーバーで読んだレシピを編集の画面に入れて出す", async () => {
     getRecipe.mockResolvedValue(recipe);
 
-    renderWithQueryClient(await recipeSection(RECIPE_ID));
+    render(await recipeSection(RECIPE_ID));
 
     expect(getRecipe).toHaveBeenCalledWith(RECIPE_ID);
     expect(
@@ -131,7 +130,7 @@ describe("RecipeFormSection (/recipes/[id])", () => {
 
 describe("FoodMasterFormSection (/other/food-masters/[id])", () => {
   it("S-08a: /other/food-masters/new は新規の画面で、DB を読まない", async () => {
-    renderWithQueryClient(await foodMasterSection("new"));
+    render(await foodMasterSection("new"));
 
     expect(
       screen.getByRole("heading", { name: "食品を登録" }),
@@ -141,7 +140,7 @@ describe("FoodMasterFormSection (/other/food-masters/[id])", () => {
   });
 
   it("S-08a: 新規の URL に付いた OCR の値(?name= など)を入力に入れて出す", async () => {
-    renderWithQueryClient(
+    render(
       await foodMasterSection("new", {
         name: "プロテインバー",
         calories: "200",
@@ -153,7 +152,7 @@ describe("FoodMasterFormSection (/other/food-masters/[id])", () => {
   });
 
   it("S-08a: 同じ名前が2つ付いた URL(?name=a&name=b)でも新規の画面を出す", async () => {
-    renderWithQueryClient(await foodMasterSection("new", { name: ["a", "b"] }));
+    render(await foodMasterSection("new", { name: ["a", "b"] }));
 
     expect(
       screen.getByRole("heading", { name: "食品を登録" }),
@@ -163,9 +162,7 @@ describe("FoodMasterFormSection (/other/food-masters/[id])", () => {
   it("S-08a: 有る id はサーバーで読んだマスタを編集の画面に入れ、URL の値では上書きしない", async () => {
     getFoodMaster.mockResolvedValue(foodMaster);
 
-    renderWithQueryClient(
-      await foodMasterSection(MASTER_ID, { name: "別の名前" }),
-    );
+    render(await foodMasterSection(MASTER_ID, { name: "別の名前" }));
 
     expect(getFoodMaster).toHaveBeenCalledWith(MASTER_ID);
     expect(

@@ -1,15 +1,17 @@
-import { act, cleanup, screen, waitFor, within } from "@testing-library/react";
+import {
+  act,
+  cleanup,
+  render,
+  screen,
+  waitFor,
+  within,
+} from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { Activity } from "react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { RecipeFormView } from "@/components/features/recipes/components/recipe-form-view";
 import type { Recipe } from "@/components/features/recipes/types/recipe";
 import { deferred } from "./helpers/daily-meals";
-import {
-  areLegacyScreensFresh,
-  areLegacyScreensStale,
-  renderWithQueryClient,
-} from "./helpers/query-client";
 
 const push = vi.fn();
 vi.mock("next/navigation", () => ({
@@ -87,7 +89,7 @@ const flush = async () => {
 describe("RecipeFormView (S-05 レシピ登録/編集)", () => {
   describe("新規", () => {
     it("S-05: 新規の画面は「レシピを登録」で、入力は空、削除の操作は無い", () => {
-      renderWithQueryClient(<RecipeFormView />);
+      render(<RecipeFormView />);
 
       expect(
         screen.getByRole("heading", { name: "レシピを登録" }),
@@ -104,7 +106,7 @@ describe("RecipeFormView (S-05 レシピ登録/編集)", () => {
     it("AC-R-5: 登録に成功すると、成功を知らせてレシピの一覧に移る", async () => {
       saveRecipe.mockResolvedValue({ ok: true });
       const u = user();
-      renderWithQueryClient(<RecipeFormView />);
+      render(<RecipeFormView />);
 
       await u.type(nameField(), "カレー");
       await u.clear(caloriesField());
@@ -124,7 +126,7 @@ describe("RecipeFormView (S-05 レシピ登録/編集)", () => {
 
     it("02 バリデーション: 名前が空のまま登録すると、欄の下にエラーが出て保存しない", async () => {
       const u = user();
-      renderWithQueryClient(<RecipeFormView />);
+      render(<RecipeFormView />);
 
       await u.click(screen.getByRole("button", { name: /登録する/ }));
 
@@ -137,7 +139,7 @@ describe("RecipeFormView (S-05 レシピ登録/編集)", () => {
 
     it("02 バリデーション: 0人分では保存しない", async () => {
       const u = user();
-      renderWithQueryClient(<RecipeFormView />);
+      render(<RecipeFormView />);
 
       await u.type(nameField(), "カレー");
       await u.clear(servingsField());
@@ -152,7 +154,7 @@ describe("RecipeFormView (S-05 レシピ登録/編集)", () => {
 
     it("02 バリデーション: エラーの文は欄に結び付き(aria-describedby)、欄はエラーの状態(aria-invalid)になる", async () => {
       const u = user();
-      renderWithQueryClient(<RecipeFormView />);
+      render(<RecipeFormView />);
       expect(nameField()).not.toHaveAttribute("aria-invalid", "true");
 
       await u.clear(servingsField());
@@ -188,7 +190,7 @@ describe("RecipeFormView (S-05 レシピ登録/編集)", () => {
 
     it("S-05: 「追加」で材料の行が増え、単価×数量の食費合計がすぐ変わる", async () => {
       const u = user();
-      renderWithQueryClient(<RecipeFormView />);
+      render(<RecipeFormView />);
       expect(screen.getByText(/食費合計: ¥0/)).toBeInTheDocument();
 
       await u.click(screen.getByRole("button", { name: "追加" }));
@@ -206,7 +208,7 @@ describe("RecipeFormView (S-05 レシピ登録/編集)", () => {
     it("S-05: 材料名が空の行は材料として保存しない", async () => {
       saveRecipe.mockResolvedValue({ ok: true });
       const u = user();
-      renderWithQueryClient(<RecipeFormView />);
+      render(<RecipeFormView />);
 
       await u.type(nameField(), "カレー");
       await u.click(screen.getByRole("button", { name: "追加" }));
@@ -220,7 +222,7 @@ describe("RecipeFormView (S-05 レシピ登録/編集)", () => {
 
   describe("編集", () => {
     it("N-2: 編集の画面は「レシピを編集」で、サーバーで読んだ値と材料が入っている", () => {
-      renderWithQueryClient(<RecipeFormView existing={createRecipe()} />);
+      render(<RecipeFormView existing={createRecipe()} />);
 
       expect(
         screen.getByRole("heading", { name: "レシピを編集" }),
@@ -239,7 +241,7 @@ describe("RecipeFormView (S-05 レシピ登録/編集)", () => {
     it("AC-R-5: 変更を保存すると、そのレシピの id で保存し、成功を知らせて一覧に移る", async () => {
       saveRecipe.mockResolvedValue({ ok: true });
       const u = user();
-      renderWithQueryClient(<RecipeFormView existing={createRecipe()} />);
+      render(<RecipeFormView existing={createRecipe()} />);
 
       await u.clear(nameField());
       await u.type(nameField(), "豚じゃが");
@@ -271,7 +273,7 @@ describe("RecipeFormView (S-05 レシピ登録/編集)", () => {
       const pending = deferred<{ ok: boolean }>();
       saveRecipe.mockReturnValue(pending.promise);
       const u = user();
-      renderWithQueryClient(<RecipeFormView existing={createRecipe()} />);
+      render(<RecipeFormView existing={createRecipe()} />);
 
       await u.click(screen.getByRole("button", { name: "変更を保存" }));
 
@@ -289,7 +291,7 @@ describe("RecipeFormView (S-05 レシピ登録/編集)", () => {
     it("AC-R-5: 保存に失敗すると、エラーを出して画面に残り、打った値も消さない", async () => {
       saveRecipe.mockResolvedValue({ ok: false });
       const u = user();
-      renderWithQueryClient(<RecipeFormView existing={createRecipe()} />);
+      render(<RecipeFormView existing={createRecipe()} />);
 
       await u.clear(nameField());
       await u.type(nameField(), "豚じゃが");
@@ -306,7 +308,7 @@ describe("RecipeFormView (S-05 レシピ登録/編集)", () => {
     it("AC-R-5: 呼び出しそのものが失敗しても(通信が切れた など)、画面を替えずにエラーを出す", async () => {
       saveRecipe.mockRejectedValue(new TypeError("Failed to fetch"));
       const u = user();
-      renderWithQueryClient(<RecipeFormView existing={createRecipe()} />);
+      render(<RecipeFormView existing={createRecipe()} />);
 
       await u.click(screen.getByRole("button", { name: "変更を保存" }));
       await flush();
@@ -318,7 +320,7 @@ describe("RecipeFormView (S-05 レシピ登録/編集)", () => {
 
     it("02 削除確認: 「このレシピを削除する」で、名前入りの確認が出て、キャンセルすると消さない", async () => {
       const u = user();
-      renderWithQueryClient(<RecipeFormView existing={createRecipe()} />);
+      render(<RecipeFormView existing={createRecipe()} />);
 
       await u.click(
         screen.getByRole("button", { name: /このレシピを削除する/ }),
@@ -338,7 +340,7 @@ describe("RecipeFormView (S-05 レシピ登録/編集)", () => {
     it("AC-R-5: 削除すると、そのレシピの id で消し、知らせて一覧に移る", async () => {
       deleteRecipe.mockResolvedValue({ ok: true });
       const u = user();
-      renderWithQueryClient(<RecipeFormView existing={createRecipe()} />);
+      render(<RecipeFormView existing={createRecipe()} />);
 
       await u.click(
         screen.getByRole("button", { name: /このレシピを削除する/ }),
@@ -355,7 +357,7 @@ describe("RecipeFormView (S-05 レシピ登録/編集)", () => {
       const pending = deferred<{ ok: boolean }>();
       deleteRecipe.mockReturnValue(pending.promise);
       const u = user();
-      renderWithQueryClient(<RecipeFormView existing={createRecipe()} />);
+      render(<RecipeFormView existing={createRecipe()} />);
 
       await u.click(
         screen.getByRole("button", { name: /このレシピを削除する/ }),
@@ -375,7 +377,7 @@ describe("RecipeFormView (S-05 レシピ登録/編集)", () => {
     it("AC-R-5: 削除に失敗すると、エラーを出して画面に残る", async () => {
       deleteRecipe.mockResolvedValue({ ok: false });
       const u = user();
-      renderWithQueryClient(<RecipeFormView existing={createRecipe()} />);
+      render(<RecipeFormView existing={createRecipe()} />);
 
       await u.click(
         screen.getByRole("button", { name: /このレシピを削除する/ }),
@@ -389,85 +391,10 @@ describe("RecipeFormView (S-05 レシピ登録/編集)", () => {
     });
   });
 
-  // Plan and report still read through TanStack Query; after a Server Action their data must be read again (ui-tech §5)
-  describe("まだ移していない画面(献立・レポート)の読み直し(AC-R-6)", () => {
-    it("AC-R-6: 登録に成功すると、献立とレポートのデータを古い扱いにする", async () => {
-      saveRecipe.mockResolvedValue({ ok: true });
-      const u = user();
-      const { queryClient } = renderWithQueryClient(<RecipeFormView />);
-
-      await u.type(nameField(), "カレー");
-      await u.click(screen.getByRole("button", { name: /登録する/ }));
-      await flush();
-
-      expect(areLegacyScreensStale(queryClient)).toBe(true);
-    });
-
-    it("AC-R-6: 変更の保存に成功すると、献立とレポートのデータを古い扱いにする", async () => {
-      saveRecipe.mockResolvedValue({ ok: true });
-      const u = user();
-      const { queryClient } = renderWithQueryClient(
-        <RecipeFormView existing={createRecipe()} />,
-      );
-
-      await u.click(screen.getByRole("button", { name: "変更を保存" }));
-      await flush();
-
-      expect(areLegacyScreensStale(queryClient)).toBe(true);
-    });
-
-    it("AC-R-6: 保存に失敗したときは、献立とレポートのデータをそのままにする", async () => {
-      saveRecipe.mockResolvedValue({ ok: false });
-      const u = user();
-      const { queryClient } = renderWithQueryClient(
-        <RecipeFormView existing={createRecipe()} />,
-      );
-
-      await u.click(screen.getByRole("button", { name: "変更を保存" }));
-      await flush();
-
-      expect(toastError).toHaveBeenCalledWith("保存に失敗しました");
-      expect(areLegacyScreensFresh(queryClient)).toBe(true);
-    });
-
-    it("AC-R-6: 削除に成功すると、献立とレポートのデータを古い扱いにする", async () => {
-      deleteRecipe.mockResolvedValue({ ok: true });
-      const u = user();
-      const { queryClient } = renderWithQueryClient(
-        <RecipeFormView existing={createRecipe()} />,
-      );
-
-      await u.click(
-        screen.getByRole("button", { name: /このレシピを削除する/ }),
-      );
-      await u.click(screen.getByRole("button", { name: "削除する" }));
-      await flush();
-
-      expect(areLegacyScreensStale(queryClient)).toBe(true);
-    });
-
-    it("AC-R-6: 削除に失敗したときは、献立とレポートのデータをそのままにする", async () => {
-      deleteRecipe.mockResolvedValue({ ok: false });
-      const u = user();
-      const { queryClient } = renderWithQueryClient(
-        <RecipeFormView existing={createRecipe()} />,
-      );
-
-      await u.click(
-        screen.getByRole("button", { name: /このレシピを削除する/ }),
-      );
-      await u.click(screen.getByRole("button", { name: "削除する" }));
-      await flush();
-
-      expect(toastError).toHaveBeenCalledWith("削除に失敗しました");
-      expect(areLegacyScreensFresh(queryClient)).toBe(true);
-    });
-  });
-
   describe("戻るときの未保存の確認(G-8)", () => {
     it("G-8: 何も変えていなければ、確認を出さずに一覧に戻る", async () => {
       const u = user();
-      renderWithQueryClient(<RecipeFormView existing={createRecipe()} />);
+      render(<RecipeFormView existing={createRecipe()} />);
 
       await u.click(backButton());
 
@@ -477,7 +404,7 @@ describe("RecipeFormView (S-05 レシピ登録/編集)", () => {
 
     it("G-8: 入力を変えて戻ると「変更を破棄しますか？」が出て、「編集を続ける」なら入力が残る", async () => {
       const u = user();
-      renderWithQueryClient(<RecipeFormView existing={createRecipe()} />);
+      render(<RecipeFormView existing={createRecipe()} />);
 
       await u.type(nameField(), "改");
       await u.click(backButton());
@@ -498,7 +425,7 @@ describe("RecipeFormView (S-05 レシピ登録/編集)", () => {
 
     it("G-8: 確認で「破棄して戻る」を選ぶと一覧に戻る", async () => {
       const u = user();
-      renderWithQueryClient(<RecipeFormView existing={createRecipe()} />);
+      render(<RecipeFormView existing={createRecipe()} />);
 
       await u.type(nameField(), "改");
       await u.click(backButton());
@@ -512,7 +439,7 @@ describe("RecipeFormView (S-05 レシピ登録/編集)", () => {
 
     it("G-8: 材料を足しただけでも、戻るときに確認が出る", async () => {
       const u = user();
-      renderWithQueryClient(<RecipeFormView existing={createRecipe()} />);
+      render(<RecipeFormView existing={createRecipe()} />);
 
       await u.click(screen.getByRole("button", { name: "追加" }));
       await u.click(backButton());
@@ -535,7 +462,7 @@ describe("RecipeFormView (S-05 レシピ登録/編集)", () => {
       </Activity>
     );
     const u = user();
-    const { rerender } = renderWithQueryClient(onScreen("visible"));
+    const { rerender } = render(onScreen("visible"));
 
     await u.clear(nameField());
     await u.type(nameField(), "豚じゃが");

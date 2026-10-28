@@ -1,15 +1,14 @@
-import { cleanup, screen } from "@testing-library/react";
+import { cleanup, render, screen } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import type { FoodMaster } from "@/components/features/food-masters/types/food-master";
 import type { Recipe } from "@/components/features/recipes/types/recipe";
 import { getSetMenu } from "@/components/features/set-menus/api/queries";
 import { SetMenuFormSection } from "@/components/features/set-menus/components/set-menu-form-section";
-import { renderWithQueryClient } from "./helpers/query-client";
 
-// useListCacheSeed opened a set menu's edit screen at once from the list already in the browser (TanStack Query).
-// Phase 5 removed it: the edit screen now reads the set menu on the server with the page (AC-R-2), and an id that is
-// not there is a 404 (AC-R-7). The same needs (open the right set menu, nothing for an unknown id) are checked on
-// SetMenuFormSection and getSetMenu. The DB, the route's 404 and the Server Actions are the boundary here.
+// SetMenuFormSection reads the set menu on the server with the page (/other/set-menus/[id]) and opens the edit screen
+// with its name and items, along with the recipes and food masters that can be added (AC-R-2). /new opens an empty form
+// without reading the DB, and an id that is not there (or was deleted) is a 404 (AC-R-7). getSetMenu reads one set menu
+// that is not deleted. The DB, the route's 404 and the Server Actions are the boundary here.
 
 class NotFoundError extends Error {}
 vi.mock("next/navigation", () => ({
@@ -132,7 +131,7 @@ const section = (id: string) =>
 
 describe("SetMenuFormSection (/other/set-menus/[id])", () => {
   it("S-06a: /other/set-menus/new は新規の画面で、セットメニューを DB から読まない", async () => {
-    renderWithQueryClient(await section("new"));
+    render(await section("new"));
 
     expect(
       screen.getByRole("heading", { name: "セットメニューを登録" }),
@@ -144,7 +143,7 @@ describe("SetMenuFormSection (/other/set-menus/[id])", () => {
   it("AC-R-2: 有る id は、サーバーで読んだセットメニューの名前とアイテムを入れた編集の画面で開く", async () => {
     setMenuQuery.result = { data: setMenuRow, error: null };
 
-    renderWithQueryClient(await section(SET_MENU_ID));
+    render(await section(SET_MENU_ID));
 
     expect(
       screen.getByRole("heading", { name: "セットメニューを編集" }),
@@ -160,7 +159,7 @@ describe("SetMenuFormSection (/other/set-menus/[id])", () => {
   });
 
   it("AC-R-2: 追加できるレシピと食品マスタも、サーバーで読んで画面に渡す", async () => {
-    renderWithQueryClient(await section("new"));
+    render(await section("new"));
 
     expect(getRecipes).toHaveBeenCalledTimes(1);
     expect(getFoodMasters).toHaveBeenCalledTimes(1);

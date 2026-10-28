@@ -1,4 +1,3 @@
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { render } from "@testing-library/react";
 import { createStore, Provider as JotaiProvider } from "jotai";
 import { DailyMealsProvider } from "@/components/features/meals/components/daily-meals-provider";
@@ -43,32 +42,29 @@ export type DailyMealsOptions = {
 };
 
 /** The providers the home screen puts around its client parts: the day's meals as the server read them,
- *  Jotai (drawer state) and the TanStack Query client the legacy screens still refresh through */
+ *  and Jotai (drawer state) */
 export const createDailyMealsWrapper = ({
   date = "2026-10-20",
   today = "2026-10-20",
   meals = emptyDailyMeals(),
 }: DailyMealsOptions = {}) => {
-  const queryClient = new QueryClient();
   const store = createStore();
   const Wrapper = ({ children }: { children: React.ReactNode }) => (
-    <QueryClientProvider client={queryClient}>
-      <JotaiProvider store={store}>
-        <DailyMealsProvider date={date} today={today} meals={meals}>
-          {children}
-        </DailyMealsProvider>
-      </JotaiProvider>
-    </QueryClientProvider>
+    <JotaiProvider store={store}>
+      <DailyMealsProvider date={date} today={today} meals={meals}>
+        {children}
+      </DailyMealsProvider>
+    </JotaiProvider>
   );
-  return { Wrapper, store, queryClient };
+  return { Wrapper, store };
 };
 
 export const renderWithDailyMeals = (
   ui: React.ReactElement,
   options: DailyMealsOptions = {},
 ) => {
-  const { Wrapper, store, queryClient } = createDailyMealsWrapper(options);
-  return { ...render(ui, { wrapper: Wrapper }), store, queryClient };
+  const { Wrapper, store } = createDailyMealsWrapper(options);
+  return { ...render(ui, { wrapper: Wrapper }), store };
 };
 
 /** A promise the test settles by hand, to look at the screen while a Server Action is still running */
