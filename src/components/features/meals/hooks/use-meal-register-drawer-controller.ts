@@ -11,7 +11,6 @@ import {
 } from "@/components/features/ocr";
 import { useIsShown } from "@/hooks";
 import { callAction } from "@/lib/action-result";
-import { useRefreshLegacyScreens } from "@/lib/legacy-bridge";
 import type { SourceType } from "@/types";
 import { registerMealItems } from "../api/actions";
 import {
@@ -41,7 +40,6 @@ export const useMealRegisterDrawerController = () => {
   const store = useStore();
   const [draftItems, setDraftItems] = useAtom(draftItemsAtom);
   const { date, showMealChange } = useDailyMealsContext();
-  const refreshLegacyScreens = useRefreshLegacyScreens();
   const [isRegistering, startRegistering] = useTransition();
   const [activeTab, setActiveTab] = useState<RegisterTab>("manual");
   const [isOcrOpen, setIsOcrOpen] = useState(false);
@@ -275,14 +273,12 @@ export const useMealRegisterDrawerController = () => {
           return;
         }
         toast.success(`${items.length}件の食事を登録しました`);
-        refreshLegacyScreens();
       });
     },
     [
       closeDrawer,
       date,
       mealType,
-      refreshLegacyScreens,
       setDraftItems,
       setDrawerMealType,
       setIsOpen,

@@ -5,7 +5,6 @@ import { useState, useTransition } from "react";
 import { toast } from "sonner";
 import { useIsShown } from "@/hooks";
 import { callAction } from "@/lib/action-result";
-import { useRefreshLegacyScreens } from "@/lib/legacy-bridge";
 import { MEAL_TYPE_LABELS, type MealType } from "@/types";
 import { copyPreviousDayMeal, transferMealToPlan } from "../api/actions";
 import {
@@ -20,7 +19,6 @@ export const useMealSlot = (mealType: MealType, items: DisplayedMealItem[]) => {
   const { date } = useDailyMealsContext();
   const setIsDrawerOpen = useSetAtom(isDrawerOpenAtom);
   const setDrawerMealType = useSetAtom(drawerMealTypeAtom);
-  const refreshLegacyScreens = useRefreshLegacyScreens();
   const [editingItem, setEditingItem] = useState<MealItem | null>(null);
   const [isCopying, startCopy] = useTransition();
   const [isTransferring, startTransfer] = useTransition();
@@ -48,7 +46,6 @@ export const useMealSlot = (mealType: MealType, items: DisplayedMealItem[]) => {
         return;
       }
       toast.success(`前日の${label}(${result.copiedCount}件)をコピーしました`);
-      refreshLegacyScreens();
     });
   };
 
@@ -62,7 +59,6 @@ export const useMealSlot = (mealType: MealType, items: DisplayedMealItem[]) => {
         return;
       }
       toast.success("献立に反映しました");
-      refreshLegacyScreens();
     });
   };
 

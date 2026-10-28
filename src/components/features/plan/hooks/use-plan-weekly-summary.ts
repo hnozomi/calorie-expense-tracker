@@ -7,14 +7,12 @@ import {
   transferPlansToMeals,
 } from "@/components/features/plan/api/actions";
 import { callAction } from "@/lib/action-result";
-import { useRefreshLegacyScreens } from "@/lib/legacy-bridge";
 import { formatMonthDay, shiftDate } from "@/utils";
 import { useWeeklyPlansContext } from "./use-weekly-plans-context";
 
 /** Weekly totals against the target, plus moving today's plans into the meal record and actual meals into past plans */
 export const usePlanWeeklySummary = (targetCalories: number) => {
   const { weekStart, today, plans } = useWeeklyPlansContext();
-  const refreshLegacyScreens = useRefreshLegacyScreens();
   const [isTransferring, startTransfer] = useTransition();
   const [isSyncing, startSync] = useTransition();
 
@@ -52,7 +50,6 @@ export const usePlanWeeklySummary = (targetCalories: number) => {
       const transferredCount = result.ok ? result.transferredCount : 0;
       if (transferredCount === todayMealTypes.length) {
         toast.success("今日の献立を食事記録に転記しました");
-        refreshLegacyScreens();
         return;
       }
       toast.error(
@@ -79,7 +76,6 @@ export const usePlanWeeklySummary = (targetCalories: number) => {
       toast.success(
         `${result.replacedCount}枠の献立を実際の食事内容で置き換えました`,
       );
-      refreshLegacyScreens();
     });
   };
 

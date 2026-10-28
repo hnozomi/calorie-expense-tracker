@@ -1,54 +1,19 @@
 "use client";
+// Client because the theme and Jotai providers hold browser-only state
 
-import {
-  MutationCache,
-  QueryClient,
-  QueryClientProvider,
-} from "@tanstack/react-query";
-import { ReactQueryDevtools } from "@tanstack/react-query-devtools";
 import { Provider as JotaiProvider } from "jotai";
 import { ThemeProvider } from "next-themes";
-import { useState } from "react";
-import { revalidateAfterLegacyMutation } from "@/lib/legacy-bridge";
 
-/** Wraps the app with Jotai and TanStack Query providers */
-const Providers = ({ children }: { children: React.ReactNode }) => {
-  const [queryClient] = useState(
-    () =>
-      new QueryClient({
-        mutationCache: new MutationCache({
-          onSuccess: revalidateAfterLegacyMutation,
-        }),
-        defaultOptions: {
-          queries: {
-            staleTime: 60 * 1000,
-            // Keep cached data long enough to survive tab switches; stale data
-            // is shown instantly and revalidated in the background
-            gcTime: 30 * 60 * 1000,
-            retry: 1,
-          },
-        },
-      }),
-  );
-
-  return (
-    <ThemeProvider
-      attribute="class"
-      defaultTheme="system"
-      enableSystem
-      disableTransitionOnChange
-    >
-      <JotaiProvider>
-        <QueryClientProvider client={queryClient}>
-          {children}
-          {/* Hidden during E2E runs: the floating button overlaps the bottom nav */}
-          {process.env.NEXT_PUBLIC_E2E !== "1" && (
-            <ReactQueryDevtools initialIsOpen={false} />
-          )}
-        </QueryClientProvider>
-      </JotaiProvider>
-    </ThemeProvider>
-  );
-};
+/** Wraps the app with the theme and Jotai providers */
+const Providers = ({ children }: { children: React.ReactNode }) => (
+  <ThemeProvider
+    attribute="class"
+    defaultTheme="system"
+    enableSystem
+    disableTransitionOnChange
+  >
+    <JotaiProvider>{children}</JotaiProvider>
+  </ThemeProvider>
+);
 
 export { Providers };
