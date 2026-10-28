@@ -4,6 +4,9 @@ import { InlineDeleteConfirm } from "@/components/ui/inline-delete-confirm";
 
 type Props = {
   isNew: boolean;
+  /** e.g. このレシピを削除する */
+  deleteLabel: string;
+  deleteDescription: string;
   isSaving: boolean;
   isDeleting: boolean;
   itemName: string;
@@ -13,8 +16,11 @@ type Props = {
   onDelete: () => void;
 };
 
-export const RecipeFormFooter = ({
+/** The submit button (登録する on a new record, 変更を保存 on an edit) and, when editing, the delete confirm */
+export const EditFormFooter = ({
   isNew,
+  deleteLabel,
+  deleteDescription,
   isSaving,
   isDeleting,
   itemName,
@@ -39,9 +45,9 @@ export const RecipeFormFooter = ({
     </SubmitButton>
     {!isNew && (
       <InlineDeleteConfirm
-        triggerLabel="このレシピを削除する"
+        triggerLabel={deleteLabel}
         itemName={itemName}
-        description="過去の食事記録は影響を受けません。セットメニューに含まれている場合、既存の内容は保持されますが、新たに追加できなくなります。"
+        description={deleteDescription}
         isOpen={isDeleteConfirmOpen}
         isDeleting={isDeleting}
         onOpen={onDeleteAsk}

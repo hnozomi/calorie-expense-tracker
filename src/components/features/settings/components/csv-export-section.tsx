@@ -1,15 +1,15 @@
 "use client";
+// Client because the period picker and export buttons are interactive
 
 import { Download, FileSpreadsheet, Loader2 } from "lucide-react";
-import { useState } from "react";
-import { Button } from "@/components/ui/button";
-import { SectionHeader } from "@/components/ui/section-header";
-import { cn } from "@/utils";
 import {
   CSV_EXPORT_PERIOD_LABELS,
   type CsvExportPeriod,
-} from "../csv-export-config";
-import { useCsvExport } from "../hooks/use-csv-export";
+} from "@/components/features/settings/csv-export-config";
+import { useCsvExport } from "@/components/features/settings/hooks/use-csv-export";
+import { Button } from "@/components/ui/button";
+import { SectionHeader } from "@/components/ui/section-header";
+import { cn } from "@/utils";
 
 const EXPORT_ITEMS = [
   { type: "meals" as const, label: "食事記録" },
@@ -18,16 +18,20 @@ const EXPORT_ITEMS = [
   { type: "set_menus" as const, label: "セットメニュー" },
 ] as const;
 
+// Object.entries widens the keys to string; they are the CsvExportPeriod keys of the labels
 const PERIOD_OPTIONS = Object.entries(CSV_EXPORT_PERIOD_LABELS) as [
   CsvExportPeriod,
   string,
 ][];
 
-/** Section for CSV export buttons with a period selector for meal data */
-const CsvExportSection = () => {
-  const { exportingType, exportByType } = useCsvExport();
-  const [mealPeriod, setMealPeriod] = useState<CsvExportPeriod>("all");
-  const isExporting = exportingType !== null;
+export const CsvExportSection = () => {
+  const {
+    isExporting,
+    isExportingType,
+    mealPeriod,
+    setMealPeriod,
+    exportByType,
+  } = useCsvExport();
 
   return (
     <section className="space-y-3">
@@ -58,24 +62,21 @@ const CsvExportSection = () => {
 
         <div className="grid grid-cols-2 gap-2.5">
           {EXPORT_ITEMS.map(({ type, label }) => {
-            const isCurrentExporting = exportingType === type;
             return (
               <Button
                 key={type}
                 variant="outline"
                 className="h-auto flex-col gap-1.5 bg-background/80 py-3"
-                onClick={() =>
-                  exportByType(type, type === "meals" ? mealPeriod : "all")
-                }
+                onClick={() => exportByType(type)}
                 disabled={isExporting}
               >
-                {isCurrentExporting ? (
+                {isExportingType(type) ? (
                   <Loader2 className="h-5 w-5 animate-spin text-primary/70" />
                 ) : (
                   <FileSpreadsheet className="h-5 w-5 text-primary/70" />
                 )}
                 <span className="text-xs font-medium">
-                  {isCurrentExporting ? "エクスポート中..." : label}
+                  {isExportingType(type) ? "エクスポート中..." : label}
                 </span>
               </Button>
             );
@@ -85,5 +86,3 @@ const CsvExportSection = () => {
     </section>
   );
 };
-
-export { CsvExportSection };

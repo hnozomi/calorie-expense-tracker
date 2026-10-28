@@ -6,9 +6,9 @@ import { Header, PageContainer } from "@/components/features/layout";
 import { useRecipeFormController } from "@/components/features/recipes/hooks/use-recipe-form-controller";
 import type { Recipe } from "@/components/features/recipes/types/recipe";
 import { Button } from "@/components/ui/button";
+import { EditFormFooter } from "@/components/ui/edit-form-footer";
 import { UnsavedChangesDialog } from "@/components/ui/unsaved-changes-dialog";
 import { RecipeBasicSection } from "./recipe-basic-section";
-import { RecipeFormFooter } from "./recipe-form-footer";
 import { RecipeIngredientsEditor } from "./recipe-ingredients-editor";
 import { RecipeNotesSection } from "./recipe-notes-section";
 import { RecipeNutritionSection } from "./recipe-nutrition-section";
@@ -71,7 +71,9 @@ export const RecipeFormView = ({ existing }: Props) => {
 
           <RecipeNotesSection register={register} />
 
-          <RecipeFormFooter
+          <EditFormFooter
+            deleteDescription="過去の食事記録は影響を受けません。セットメニューに含まれている場合、既存の内容は保持されますが、新たに追加できなくなります。"
+            deleteLabel="このレシピを削除する"
             isNew={isNew}
             isSaving={isSaving}
             isDeleting={isDeleting}

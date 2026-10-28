@@ -1,22 +1,18 @@
-"use client";
-
 import Link from "next/link";
+import type { SetMenu } from "@/components/features/set-menus/types/set-menu";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
 import { PfcDisplay } from "@/components/ui/pfc-display";
-import type { SetMenu } from "../types/set-menu";
 
-type SetMenuCardProps = {
+type Props = {
   setMenu: SetMenu;
   href: string;
 };
 
 /** Card displaying a set menu's name, items, and totals */
-const SetMenuCard = ({ setMenu, href }: SetMenuCardProps) => {
+export const SetMenuCard = ({ setMenu, href }: Props) => {
   return (
-    // Full prefetch: dynamic detail routes only prefetch their loading
-    // boundary by default, which still costs a server round-trip on tap
-    <Link href={href} prefetch className="block">
+    <Link href={href} className="block">
       <Card className="cursor-pointer border-muted-foreground/10 transition-all duration-200 hover:scale-[1.01] hover:shadow-md active:scale-[0.99]">
         <CardContent className="py-3">
           <div className="flex items-start justify-between gap-3">
@@ -64,5 +60,3 @@ const SetMenuCard = ({ setMenu, href }: SetMenuCardProps) => {
     </Link>
   );
 };
-
-export { SetMenuCard };

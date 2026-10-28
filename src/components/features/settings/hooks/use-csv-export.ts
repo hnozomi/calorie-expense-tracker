@@ -1,46 +1,55 @@
 "use client";
+// Client because the file is built and downloaded in the browser
 
-import { useCallback, useState } from "react";
+import { useState, useTransition } from "react";
 import { toast } from "sonner";
-import { useSupabase } from "@/hooks";
-import { downloadCsv, toCsv } from "@/utils";
+import { exportCsvRows } from "@/components/features/settings/api/actions";
 import {
   buildCsvFilename,
   type CsvExportPeriod,
   type CsvExportType,
   csvExportDefinitions,
-} from "../csv-export-config";
+} from "@/components/features/settings/csv-export-config";
+import { callAction } from "@/lib/action-result";
+import { downloadCsv, toCsv } from "@/utils";
 
-/** CSV export hook providing download functions for each data type */
+/** The rows are read on the server; the file is made and saved here */
 export const useCsvExport = () => {
-  const supabase = useSupabase();
   const [exportingType, setExportingType] = useState<CsvExportType | null>(
     null,
   );
+  const [mealPeriod, setMealPeriod] = useState<CsvExportPeriod>("all");
+  const [, startExport] = useTransition();
 
-  const exportByType = useCallback(
-    async (type: CsvExportType, period: CsvExportPeriod = "all") => {
-      const definition = csvExportDefinitions[type];
-
-      setExportingType(type);
-      try {
-        const rows = await definition.fetchRows(supabase, period);
-        if (rows.length === 0) {
-          toast.info("エクスポートするデータがありません");
-          return;
-        }
-        const csv = toCsv(definition.headers, rows);
-        downloadCsv(csv, buildCsvFilename(definition.filenamePrefix));
-        toast.success(definition.successMessage);
-      } catch (error) {
-        console.error(`Failed to export ${type}:`, error);
+  const exportByType = (type: CsvExportType) => {
+    const definition = csvExportDefinitions[type];
+    setExportingType(type);
+    startExport(async () => {
+      const result = await callAction(() =>
+        exportCsvRows({ type, period: type === "meals" ? mealPeriod : "all" }),
+      );
+      setExportingType(null);
+      if (!result.ok) {
         toast.error("エクスポートに失敗しました");
-      } finally {
-        setExportingType(null);
+        return;
       }
-    },
-    [supabase],
-  );
+      if (result.rows.length === 0) {
+        toast.info("エクスポートするデータがありません");
+        return;
+      }
+      downloadCsv(
+        toCsv(definition.headers, result.rows),
+        buildCsvFilename(definition.filenamePrefix),
+      );
+      toast.success(definition.successMessage);
+    });
+  };
 
-  return { exportingType, exportByType };
+  return {
+    isExporting: exportingType !== null,
+    isExportingType: (type: CsvExportType) => exportingType === type,
+    mealPeriod,
+    setMealPeriod,
+    exportByType,
+  };
 };

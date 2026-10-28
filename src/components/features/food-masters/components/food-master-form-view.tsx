@@ -10,9 +10,9 @@ import type {
 import { Header, PageContainer } from "@/components/features/layout";
 import { OcrCameraOverlay } from "@/components/features/ocr";
 import { Button } from "@/components/ui/button";
+import { EditFormFooter } from "@/components/ui/edit-form-footer";
 import { UnsavedChangesDialog } from "@/components/ui/unsaved-changes-dialog";
 import { FoodMasterBasicSection } from "./food-master-basic-section";
-import { FoodMasterFormFooter } from "./food-master-form-footer";
 import { FoodMasterNutritionSection } from "./food-master-nutrition-section";
 import { FoodMasterOcrButton } from "./food-master-ocr-button";
 import { FoodMasterOtherSection } from "./food-master-other-section";
@@ -74,7 +74,9 @@ export const FoodMasterFormView = ({ existing, prefill }: Props) => {
 
           <FoodMasterOtherSection register={register} errors={errors} />
 
-          <FoodMasterFormFooter
+          <EditFormFooter
+            deleteDescription="過去の食事記録は影響を受けません。セットメニューに含まれている場合、既存の内容は保持されますが、新たに追加できなくなります。"
+            deleteLabel="この食品を削除する"
             isNew={isNew}
             isSaving={isSaving}
             isDeleting={isDeleting}

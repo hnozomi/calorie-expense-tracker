@@ -44,7 +44,7 @@
 | `/plan?week=` | 週の献立・目標値・買い物リスト・献立の候補 | 同上 | `week` で変わる。無ければ今週の月曜 |
 | `/recipes?q=`・`/recipes/[id]` | レシピの一覧(検索)・詳細 | 同上 | `q`・`id`。`id="new"` は新規 |
 | `/other/food-masters?q=`・`/other/food-masters/[id]` | マスタの一覧(検索)・詳細 | 同上 | 同上 |
-| `/other/set-menus`・`/other/set-menus/[id]` | セットの一覧・詳細 | 同上 | `id` |
+| `/other/set-menus?q=`・`/other/set-menus/[id]` | セットの一覧(検索)・詳細 | 同上 | `q`・`id` |
 | `/other/report?week=` | 週の集計 | 同上 | `week` |
 | `/other/settings` | 目標値・メール・CSV・全削除 | 同上 | なし |
 | `/other`・`/login`・`/signup`・`/offline` | データ無し | 今のまま | 静的 |
@@ -127,12 +127,12 @@ app/(main)/home/page.tsx                    Server。Header と <Suspense> を�
 
 - ホームの Drawer・編集モーダルは、タブを移ったら閉じる(隠れたときに `useLayoutEffect` の後始末で閉じる)
 - 献立のメニュー選択と買い物リストのダイアログも、タブを移ったら閉じる(同じ作り。保存の失敗で開き直したダイアログが、戻ったときに開いて見えないように)
-- 詳細画面の入力中は残す(戻ったら続きから)。保存したら一覧に移るので残らない
+- 詳細画面の入力中は残す(戻ったら続きから)。設定の目標値の入力中も同じく残す。保存したら一覧に移るので残らない
 - 日・週・検索語は URL なので、Suspense の `key` で切り替わる
 
 ## 5. データ層
 
-- 永続化先: Supabase の `public` スキーマ(今のまま。テーブル・RPC は変えない。フェーズ 4 のレシピの保存の RPC だけ例外。§6)
+- 永続化先: Supabase の `public` スキーマ(今のまま。テーブル・RPC は変えない。フェーズ 4 のレシピとフェーズ 5 のセットメニューの保存の RPC だけ例外。§6)
 - 型: 各機能の `types/`(今のまま)。DB の行から型に直す関数は `queries.ts` から `api/queries.ts` に移す
 - 読む: `api/queries.ts`。`'use cache: private'` + `cacheLife(SCREEN_CACHE)`(`{ stale: 300 }`。`'use cache: private'` はサーバーに残らずブラウザだけに置かれるので、効くのは `stale` だけ。ほかのアプリと同じ)。データはこのアプリの中からしか変わらず、記録はスマホからだけ(別の端末で足すことが無い)ため 300 秒(規約)
 - 1回の表示で同じものを2か所から読むとき(目標値をホームの集計と Drawer で使う など)は、`cache` で包む
@@ -153,7 +153,7 @@ app/(main)/home/page.tsx                    Server。Header と <Suspense> を�
 
 ## 6. バックエンド
 
-原則として変えない(フェーズ 4 のレシピの保存の RPC だけ例外。フェーズ 4 の項目を参照)。テーブル・RLS は変えない(#8 で本番のスキーマを最初のマイグレーションにし、pgTAP で確かめている)。`is_member()` が無いこと(共通の Auth の別のアプリの利用者も入れる)は、作りとは別の話なので、このフェーズには入れない。
+原則として変えない(フェーズ 4 のレシピとフェーズ 5 のセットメニューの保存の RPC だけ例外。各フェーズの項目を参照)。テーブル・RLS は変えない(#8 で本番のスキーマを最初のマイグレーションにし、pgTAP で確かめている)。`is_member()` が無いこと(共通の Auth の別のアプリの利用者も入れる)は、作りとは別の話なので、このフェーズには入れない。
 
 ## 7. PWA
 
@@ -262,7 +262,10 @@ app/(main)/home/page.tsx                    Server。Header と <Suspense> を�
 
 ### フェーズ 5: セットメニュー・レポート・設定
 
-- `/other/set-menus`・`/other/set-menus/[id]`・`/other/report?week=`・`/other/settings`
+- `/other/set-menus?q=`・`/other/set-menus/[id]`・`/other/report?week=`・`/other/settings`
+- セットメニューはフェーズ 4 と同じ形(一覧は ?q= と SearchBox、詳細は new・uuid・消した id で 404、保存・削除は結果を返してクライアントが一覧へ、合計はサーバーで計算)。保存の RPC も消したものを更新しない(マイグレーション `keep_deleted_set_menus_unsaved`)。保存と削除の欄は共通の `ui/edit-form-footer`
+- レポートと献立の週の切り替えは共通の `ui/week-switcher`。レポートの棒はリンク(`/home?date=`)
+- 設定はサーバーで目標値とメールを読む。CSV の行は Server Action が読み(今月・先月は Asia/Tokyo)、ファイルはブラウザで作る
 - `set-menus/api/{queries,actions}.ts`・`report/api/queries.ts`・`settings/api/{queries,actions}.ts`(目標値の保存・全データ削除・CSV の行を返す)
 - ログアウトを `signOut({ scope: "local" })` にする(共通の Auth で、他のアプリのセッションまで切れるため。`supabase.md`)
 - 消す: 各 hooks・`use-recipes`・`use-food-masters`・`use-list-cache-seed`(フェーズ 4 から持ち越し)・`report/queries.ts`・`report-week-atom.ts`・`settings/queries.ts`・残りの `HydratedOnly`
