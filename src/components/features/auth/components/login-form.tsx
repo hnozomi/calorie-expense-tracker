@@ -22,6 +22,9 @@ const loginSchema = z.object({
 
 type LoginFormValues = z.infer<typeof loginSchema>;
 
+// The account used every day across the apps, so only the password has to be typed
+const appUserEmail = "app-user@example.com";
+
 /** User-facing messages for known Supabase auth error codes */
 const AUTH_ERROR_MESSAGES: Record<string, string> = {
   invalid_credentials: "メールアドレスまたはパスワードが正しくありません",
@@ -55,6 +58,7 @@ const LoginForm = () => {
     formState: { errors, isSubmitting },
   } = useForm<LoginFormValues>({
     resolver: zodResolver(loginSchema),
+    defaultValues: { email: appUserEmail },
   });
 
   /** Handle login submission and display server errors */

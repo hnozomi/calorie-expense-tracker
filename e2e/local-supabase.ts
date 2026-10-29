@@ -29,7 +29,7 @@ export const localSupabase = (): LocalSupabaseStatus => {
   return status;
 };
 
-/** Created fresh by global.setup.ts after every `supabase db reset` */
+/** Created by supabase/seed.sql on every `supabase db reset`. The same in every app */
 export const e2eUser = {
   email: "e2e@example.com",
   password: "e2e-password",

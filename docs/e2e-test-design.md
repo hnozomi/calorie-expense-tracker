@@ -18,7 +18,7 @@ Playwright による本アプリのE2Eテストの設計・実装状況・カバ
 | 実行 | 先に `supabase start`。`pnpm test:e2e` がローカルの Supabase につないだ `next dev` をポート 3101 で自動起動(既存サーバーは再利用しない) |
 | 並列性 | **直列実行**(`workers: 1`)。全テストが同一ユーザーのデータを変更するため |
 | 認証 | `auth.setup.ts` がUIログインし `e2e/.auth/user.json`(gitignore)に storageState を保存。各テストはこれを再利用 |
-| テストデータ | ローカルの Supabase だけを使う(`e2e/local-supabase.ts` がローカル以外なら止める)。`global.setup.ts` が毎回 `supabase db reset --local` してから E2E 用の利用者を3人作る: 共通の `e2e@example.com`(`e2eUser`)と、ログアウトを確かめる R-2 専用の `e2e-previous@example.com`・`e2e-next@example.com`(`e2eSwitchUsers`。ログアウトするとその利用者のセッションがすべて切れるため、共通の利用者を使わない) |
+| テストデータ | ローカルの Supabase だけを使う(`e2e/local-supabase.ts` がローカル以外なら止める)。`global.setup.ts` が毎回 `supabase db reset --local` し、`supabase/seed.sql` が E2E 用の利用者を3人作る: 共通の `e2e@example.com`(`e2eUser`)と、ログアウトを確かめる R-2 専用の `e2e-previous@example.com`・`e2e-next@example.com`(`e2eSwitchUsers`。ログアウトするとその利用者のセッションがすべて切れるため、共通の利用者を使わない) |
 | リトライ | `retries: 1`(devサーバー起因のフレーク対策) |
 
 ### データライフサイクル

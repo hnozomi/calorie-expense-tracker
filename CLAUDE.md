@@ -38,7 +38,7 @@ src/
 - `pnpm test:e2e` (or `pnpm e2e`) — Run Playwright E2E tests (starts its own dev server with `NEXT_PUBLIC_E2E=1`)
 
 ## E2E Tests
-- Specs live in `e2e/` and run only against local Supabase: `supabase start` first (ports 593xx, see `supabase/config.toml`). `e2e/global.setup.ts` runs `supabase db reset --local` and creates the three E2E users every run (`e2eUser`, plus `e2eSwitchUsers` only for the logout flow, since logging out ends all of that user's sessions), and `e2e/local-supabase.ts` refuses a non-local URL. The app is started on port 3101 with the local URL and key.
+- Specs live in `e2e/` and run only against local Supabase: `supabase start` first (ports 593xx, see `supabase/config.toml`). `e2e/global.setup.ts` runs `supabase db reset --local` every run, and `supabase/seed.sql` creates the three E2E users with fixed ids (`e2eUser`, plus `e2eSwitchUsers` only for the logout flow, since logging out ends all of that user's sessions), and `e2e/local-supabase.ts` refuses a non-local URL. The app is started on port 3101 with the local URL and key.
 - Always use the helpers in `e2e/helpers.ts` (`gotoHydrated`, `fillStable`, `clickToReveal`, `loginViaUi`, which takes the user to sign in as): input and clicks before React hydration are silently lost on the dev server.
 - Find text and fields with `visibleText` / `visibleField`, not `page.getByText` / `page.getByLabel`: with `cacheComponents`, visited screens stay hidden in the DOM and match too.
 - `NEXT_PUBLIC_E2E=1` hides the Next.js dev indicator, which overlaps the bottom nav and intercepts taps.
