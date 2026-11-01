@@ -1,7 +1,7 @@
 import { defineConfig, devices } from "@playwright/test";
 import { localSupabase } from "./e2e/local-supabase";
 
-const { API_URL, ANON_KEY } = localSupabase();
+const { API_URL, PUBLISHABLE_KEY } = localSupabase();
 // A port of its own so a dev server on 3000 never answers for the E2E run
 const port = 3101;
 
@@ -44,7 +44,7 @@ export default defineConfig({
     env: {
       NEXT_PUBLIC_E2E: "1",
       NEXT_PUBLIC_SUPABASE_URL: API_URL,
-      NEXT_PUBLIC_SUPABASE_ANON_KEY: ANON_KEY,
+      NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY: PUBLISHABLE_KEY,
     },
   },
 });

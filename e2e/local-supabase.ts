@@ -2,7 +2,7 @@ import { execSync } from "node:child_process";
 
 type LocalSupabaseStatus = {
   API_URL: string;
-  ANON_KEY: string;
+  PUBLISHABLE_KEY: string;
   SERVICE_ROLE_KEY: string;
 };
 
