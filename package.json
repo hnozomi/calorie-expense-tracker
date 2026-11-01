@@ -70,5 +70,6 @@
       "source-map-js@>=1.0.0 <1.2.2": "^1.2.2",
       "minimatch@10": "^11.0.1"
     }
-  }
+  },
+  "packageManager": "pnpm@9.5.0"
 }
