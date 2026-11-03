@@ -22,7 +22,7 @@ export const EmptySlotActions = ({
     </button>
     <button
       type="button"
-      className="mt-1 flex w-full items-center justify-center gap-1.5 rounded-lg py-2 text-xs text-muted-foreground/80 transition-colors active:bg-muted/60 disabled:opacity-50"
+      className="mt-1 flex w-full items-center justify-center gap-1.5 rounded-lg py-2 text-xs text-muted-foreground transition-colors active:bg-muted/60 disabled:opacity-50"
       onClick={onCopyPreviousDay}
       disabled={isCopying}
     >

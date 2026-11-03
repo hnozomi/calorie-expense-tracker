@@ -99,7 +99,7 @@ const NutritionFormFields = ({
         <div className="space-y-1">
           <Label
             htmlFor={id("fat")}
-            className="text-xs text-amber-600 dark:text-amber-400"
+            className="text-xs text-amber-700 dark:text-amber-400"
           >
             F (g)
           </Label>
@@ -119,7 +119,7 @@ const NutritionFormFields = ({
         <div className="space-y-1">
           <Label
             htmlFor={id("carbs")}
-            className="text-xs text-green-600 dark:text-green-400"
+            className="text-xs text-green-700 dark:text-green-400"
           >
             C (g)
           </Label>

@@ -51,13 +51,13 @@ const WeeklyPfcChart = ({
         </span>
         <span className="flex items-center gap-1.5">
           <PfcDot color="bg-amber-500" />
-          <span className="font-medium text-amber-600 dark:text-amber-400">
+          <span className="font-medium text-amber-700 dark:text-amber-400">
             脂質
           </span>
         </span>
         <span className="flex items-center gap-1.5">
           <PfcDot color="bg-green-500" />
-          <span className="font-medium text-green-600 dark:text-green-400">
+          <span className="font-medium text-green-700 dark:text-green-400">
             炭水化物
           </span>
         </span>
@@ -146,7 +146,7 @@ const WeeklyPfcChart = ({
           <div className="flex flex-col items-center gap-1">
             <div className="flex items-center gap-1.5">
               <PfcDot color="bg-amber-500" />
-              <span className="font-semibold text-amber-600 dark:text-amber-400">
+              <span className="font-semibold text-amber-700 dark:text-amber-400">
                 F
               </span>
             </div>
@@ -160,7 +160,7 @@ const WeeklyPfcChart = ({
           <div className="flex flex-col items-center gap-1">
             <div className="flex items-center gap-1.5">
               <PfcDot color="bg-green-500" />
-              <span className="font-semibold text-green-600 dark:text-green-400">
+              <span className="font-semibold text-green-700 dark:text-green-400">
                 C
               </span>
             </div>

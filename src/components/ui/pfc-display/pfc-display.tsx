@@ -39,11 +39,11 @@ const PfcDisplay = ({
       </span>
       <span className="flex items-center gap-1">
         <PfcDot color="bg-amber-500" />
-        <span className="text-amber-600 dark:text-amber-400">F {fmt(fat)}</span>
+        <span className="text-amber-700 dark:text-amber-400">F {fmt(fat)}</span>
       </span>
       <span className="flex items-center gap-1">
         <PfcDot color="bg-green-500" />
-        <span className="text-green-600 dark:text-green-400">
+        <span className="text-green-700 dark:text-green-400">
           C {fmt(carbs)}
         </span>
       </span>

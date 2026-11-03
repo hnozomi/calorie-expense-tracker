@@ -29,7 +29,7 @@ export const PfcBars = ({
       target={targetFat}
       color="bg-amber-500"
       bgColor="bg-amber-200/60 dark:bg-amber-900/30"
-      textColor="text-amber-600 dark:text-amber-400"
+      textColor="text-amber-700 dark:text-amber-400"
     />
     <PfcBar
       label="C 炭水化物"
@@ -37,7 +37,7 @@ export const PfcBars = ({
       target={targetCarbs}
       color="bg-green-500"
       bgColor="bg-green-200/60 dark:bg-green-900/30"
-      textColor="text-green-600 dark:text-green-400"
+      textColor="text-green-700 dark:text-green-400"
     />
   </div>
 );
