@@ -38,7 +38,9 @@ export const useAuth = () => {
   );
 
   const signOut = useCallback(async () => {
-    await supabase.auth.signOut();
+    // local: the Auth project is shared by several apps, and the default (global) would sign this account
+    // out of all of them and of every device (supabase.md)
+    await supabase.auth.signOut({ scope: "local" });
     router.push("/login");
     router.refresh();
   }, [supabase, router]);
