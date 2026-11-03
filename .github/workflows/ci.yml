@@ -1,8 +1,6 @@
 name: CI
 
 on:
-  push:
-    branches: [main]
   pull_request:
 
 concurrency:
@@ -14,6 +12,9 @@ permissions:
 
 jobs:
   check:
+    # Only Renovate PRs need CI: it gates automerge and shows whether a major update builds.
+    # Our own commits and pushes are already checked locally by the pre-commit hook.
+    if: startsWith(github.head_ref, 'renovate/')
     runs-on: ubuntu-latest
     timeout-minutes: 15
     # Pages that create a Supabase client are prerendered at build time; dummy values let the build pass without Supabase.
