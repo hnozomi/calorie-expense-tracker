@@ -54,7 +54,7 @@ export const NutritionTargetSection = ({ target }: Props) => {
             id="target-fat"
             label={
               <>
-                <span className="text-amber-600 dark:text-amber-400">F</span>{" "}
+                <span className="text-amber-700 dark:text-amber-400">F</span>{" "}
                 (g)
               </>
             }
@@ -66,7 +66,7 @@ export const NutritionTargetSection = ({ target }: Props) => {
             id="target-carbs"
             label={
               <>
-                <span className="text-green-600 dark:text-green-400">C</span>{" "}
+                <span className="text-green-700 dark:text-green-400">C</span>{" "}
                 (g)
               </>
             }

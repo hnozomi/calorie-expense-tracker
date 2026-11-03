@@ -35,9 +35,3 @@ export type DisplayedMealPlan = MealPlan & { isOptimistic?: boolean };
 export type PlanChange =
   | { type: "save"; plan: DisplayedMealPlan }
   | { type: "remove"; planId: string };
-
-/** Daily summary row returned by get_weekly_summary RPC */
-export type WeeklySummaryRow = NutritionValues & {
-  date: string;
-  totalCost: number;
-};

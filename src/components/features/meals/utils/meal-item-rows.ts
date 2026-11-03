@@ -74,7 +74,7 @@ const resolveNutrition = (
 };
 
 /** Map a raw meal_items row to MealItem, resolving master values */
-export const mapMealItem = (
+const mapMealItem = (
   item: Record<string, unknown>,
   foodMasterMap: Map<string, MasterRow>,
   recipeMap: Map<string, MasterRow>,

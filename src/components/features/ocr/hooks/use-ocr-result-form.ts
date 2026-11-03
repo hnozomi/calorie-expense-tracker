@@ -2,7 +2,7 @@
 
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useEffect, useState } from "react";
-import { useForm } from "react-hook-form";
+import { useForm, useWatch } from "react-hook-form";
 import {
   type MealItemFormInput,
   type MealItemFormValues,
@@ -38,7 +38,7 @@ export const useOcrResultForm = ({
     handleSubmit,
     getValues,
     setValue,
-    watch,
+    control,
     formState: { errors },
   } = useForm<MealItemFormInput, undefined, MealItemFormValues>({
     resolver: zodResolver(mealItemFormSchema),
@@ -60,7 +60,7 @@ export const useOcrResultForm = ({
     };
   }, [pendingItemRef, getValues]);
 
-  const nameValue = watch("name");
+  const nameValue = useWatch({ control, name: "name" });
   const canAdd = typeof nameValue === "string" && nameValue.trim().length > 0;
 
   /** Change the eaten count and refill the nutrition fields from the per-piece values on the label */

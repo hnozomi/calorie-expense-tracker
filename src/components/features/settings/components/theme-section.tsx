@@ -2,7 +2,7 @@
 
 import { Monitor, Moon, Palette, Sun } from "lucide-react";
 import { useTheme } from "next-themes";
-import { useEffect, useState } from "react";
+import { useSyncExternalStore } from "react";
 import { SectionHeader } from "@/components/ui/section-header";
 import { cn } from "@/utils";
 
@@ -12,15 +12,17 @@ const THEME_OPTIONS = [
   { value: "dark", label: "ダーク", icon: Moon },
 ] as const;
 
+const subscribeNothing = () => () => {};
+
 /** Section for switching the app color theme (system / light / dark) */
 const ThemeSection = () => {
   const { theme, setTheme } = useTheme();
-  const [isMounted, setIsMounted] = useState(false);
-
-  // Theme is unknown until after hydration; avoid a mismatched active state
-  useEffect(() => {
-    setIsMounted(true);
-  }, []);
+  // Theme is unknown until after hydration; avoid a mismatched active state (false on the server and while hydrating)
+  const isMounted = useSyncExternalStore(
+    subscribeNothing,
+    () => true,
+    () => false,
+  );
 
   return (
     <section className="space-y-3">

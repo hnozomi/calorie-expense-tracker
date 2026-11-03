@@ -8,7 +8,9 @@ import { useLayoutEffect, useRef } from "react";
 export const useIsShown = (onHide?: () => void) => {
   const isShownRef = useRef(true);
   const onHideRef = useRef(onHide);
-  onHideRef.current = onHide;
+  useLayoutEffect(() => {
+    onHideRef.current = onHide;
+  });
   useLayoutEffect(() => {
     isShownRef.current = true;
     return () => {
