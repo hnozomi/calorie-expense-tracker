@@ -1,0 +1,11 @@
+{
+  "$schema": "https://unpkg.com/knip@6/schema.json",
+  "playwright": false,
+  "entry": ["playwright.config.ts", "e2e/**/*.{spec,setup}.ts"],
+  "ignore": ["public/sw.js"],
+  "ignoreBinaries": ["supabase"],
+  "ignoreIssues": {
+    "src/components/ui/*.tsx": ["exports"],
+    "src/components/ui/card/card.tsx": ["exports"]
+  }
+}
