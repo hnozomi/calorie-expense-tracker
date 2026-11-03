@@ -1,5 +1,5 @@
 import type { ComponentProps } from "react";
-import { Button } from "./button";
+import { Button } from "@/components/ui/button";
 
 type Props = ComponentProps<typeof Button> & {
   isPending: boolean;

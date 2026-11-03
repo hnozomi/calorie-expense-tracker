@@ -12,11 +12,5 @@ export {
   SOURCE_TYPE_LABELS,
   SOURCE_TYPES,
 } from "./common";
-export type {
-  DbDailySummaryRow,
-  DbMeal,
-  DbMealItem,
-  DbMealItemCost,
-} from "./database";
+export type { DbDailySummaryRow } from "./database";
 export type { NutritionTarget } from "./settings";
-export { DEFAULT_NUTRITION_TARGET } from "./settings";

@@ -8,7 +8,6 @@ export {
   formatWeekLabel,
   getMondayOf,
   getThisMonday,
-  getThisMondayInTokyo,
   getTodayInTokyo,
   getTodayString,
   isValidDateString,
@@ -16,8 +15,4 @@ export {
 } from "./date";
 export { matchesSearch } from "./matches-search";
 export { MEAL_TYPE_META } from "./meal-type-meta";
-export {
-  type ParsedDateParam,
-  parseDateParam,
-  parseWeekParam,
-} from "./search-params";
+export { parseDateParam, parseWeekParam } from "./search-params";

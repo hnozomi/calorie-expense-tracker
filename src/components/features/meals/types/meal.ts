@@ -1,17 +1,6 @@
 import { z } from "zod/v4";
 import type { MealType, NutritionValues, SourceType } from "@/types";
 
-/** A meal record (e.g. breakfast on 2026-03-21) */
-export type Meal = {
-  id: string;
-  userId: string;
-  date: string;
-  mealType: MealType;
-  items: MealItem[];
-  createdAt: string;
-  updatedAt: string;
-};
-
 /** An individual food item within a meal */
 export type MealItem = NutritionValues & {
   id: string;
