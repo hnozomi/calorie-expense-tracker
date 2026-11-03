@@ -1,6 +1,6 @@
 "use client";
 
-import { startTransition, use, useEffect, useRef, useState } from "react";
+import { startTransition, use, useRef, useState } from "react";
 import { toast } from "sonner";
 import type { FoodMaster } from "@/components/features/food-masters/types/food-master";
 import {
@@ -34,6 +34,16 @@ type UsePlanMenuSelectControllerParams = {
   onReopen: () => void;
 };
 
+/** The manual form's text values for a plan (empty for a new one) */
+const manualValuesOf = (plan?: MealPlan) => ({
+  name: plan?.plannedName ?? "",
+  calories: plan ? String(plan.calories) : "",
+  protein: plan ? String(plan.protein) : "",
+  fat: plan ? String(plan.fat) : "",
+  carbs: plan ? String(plan.carbs) : "",
+  cost: plan ? String(plan.estimatedCost) : "",
+});
+
 export const usePlanMenuSelectController = ({
   date,
   mealType,
@@ -45,23 +55,40 @@ export const usePlanMenuSelectController = ({
   const { recipes, foodMasters, setMenus, hasError } = use(candidates);
   const [recipeSearch, setRecipeSearch] = useState("");
   const [fmSearch, setFmSearch] = useState("");
-  const [manualName, setManualName] = useState("");
-  const [manualCalories, setManualCalories] = useState("");
-  const [manualProtein, setManualProtein] = useState("");
-  const [manualFat, setManualFat] = useState("");
-  const [manualCarbs, setManualCarbs] = useState("");
-  const [manualCost, setManualCost] = useState("");
+  const [manualName, setManualName] = useState(
+    () => manualValuesOf(existingPlan).name,
+  );
+  const [manualCalories, setManualCalories] = useState(
+    () => manualValuesOf(existingPlan).calories,
+  );
+  const [manualProtein, setManualProtein] = useState(
+    () => manualValuesOf(existingPlan).protein,
+  );
+  const [manualFat, setManualFat] = useState(
+    () => manualValuesOf(existingPlan).fat,
+  );
+  const [manualCarbs, setManualCarbs] = useState(
+    () => manualValuesOf(existingPlan).carbs,
+  );
+  const [manualCost, setManualCost] = useState(
+    () => manualValuesOf(existingPlan).cost,
+  );
   // The dialog closes on the first tap, but a fast double tap reaches the handler twice before it re-renders
   const isSubmittingRef = useRef(false);
 
-  useEffect(() => {
-    setManualName(existingPlan?.plannedName ?? "");
-    setManualCalories(existingPlan ? String(existingPlan.calories) : "");
-    setManualProtein(existingPlan ? String(existingPlan.protein) : "");
-    setManualFat(existingPlan ? String(existingPlan.fat) : "");
-    setManualCarbs(existingPlan ? String(existingPlan.carbs) : "");
-    setManualCost(existingPlan ? String(existingPlan.estimatedCost) : "");
-  }, [existingPlan]);
+  // Opening the dialog for another plan refills the manual form. Set while rendering, not in an Effect,
+  // so the form never shows the previous plan for one render
+  const [filledPlan, setFilledPlan] = useState(existingPlan);
+  if (existingPlan !== filledPlan) {
+    setFilledPlan(existingPlan);
+    const values = manualValuesOf(existingPlan);
+    setManualName(values.name);
+    setManualCalories(values.calories);
+    setManualProtein(values.protein);
+    setManualFat(values.fat);
+    setManualCarbs(values.carbs);
+    setManualCost(values.cost);
+  }
 
   /** Close at once and show the plan in the cell while it is saved */
   const handleSave = (values: MealPlanFormValues, refs?: SaveRefs) => {

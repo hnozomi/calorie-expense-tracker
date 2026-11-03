@@ -2,7 +2,7 @@
 
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useEffect } from "react";
-import { useForm } from "react-hook-form";
+import { useForm, useWatch } from "react-hook-form";
 import { Button } from "@/components/ui/button";
 import {
   type MealItemFormInput,
@@ -25,7 +25,7 @@ const ManualInputForm = ({ onAdd, pendingItemRef }: ManualInputFormProps) => {
     handleSubmit,
     getValues,
     reset,
-    watch,
+    control,
     formState: { errors },
   } = useForm<MealItemFormInput, undefined, MealItemFormValues>({
     resolver: zodResolver(mealItemFormSchema),
@@ -33,7 +33,7 @@ const ManualInputForm = ({ onAdd, pendingItemRef }: ManualInputFormProps) => {
     defaultValues: { name: "", calories: "", protein: "", fat: "", carbs: "" },
   });
 
-  const nameValue = watch("name");
+  const nameValue = useWatch({ control, name: "name" });
   const canAdd = typeof nameValue === "string" && nameValue.trim().length > 0;
 
   useEffect(() => {

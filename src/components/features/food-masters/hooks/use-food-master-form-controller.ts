@@ -4,7 +4,7 @@
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useRouter } from "next/navigation";
 import { useCallback, useState, useTransition } from "react";
-import { useForm } from "react-hook-form";
+import { useForm, useWatch } from "react-hook-form";
 import { toast } from "sonner";
 import {
   deleteFoodMaster,
@@ -128,10 +128,12 @@ export const useFoodMasterFormController = (
     router.push("/other/food-masters");
   });
 
+  const categoryValue = useWatch({ control: form.control, name: "category" });
+
   return {
     form,
     backGuard,
-    categoryValue: form.watch("category"),
+    categoryValue,
     existing,
     hasUnsavedChanges: form.formState.isDirty,
     isDeleteConfirmOpen,
