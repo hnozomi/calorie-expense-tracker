@@ -57,7 +57,7 @@ export const MealRegisterDrawer = ({ candidates }: Props) => {
             <Button
               variant="ghost"
               size="icon"
-              className="absolute top-0 right-2 size-11"
+              className="absolute top-1 right-2 size-11"
               aria-label="閉じる"
               data-vaul-no-drag
               onClick={() => drawer.handleOpenChange(false)}
