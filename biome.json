@@ -28,6 +28,12 @@
     "lineWidth": 80
   },
   "files": {
-    "includes": ["**/*.ts", "**/*.tsx", "**/*.js", "**/*.json"]
+    "includes": [
+      "**/*.ts",
+      "**/*.tsx",
+      "**/*.js",
+      "**/*.json",
+      "!src/lib/supabase/database.types.ts"
+    ]
   }
 }

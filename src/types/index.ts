@@ -12,5 +12,9 @@ export {
   SOURCE_TYPE_LABELS,
   SOURCE_TYPES,
 } from "./common";
-export type { DbDailySummaryRow } from "./database";
+export type {
+  AppDatabase,
+  FoodMasterNutritionRow,
+  RecipeNutritionRow,
+} from "./database";
 export type { NutritionTarget } from "./settings";

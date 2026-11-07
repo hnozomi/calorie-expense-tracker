@@ -19,9 +19,9 @@ src/
       index.ts                公開するものの再 export
     ui/<component>/           汎用部品(shadcn/ui とその派生)
   hooks/                      複数の機能で使う hooks
-  types/                      複数の機能で使う型(Supabase の型は database.ts)
+  types/                      複数の機能で使う型(生成した型への上書きと行の型は database.ts)
   utils/                      機能に依存しない純粋な関数(`cn()` は utils/cn.ts)
-  lib/supabase/               Supabase のクライアント
+  lib/supabase/               Supabase のクライアントと生成した型(database.types.ts)
   __tests__/                  テスト
 ```
 

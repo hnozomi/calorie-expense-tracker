@@ -1,12 +1,13 @@
 import "server-only";
 import { createServerClient } from "@supabase/ssr";
 import { cookies } from "next/headers";
+import type { AppDatabase } from "@/types";
 
 /** Create a Supabase client for server-side usage with cookie management */
 export const createClient = async () => {
   const cookieStore = await cookies();
 
-  return createServerClient(
+  return createServerClient<AppDatabase>(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY!,
     {
