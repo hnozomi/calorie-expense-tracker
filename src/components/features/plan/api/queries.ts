@@ -1,58 +1,14 @@
 import "server-only";
-import type { SupabaseClient } from "@supabase/supabase-js";
 import { cacheLife } from "next/cache";
 import type { MealPlan } from "@/components/features/plan/types/meal-plan";
 import {
   collectPlanMasterIds,
-  type MasterRow,
   toMealPlan,
 } from "@/components/features/plan/utils/meal-plan-rows";
+import { fetchMasters } from "@/lib/fetch-masters";
 import { SCREEN_CACHE } from "@/lib/screen-cache";
 import { createClient } from "@/lib/supabase/server";
 import { shiftDate } from "@/utils";
-
-const fetchPlanMasters = async (
-  supabase: SupabaseClient,
-  rows: Record<string, unknown>[],
-) => {
-  const { foodMasterIds, recipeIds } = collectPlanMasterIds(rows);
-  const foodMasterMap = new Map<string, MasterRow>();
-  const recipeMap = new Map<string, MasterRow>();
-  const promises: PromiseLike<void>[] = [];
-
-  if (foodMasterIds.size > 0) {
-    promises.push(
-      supabase
-        .from("food_masters")
-        .select(
-          "id, name, calories, protein, fat, carbs, default_price, deleted_at",
-        )
-        .in("id", [...foodMasterIds])
-        .then(({ data }) => {
-          for (const row of data ?? []) {
-            foodMasterMap.set(row.id, row as MasterRow);
-          }
-        }),
-    );
-  }
-
-  if (recipeIds.size > 0) {
-    promises.push(
-      supabase
-        .from("recipes")
-        .select("id, name, calories, protein, fat, carbs, servings, deleted_at")
-        .in("id", [...recipeIds])
-        .then(({ data }) => {
-          for (const row of data ?? []) {
-            recipeMap.set(row.id, row as MasterRow);
-          }
-        }),
-    );
-  }
-
-  await Promise.all(promises);
-  return { foodMasterMap, recipeMap };
-};
 
 export const getWeeklyMealPlans = async (
   weekStart: string,
@@ -70,6 +26,11 @@ export const getWeeklyMealPlans = async (
   if (error) throw error;
 
   const rows = (data ?? []) as Record<string, unknown>[]; // untyped client, see meal-plan-rows.ts
-  const { foodMasterMap, recipeMap } = await fetchPlanMasters(supabase, rows);
+  const { foodMasterIds, recipeIds } = collectPlanMasterIds(rows);
+  const { foodMasterMap, recipeMap } = await fetchMasters(
+    supabase,
+    foodMasterIds,
+    recipeIds,
+  );
   return rows.map((row) => toMealPlan(row, foodMasterMap, recipeMap));
 };

@@ -1,15 +1,11 @@
 import "server-only";
-import type { SupabaseClient } from "@supabase/supabase-js";
 import { cacheLife } from "next/cache";
+import { fetchMasters } from "@/lib/fetch-masters";
 import { SCREEN_CACHE } from "@/lib/screen-cache";
 import { createClient } from "@/lib/supabase/server";
 import type { DbDailySummaryRow, MealType, SourceType } from "@/types";
 import type { DailyMealGroup, DailySummaryRow } from "../types/meal";
-import {
-  collectMasterIds,
-  groupDailyMeals,
-  type MasterRow,
-} from "../utils/meal-item-rows";
+import { collectMasterIds, groupDailyMeals } from "../utils/meal-item-rows";
 import {
   dedupeRecentItemsByName,
   type RecentMealItem,
@@ -18,50 +14,6 @@ import {
 // The Supabase client has no generated types, so rows arrive untyped; the casts follow the table definitions in supabase/migrations
 const RECENT_FETCH_LIMIT = 100;
 const RECENT_DISPLAY_LIMIT = 20;
-
-const fetchMasters = async (
-  supabase: SupabaseClient,
-  foodMasterIds: Set<string>,
-  recipeIds: Set<string>,
-) => {
-  const foodMasterMap = new Map<string, MasterRow>();
-  const recipeMap = new Map<string, MasterRow>();
-
-  const promises: PromiseLike<void>[] = [];
-
-  if (foodMasterIds.size > 0) {
-    promises.push(
-      supabase
-        .from("food_masters")
-        .select(
-          "id, name, calories, protein, fat, carbs, default_price, deleted_at",
-        )
-        .in("id", [...foodMasterIds])
-        .then(({ data }) => {
-          for (const row of data ?? []) {
-            foodMasterMap.set(row.id, row as MasterRow);
-          }
-        }),
-    );
-  }
-
-  if (recipeIds.size > 0) {
-    promises.push(
-      supabase
-        .from("recipes")
-        .select("id, name, calories, protein, fat, carbs, servings, deleted_at")
-        .in("id", [...recipeIds])
-        .then(({ data }) => {
-          for (const row of data ?? []) {
-            recipeMap.set(row.id, row as MasterRow);
-          }
-        }),
-    );
-  }
-
-  await Promise.all(promises);
-  return { foodMasterMap, recipeMap };
-};
 
 // Items linked to a master show the master's current values, so fixing a master fixes past days too
 export const getDailyMeals = async (date: string): Promise<DailyMealGroup> => {
