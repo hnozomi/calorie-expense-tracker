@@ -3,8 +3,7 @@
 import { zodResolver } from "@hookform/resolvers/zod";
 import type { AuthError } from "@supabase/supabase-js";
 import { AlertCircle, Utensils } from "lucide-react";
-import Link from "next/link";
-import { Suspense, useState } from "react";
+import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { z } from "zod/v4";
 import { Button } from "@/components/ui/button";
@@ -13,7 +12,6 @@ import { Input, PasswordInput } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { cn } from "@/utils";
 import { useAuth } from "../hooks/use-auth";
-import { CallbackErrorNotice } from "./callback-error-notice";
 
 const loginSchema = z.object({
   email: z.email("有効なメールアドレスを入力してください"),
@@ -28,13 +26,9 @@ const appUserEmail = "app-user@example.com";
 /** User-facing messages for known Supabase auth error codes */
 const AUTH_ERROR_MESSAGES: Record<string, string> = {
   invalid_credentials: "メールアドレスまたはパスワードが正しくありません",
-  email_not_confirmed:
-    "メールアドレスの確認が完了していません。登録時に届いた確認メールのリンクをクリックしてください",
   over_request_rate_limit:
     "試行回数が多すぎます。しばらく時間をおいてから再度お試しください",
 };
-
-/** Messages for errors passed back from the auth callback route */
 
 /** Resolve a sign-in failure to a specific Japanese message */
 const resolveLoginErrorMessage = (error: AuthError): string => {
@@ -87,12 +81,6 @@ const LoginForm = () => {
       <Card className="w-full rounded-2xl border-0 shadow-lg shadow-black/5">
         <CardContent className="pt-6">
           <form onSubmit={handleSubmit(handleLogin)} className="space-y-5">
-            {/* Only the notice reads the URL, so the rest of the form is in the prerendered HTML */}
-            {!serverError && (
-              <Suspense fallback={null}>
-                <CallbackErrorNotice />
-              </Suspense>
-            )}
             {serverError && (
               <div className="flex items-start gap-2 rounded-lg bg-destructive/10 p-3">
                 <AlertCircle className="mt-0.5 h-4 w-4 shrink-0 text-destructive" />
@@ -149,16 +137,6 @@ const LoginForm = () => {
             >
               {isSubmitting ? "ログイン中..." : "ログイン"}
             </Button>
-
-            <p className="text-center text-sm text-muted-foreground">
-              アカウントをお持ちでない方は
-              <Link
-                href="/signup"
-                className="ml-1 font-medium text-brand underline-offset-4 hover:underline"
-              >
-                新規登録
-              </Link>
-            </p>
           </form>
         </CardContent>
       </Card>
