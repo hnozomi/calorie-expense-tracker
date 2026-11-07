@@ -1,7 +1,17 @@
-import type { MealType } from "@/types";
+import type { Tables } from "@/lib/supabase/database.types";
+import type {
+  FoodMasterNutritionRow,
+  MealType,
+  RecipeNutritionRow,
+  SourceType,
+} from "@/types";
 import type { DailyMealGroup, MealItem } from "../types/meal";
 
-export type MasterRow = Record<string, unknown>;
+type MealItemRow = Tables<"meal_items">;
+
+type MealWithItemsRow = Pick<Tables<"meals">, "id" | "meal_type"> & {
+  meal_items: MealItemRow[] | null;
+};
 
 export const createEmptyDailyMeals = (): DailyMealGroup => ({
   breakfast: { mealId: null, items: [] },
@@ -11,16 +21,18 @@ export const createEmptyDailyMeals = (): DailyMealGroup => ({
 });
 
 /** Collect unique non-null IDs from meal items by source type */
-export const collectMasterIds = (items: Record<string, unknown>[]) => {
+export const collectMasterIds = (
+  items: Pick<MealItemRow, "source_type" | "food_master_id" | "recipe_id">[],
+) => {
   const foodMasterIds = new Set<string>();
   const recipeIds = new Set<string>();
 
   for (const item of items) {
     if (item.source_type === "food_master" && item.food_master_id) {
-      foodMasterIds.add(item.food_master_id as string);
+      foodMasterIds.add(item.food_master_id);
     }
     if (item.source_type === "recipe" && item.recipe_id) {
-      recipeIds.add(item.recipe_id as string);
+      recipeIds.add(item.recipe_id);
     }
   }
 
@@ -29,9 +41,9 @@ export const collectMasterIds = (items: Record<string, unknown>[]) => {
 
 /** Resolve nutrition values from master data, falling back to snapshot */
 const resolveNutrition = (
-  item: Record<string, unknown>,
-  foodMaster: MasterRow | undefined,
-  recipe: MasterRow | undefined,
+  item: MealItemRow,
+  foodMaster: FoodMasterNutritionRow | undefined,
+  recipe: RecipeNutritionRow | undefined,
 ) => {
   // food_master source: use master values if it still exists (not soft-deleted)
   if (
@@ -40,12 +52,12 @@ const resolveNutrition = (
     !foodMaster.deleted_at
   ) {
     return {
-      name: foodMaster.name as string,
+      name: foodMaster.name,
       calories: Number(foodMaster.calories),
       protein: Number(foodMaster.protein),
       fat: Number(foodMaster.fat),
       carbs: Number(foodMaster.carbs),
-      cost: foodMaster.default_price as number | null,
+      cost: foodMaster.default_price,
     };
   }
 
@@ -53,64 +65,68 @@ const resolveNutrition = (
   if (item.source_type === "recipe" && recipe && !recipe.deleted_at) {
     const servings = Math.max(Number(recipe.servings) || 1, 1);
     return {
-      name: recipe.name as string,
+      name: recipe.name,
       calories: Number(recipe.calories) / servings,
       protein: Number(recipe.protein) / servings,
       fat: Number(recipe.fat) / servings,
       carbs: Number(recipe.carbs) / servings,
-      cost: item.cost as number | null,
+      cost: item.cost,
     };
   }
 
   // Fallback: use snapshot values stored in meal_items
   return {
-    name: item.name as string,
+    name: item.name,
     calories: Number(item.calories),
     protein: Number(item.protein),
     fat: Number(item.fat),
     carbs: Number(item.carbs),
-    cost: item.cost as number | null,
+    cost: item.cost,
   };
 };
 
 /** Map a raw meal_items row to MealItem, resolving master values */
 const mapMealItem = (
-  item: Record<string, unknown>,
-  foodMasterMap: Map<string, MasterRow>,
-  recipeMap: Map<string, MasterRow>,
+  item: MealItemRow,
+  foodMasterMap: Map<string, FoodMasterNutritionRow>,
+  recipeMap: Map<string, RecipeNutritionRow>,
 ): MealItem => {
-  const foodMaster = foodMasterMap.get(item.food_master_id as string);
-  const recipe = recipeMap.get(item.recipe_id as string);
+  const foodMaster = item.food_master_id
+    ? foodMasterMap.get(item.food_master_id)
+    : undefined;
+  const recipe = item.recipe_id ? recipeMap.get(item.recipe_id) : undefined;
   const resolved = resolveNutrition(item, foodMaster, recipe);
 
   return {
-    id: item.id as string,
-    mealId: item.meal_id as string,
+    id: item.id,
+    mealId: item.meal_id,
     ...resolved,
-    sourceType: item.source_type as MealItem["sourceType"],
-    recipeId: item.recipe_id as string | null,
-    foodMasterId: item.food_master_id as string | null,
-    setMenuId: item.set_menu_id as string | null,
-    servingQuantity: item.serving_quantity as number,
-    sortOrder: item.sort_order as number,
-    createdAt: item.created_at as string,
-    updatedAt: item.updated_at as string,
+    // source_type is a check-constrained text column holding one of SOURCE_TYPES
+    sourceType: item.source_type as SourceType,
+    recipeId: item.recipe_id,
+    foodMasterId: item.food_master_id,
+    setMenuId: item.set_menu_id,
+    servingQuantity: item.serving_quantity,
+    sortOrder: item.sort_order,
+    createdAt: item.created_at,
+    updatedAt: item.updated_at,
   };
 };
 
 /** Group meals rows (with meal_items) by meal type, resolving each item against its master */
 export const groupDailyMeals = (
-  meals: Record<string, unknown>[],
-  foodMasterMap: Map<string, MasterRow>,
-  recipeMap: Map<string, MasterRow>,
+  meals: MealWithItemsRow[],
+  foodMasterMap: Map<string, FoodMasterNutritionRow>,
+  recipeMap: Map<string, RecipeNutritionRow>,
 ): DailyMealGroup => {
   const grouped = createEmptyDailyMeals();
   for (const meal of meals) {
+    // meal_type is a check-constrained text column holding one of MEAL_TYPES
     const mealType = meal.meal_type as MealType;
     grouped[mealType] = {
-      mealId: meal.id as string,
-      items: ((meal.meal_items as Record<string, unknown>[]) ?? []).map(
-        (item) => mapMealItem(item, foodMasterMap, recipeMap),
+      mealId: meal.id,
+      items: (meal.meal_items ?? []).map((item) =>
+        mapMealItem(item, foodMasterMap, recipeMap),
       ),
     };
   }

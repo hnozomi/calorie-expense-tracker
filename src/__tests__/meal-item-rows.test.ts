@@ -3,8 +3,8 @@ import {
   collectMasterIds,
   createEmptyDailyMeals,
   groupDailyMeals,
-  type MasterRow,
 } from "@/components/features/meals/utils/meal-item-rows";
+import type { FoodMasterNutritionRow, RecipeNutritionRow } from "@/types";
 
 // The home screen reads a day's meals on the server (ui-tech §phase 2) and turns the rows into slots here.
 // Items linked to a food master or recipe show the master's current values (AC-R-6: マスタを直すとホームの値が変わる),
@@ -32,11 +32,11 @@ const itemRow = (overrides: Record<string, unknown> = {}) => ({
 
 const mealRow = (
   mealType: string,
-  items: Record<string, unknown>[],
+  items: ReturnType<typeof itemRow>[],
   id = `meal-${mealType}`,
 ) => ({ id, meal_type: mealType, meal_items: items });
 
-const noMasters = () => new Map<string, MasterRow>();
+const noMasters = () => new Map();
 
 describe("createEmptyDailyMeals", () => {
   it("S-01: every slot (朝食・昼食・夕食・間食) is there, empty, with no meal row", () => {
@@ -198,8 +198,9 @@ describe("groupDailyMeals", () => {
   });
 
   describe("food master items", () => {
-    const foodMasters = (master: MasterRow) =>
-      new Map<string, MasterRow>([["fm-1", master]]);
+    // Fixtures keep numeric columns as strings to pin the Number() reads, so they are not typed rows
+    const foodMasters = (master: Record<string, unknown>) =>
+      new Map([["fm-1", master as unknown as FoodMasterNutritionRow]]);
 
     it("AC-R-6: shows the food master's current name and nutrition, not the recorded values", () => {
       const meals = groupDailyMeals(
@@ -279,8 +280,9 @@ describe("groupDailyMeals", () => {
   });
 
   describe("recipe items", () => {
-    const recipes = (recipe: MasterRow) =>
-      new Map<string, MasterRow>([["r-1", recipe]]);
+    // Fixtures keep numeric columns as strings to pin the Number() reads, so they are not typed rows
+    const recipes = (recipe: Record<string, unknown>) =>
+      new Map([["r-1", recipe as unknown as RecipeNutritionRow]]);
 
     it("AC-R-6 / S-02: shows the recipe's current name and its values for one person", () => {
       const meals = groupDailyMeals(

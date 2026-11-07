@@ -5,9 +5,8 @@ import type {
   CsvExportType,
   CsvRow,
 } from "@/components/features/settings/csv-export-config";
+import type { AppDatabase } from "@/types";
 import { formatDateToString, getTodayInTokyo } from "@/utils";
-
-// The Supabase client has no generated types, so joined rows arrive untyped; the casts follow the select strings below
 
 // The rows are read on the server (UTC), so "this month" is decided in Asia/Tokyo, like "today" elsewhere
 /** First and last day of the month shifted by offsetMonths from now */
@@ -19,7 +18,7 @@ const getMonthRange = (offsetMonths: number) => {
 };
 
 const fetchMealRows = async (
-  supabase: SupabaseClient,
+  supabase: SupabaseClient<AppDatabase>,
   period: CsvExportPeriod,
 ): Promise<CsvRow[]> => {
   let query = supabase
@@ -37,8 +36,8 @@ const fetchMealRows = async (
   if (error) throw error;
 
   return (data ?? []).map((item) => ({
-    date: (item.meals as { date: string }).date,
-    meal_type: (item.meals as { meal_type: string }).meal_type,
+    date: item.meals.date,
+    meal_type: item.meals.meal_type,
     name: item.name,
     calories: item.calories,
     protein: item.protein,
@@ -49,7 +48,9 @@ const fetchMealRows = async (
   }));
 };
 
-const fetchRecipeRows = async (supabase: SupabaseClient): Promise<CsvRow[]> => {
+const fetchRecipeRows = async (
+  supabase: SupabaseClient<AppDatabase>,
+): Promise<CsvRow[]> => {
   const { data, error } = await supabase
     .from("recipes")
     .select("*")
@@ -62,7 +63,7 @@ const fetchRecipeRows = async (supabase: SupabaseClient): Promise<CsvRow[]> => {
 };
 
 const fetchFoodMasterRows = async (
-  supabase: SupabaseClient,
+  supabase: SupabaseClient<AppDatabase>,
 ): Promise<CsvRow[]> => {
   const { data, error } = await supabase
     .from("food_masters")
@@ -76,7 +77,7 @@ const fetchFoodMasterRows = async (
 };
 
 const fetchSetMenuRows = async (
-  supabase: SupabaseClient,
+  supabase: SupabaseClient<AppDatabase>,
 ): Promise<CsvRow[]> => {
   const { data, error } = await supabase
     .from("set_menus")
@@ -93,15 +94,13 @@ const fetchSetMenuRows = async (
     total_fat: setMenu.total_fat,
     total_carbs: setMenu.total_carbs,
     total_cost: setMenu.total_cost,
-    item_count: Array.isArray(setMenu.set_menu_items)
-      ? setMenu.set_menu_items.length
-      : 0,
+    item_count: setMenu.set_menu_items.length,
   }));
 };
 
 /** The rows of one CSV export, read with the signed-in user's client (RLS keeps them to the user's own) */
 export const fetchCsvRows = (
-  supabase: SupabaseClient,
+  supabase: SupabaseClient<AppDatabase>,
   type: CsvExportType,
   period: CsvExportPeriod,
 ): Promise<CsvRow[]> => {

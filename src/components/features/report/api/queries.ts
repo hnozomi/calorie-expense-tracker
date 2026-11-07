@@ -1,10 +1,7 @@
 import "server-only";
 import { cacheLife } from "next/cache";
 import type { WeeklyReport } from "@/components/features/report/types/weekly-report";
-import {
-  buildWeeklyReport,
-  type WeeklySummaryRow,
-} from "@/components/features/report/utils/build-weekly-report";
+import { buildWeeklyReport } from "@/components/features/report/utils/build-weekly-report";
 import { SCREEN_CACHE } from "@/lib/screen-cache";
 import { createClient } from "@/lib/supabase/server";
 
@@ -18,6 +15,5 @@ export const getWeeklyReport = async (
     p_start_date: weekStart,
   });
   if (error) throw error;
-  // The Supabase client has no generated types; the row shape follows the RPC in supabase/migrations
-  return buildWeeklyReport(weekStart, (data ?? []) as WeeklySummaryRow[]);
+  return buildWeeklyReport(weekStart, data ?? []);
 };

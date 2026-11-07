@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { toNutritionTarget } from "@/components/features/settings/utils/to-nutrition-target";
+import type { Tables } from "@/lib/supabase/database.types";
 
 // The home summary compares the day with the user's targets (settings/api/queries.ts, ui-tech §phase 2)
 
@@ -17,6 +18,7 @@ describe("toNutritionTarget", () => {
 
   it("S-09: saved targets are used, with numeric columns read as numbers", () => {
     expect(
+      // Numeric columns stay strings here to pin the Number() reads, so this is not a typed row
       toNutritionTarget({
         id: "settings-1",
         user_id: "user-1",
@@ -24,7 +26,7 @@ describe("toNutritionTarget", () => {
         target_protein: "120.5",
         target_fat: "50",
         target_carbs: "0",
-      }),
+      } as unknown as Tables<"user_settings">),
     ).toEqual({
       id: "settings-1",
       userId: "user-1",

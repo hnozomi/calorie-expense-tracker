@@ -3,7 +3,7 @@ import { cacheLife } from "next/cache";
 import { fetchMasters } from "@/lib/fetch-masters";
 import { SCREEN_CACHE } from "@/lib/screen-cache";
 import { createClient } from "@/lib/supabase/server";
-import type { DbDailySummaryRow, MealType, SourceType } from "@/types";
+import type { MealType, SourceType } from "@/types";
 import type { DailyMealGroup, DailySummaryRow } from "../types/meal";
 import { collectMasterIds, groupDailyMeals } from "../utils/meal-item-rows";
 import {
@@ -11,7 +11,6 @@ import {
   type RecentMealItem,
 } from "../utils/recent-meal-items";
 
-// The Supabase client has no generated types, so rows arrive untyped; the casts follow the table definitions in supabase/migrations
 const RECENT_FETCH_LIMIT = 100;
 const RECENT_DISPLAY_LIMIT = 20;
 
@@ -31,9 +30,7 @@ export const getDailyMeals = async (date: string): Promise<DailyMealGroup> => {
 
   const meals = data ?? [];
   const { foodMasterIds, recipeIds } = collectMasterIds(
-    meals.flatMap(
-      (meal) => (meal.meal_items as Record<string, unknown>[]) ?? [],
-    ),
+    meals.flatMap((meal) => meal.meal_items),
   );
   const { foodMasterMap, recipeMap } = await fetchMasters(
     supabase,
@@ -55,7 +52,7 @@ export const getDailySummary = async (
   if (error) throw error;
 
   return (data ?? []).map(
-    (row: DbDailySummaryRow): DailySummaryRow => ({
+    (row): DailySummaryRow => ({
       // meal_type is a check-constrained text column holding one of MEAL_TYPES
       mealType: row.meal_type as MealType,
       calories: row.total_calories,
@@ -88,6 +85,7 @@ export const getRecentMealItems = async (): Promise<RecentMealItem[]> => {
     fat: Number(row.fat),
     carbs: Number(row.carbs),
     cost: row.cost === null ? null : Number(row.cost),
+    // source_type is a check-constrained text column holding one of SOURCE_TYPES
     sourceType: row.source_type as SourceType,
     recipeId: row.recipe_id,
     foodMasterId: row.food_master_id,

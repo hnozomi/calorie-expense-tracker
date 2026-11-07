@@ -25,7 +25,7 @@ export const getWeeklyMealPlans = async (
     .order("created_at", { ascending: true });
   if (error) throw error;
 
-  const rows = (data ?? []) as Record<string, unknown>[]; // untyped client, see meal-plan-rows.ts
+  const rows = data ?? [];
   const { foodMasterIds, recipeIds } = collectPlanMasterIds(rows);
   const { foodMasterMap, recipeMap } = await fetchMasters(
     supabase,

@@ -1,29 +1,30 @@
 import type { Recipe } from "@/components/features/recipes/types/recipe";
+import type { Tables } from "@/lib/supabase/database.types";
 
-// The Supabase client has no generated types, so rows arrive untyped; the casts follow the table definitions in supabase/migrations
+type RecipeWithIngredientsRow = Tables<"recipes"> & {
+  recipe_ingredients: Tables<"recipe_ingredients">[];
+};
 
 /** A recipes row (with recipe_ingredients) as Supabase returns it */
-export const toRecipe = (row: Record<string, unknown>): Recipe => ({
-  id: row.id as string,
-  userId: row.user_id as string,
-  name: row.name as string,
-  servings: row.servings as number,
+export const toRecipe = (row: RecipeWithIngredientsRow): Recipe => ({
+  id: row.id,
+  userId: row.user_id,
+  name: row.name,
+  servings: row.servings,
   calories: Number(row.calories),
   protein: Number(row.protein),
   fat: Number(row.fat),
   carbs: Number(row.carbs),
-  notes: row.notes as string | null,
-  deletedAt: row.deleted_at as string | null,
-  createdAt: row.created_at as string,
-  updatedAt: row.updated_at as string,
-  ingredients: (
-    (row.recipe_ingredients as Record<string, unknown>[]) ?? []
-  ).map((ing) => ({
-    id: ing.id as string,
-    recipeId: ing.recipe_id as string,
-    ingredientName: ing.ingredient_name as string,
+  notes: row.notes,
+  deletedAt: row.deleted_at,
+  createdAt: row.created_at,
+  updatedAt: row.updated_at,
+  ingredients: row.recipe_ingredients.map((ing) => ({
+    id: ing.id,
+    recipeId: ing.recipe_id,
+    ingredientName: ing.ingredient_name,
     quantity: Number(ing.quantity),
-    unit: ing.unit as string,
+    unit: ing.unit,
     unitPrice: Number(ing.unit_price),
   })),
 });

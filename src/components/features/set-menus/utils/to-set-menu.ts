@@ -1,27 +1,30 @@
+import type { Tables } from "@/lib/supabase/database.types";
 import type { SetMenu, SetMenuItem } from "../types/set-menu";
 
-// The Supabase client has no generated types, so rows arrive untyped; the casts follow the table definitions in supabase/migrations
+type SetMenuWithItemsRow = Tables<"set_menus"> & {
+  set_menu_items: Tables<"set_menu_items">[];
+};
 
 /** A set_menus row (with set_menu_items) as Supabase returns it */
-export const toSetMenu = (row: Record<string, unknown>): SetMenu => ({
-  id: row.id as string,
-  userId: row.user_id as string,
-  name: row.name as string,
+export const toSetMenu = (row: SetMenuWithItemsRow): SetMenu => ({
+  id: row.id,
+  userId: row.user_id,
+  name: row.name,
   totalCalories: Number(row.total_calories),
   totalProtein: Number(row.total_protein),
   totalFat: Number(row.total_fat),
   totalCarbs: Number(row.total_carbs),
   totalCost: Number(row.total_cost),
-  deletedAt: row.deleted_at as string | null,
-  createdAt: row.created_at as string,
-  updatedAt: row.updated_at as string,
-  items: ((row.set_menu_items as Record<string, unknown>[]) ?? []).map(
+  deletedAt: row.deleted_at,
+  createdAt: row.created_at,
+  updatedAt: row.updated_at,
+  items: row.set_menu_items.map(
     (item): SetMenuItem => ({
-      id: item.id as string,
-      setMenuId: item.set_menu_id as string,
-      name: item.name as string,
-      recipeId: (item.recipe_id as string) ?? null,
-      foodMasterId: (item.food_master_id as string) ?? null,
+      id: item.id,
+      setMenuId: item.set_menu_id,
+      name: item.name,
+      recipeId: item.recipe_id,
+      foodMasterId: item.food_master_id,
       calories: Number(item.calories),
       protein: Number(item.protein),
       fat: Number(item.fat),
