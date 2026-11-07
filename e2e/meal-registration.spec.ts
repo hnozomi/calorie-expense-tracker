@@ -62,6 +62,35 @@ test.describe("食事記録", () => {
     await expect(page.getByRole("button", { name: /E2Eいなり/ })).toBeVisible();
   });
 
+  test("閉じるボタンで、入力が無ければそのまま閉じる", async ({ page }) => {
+    await gotoHydrated(page, "/home");
+
+    await openSlotDrawer(page, "夕食");
+    await page.getByRole("button", { name: "閉じる", exact: true }).click();
+
+    await expect(page.getByRole("dialog")).toHaveCount(0);
+  });
+
+  test("閉じるボタンでも、下書きがあれば破棄確認が出る", async ({ page }) => {
+    await gotoHydrated(page, "/home");
+
+    await openSlotDrawer(page, "夕食");
+    await fillStable(page, "メニュー名", "E2E閉じるボタン");
+    await fillStable(page, "カロリー (kcal)", "100");
+    await page.getByRole("button", { name: "カードに追加" }).click();
+    await expect(visibleText(page, "直前: E2E閉じるボタン")).toBeVisible();
+
+    await page.getByRole("button", { name: "閉じる", exact: true }).click();
+    await expect(
+      visibleText(page, "入力中のアイテムを破棄しますか?"),
+    ).toBeVisible();
+    await page.getByRole("button", { name: "破棄して閉じる" }).click();
+
+    await expect(
+      page.getByRole("button", { name: /E2E閉じるボタン/ }),
+    ).toHaveCount(0);
+  });
+
   test("下書きが残った状態で閉じると破棄確認が出る", async ({ page }) => {
     await gotoHydrated(page, "/home");
 
