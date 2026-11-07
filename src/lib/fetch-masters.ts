@@ -1,20 +1,24 @@
 import "server-only";
 import type { SupabaseClient } from "@supabase/supabase-js";
-
-type MasterRow = Record<string, unknown>;
+import type {
+  AppDatabase,
+  FoodMasterNutritionRow,
+  RecipeNutritionRow,
+} from "@/types";
 
 type Masters = {
-  foodMasterMap: Map<string, MasterRow>;
-  recipeMap: Map<string, MasterRow>;
+  foodMasterMap: Map<string, FoodMasterNutritionRow>;
+  recipeMap: Map<string, RecipeNutritionRow>;
 };
 
-const toMasterMap = (rows: { id: string }[] | null | undefined) =>
-  new Map<string, MasterRow>(rows?.map((row) => [row.id, row]));
+const toMasterMap = <Row extends { id: string }>(
+  rows: Row[] | null | undefined,
+) => new Map<string, Row>(rows?.map((row) => [row.id, row]));
 
 // A failed read throws: an empty map would quietly show the values saved on the item instead of the master's
 /** Read the food masters and recipes that items or plans point at */
 export const fetchMasters = async (
-  supabase: SupabaseClient,
+  supabase: SupabaseClient<AppDatabase>,
   foodMasterIds: Set<string>,
   recipeIds: Set<string>,
 ): Promise<Masters> => {

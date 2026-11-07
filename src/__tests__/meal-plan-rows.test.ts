@@ -1,9 +1,9 @@
 import { describe, expect, it } from "vitest";
 import {
   collectPlanMasterIds,
-  type MasterRow,
   toMealPlan,
 } from "@/components/features/plan/utils/meal-plan-rows";
+import type { FoodMasterNutritionRow, RecipeNutritionRow } from "@/types";
 
 const planRow = (overrides: Record<string, unknown> = {}) => ({
   id: "plan-1",
@@ -24,7 +24,14 @@ const planRow = (overrides: Record<string, unknown> = {}) => ({
   ...overrides,
 });
 
-const noMasters = () => new Map<string, MasterRow>();
+const noMasters = () => new Map();
+
+// Fixtures hold only the columns a test is about, so they are not full rows
+const foodMasterMap = (entries: [string, Record<string, unknown>][]) =>
+  new Map(entries) as unknown as Map<string, FoodMasterNutritionRow>;
+
+const recipeMap = (entries: [string, Record<string, unknown>][]) =>
+  new Map(entries) as unknown as Map<string, RecipeNutritionRow>;
 
 describe("collectPlanMasterIds", () => {
   it("AC-R-2: collects each linked food master and recipe once, to read them on the server in one query each", () => {
@@ -61,7 +68,7 @@ describe("toMealPlan", () => {
   });
 
   it("AC-R-6: a plan from a food master shows the master's current values and price", () => {
-    const masters = new Map<string, MasterRow>([
+    const masters = foodMasterMap([
       [
         "fm-1",
         {
@@ -92,7 +99,7 @@ describe("toMealPlan", () => {
   });
 
   it("AC-R-6: a plan from a recipe shows one serving of the recipe's current values, keeping its own cost", () => {
-    const recipes = new Map<string, MasterRow>([
+    const recipes = recipeMap([
       [
         "recipe-1",
         {
@@ -124,7 +131,7 @@ describe("toMealPlan", () => {
   });
 
   it("AC-R-6: a deleted master leaves the plan with what was saved", () => {
-    const masters = new Map<string, MasterRow>([
+    const masters = foodMasterMap([
       [
         "fm-1",
         {

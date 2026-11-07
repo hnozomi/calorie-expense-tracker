@@ -6,6 +6,7 @@ import type { ActionResult } from "@/lib/action-result";
 import { revalidateAllScreens } from "@/lib/revalidate-screens";
 import { createClient } from "@/lib/supabase/server";
 import { getSignedInUserId } from "@/lib/supabase/user";
+import type { AppDatabase } from "@/types";
 import { MEAL_TYPES, SOURCE_TYPES } from "@/types";
 import { isValidDateString, shiftDate } from "@/utils";
 import { mealItemFormSchema } from "../types/meal";
@@ -55,7 +56,7 @@ type RpcMealItem = {
 
 /** Create the day's meal row for the slot if needed, then add the items in one transaction */
 const insertMealItems = async (
-  supabase: SupabaseClient,
+  supabase: SupabaseClient<AppDatabase>,
   userId: string,
   date: string,
   mealType: string,
