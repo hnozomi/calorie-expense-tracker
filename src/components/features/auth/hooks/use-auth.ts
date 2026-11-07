@@ -4,23 +4,11 @@ import { useRouter } from "next/navigation";
 import { useCallback } from "react";
 import { createClient } from "@/lib/supabase/client";
 
-/** Provide sign-in/sign-up/sign-out actions for the auth forms */
+/** Provide the sign-in action for the login form */
 export const useAuth = () => {
   // createBrowserClient returns one shared client per browser tab
   const supabase = createClient();
   const router = useRouter();
-
-  const signUp = useCallback(
-    async (email: string, password: string) => {
-      const { error } = await supabase.auth.signUp({
-        email,
-        password,
-        options: { emailRedirectTo: `${window.location.origin}/auth/callback` },
-      });
-      return { error };
-    },
-    [supabase],
-  );
 
   const signIn = useCallback(
     async (email: string, password: string) => {
@@ -37,13 +25,5 @@ export const useAuth = () => {
     [supabase, router],
   );
 
-  const signOut = useCallback(async () => {
-    // local: the Auth project is shared by several apps, and the default (global) would sign this account
-    // out of all of them and of every device (supabase.md)
-    await supabase.auth.signOut({ scope: "local" });
-    router.push("/login");
-    router.refresh();
-  }, [supabase, router]);
-
-  return { signUp, signIn, signOut };
+  return { signIn };
 };

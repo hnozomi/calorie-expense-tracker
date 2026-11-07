@@ -47,7 +47,7 @@
 | `/other/set-menus?q=`・`/other/set-menus/[id]` | セットの一覧(検索)・詳細 | 同上 | `q`・`id` |
 | `/other/report?week=` | 週の集計 | 同上 | `week` |
 | `/other/settings` | 目標値・メール・CSV・全削除 | 同上 | なし |
-| `/other`・`/login`・`/signup`・`/offline` | データ無し | 今のまま | 静的 |
+| `/other`・`/login`・`/offline` | データ無し | 今のまま | 静的 |
 
 - `date`・`week`・`id` が形として正しくない、または見つからないときは、route の中で `notFound()` を返す(`dynamicParams` は使わない)
 - `week` が月曜でないときは、その週の月曜に直して表示する(404 にしない)
@@ -138,7 +138,7 @@ app/(main)/home/page.tsx                    Server。Header と <Suspense> を�
 - 1回の表示で同じものを2か所から読むとき(目標値をホームの集計と Drawer で使う など)は、`cache` で包む
 - 書く: `api/actions.ts`。入力を `unknown` で受けて zod で確かめ、今の更新(`from().insert/update/delete`・RPC)をそのまま呼び、書き込みが成功したら最後に `revalidateAllScreens()`(当たった行が0件なら失敗として返す)
 - 「今日」: サーバーで `getToday()`(`src/lib/today.ts`)。`'use cache: private'` の中で `getTodayInTokyo()`(`Intl.DateTimeFormat` に `timeZone: "Asia/Tokyo"`)を呼ぶ。searchParams を読んだ後でも、dev の事前描画は `new Date()` を止めるため(規約)。使い回す時間は画面のデータと同じなので、0時をまたいだ直後は最大その時間だけ前の日のままになる
-- ブラウザから DB を読むのは、ログイン・新規登録(`auth`)だけ残す
+- ブラウザから Supabase を呼ぶのは、ログイン・ログアウト(`auth`)だけ残す
 
 ### 移行中のつなぎ
 

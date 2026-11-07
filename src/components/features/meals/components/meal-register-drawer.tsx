@@ -1,8 +1,10 @@
 "use client";
 // Client because the drawer, its tabs and the OCR camera are interactive
 
+import { X } from "lucide-react";
 import { Suspense } from "react";
 import { OcrCameraOverlay } from "@/components/features/ocr";
+import { Button } from "@/components/ui/button";
 import {
   Drawer,
   DrawerContent,
@@ -45,13 +47,23 @@ export const MealRegisterDrawer = ({ candidates }: Props) => {
       >
         {/* max-h override needed: the base DrawerContent caps at max-h-[80vh] */}
         <DrawerContent className="h-[85dvh] max-h-[85dvh]">
-          <DrawerHeader className="shrink-0 pb-2">
+          <DrawerHeader className="relative shrink-0 pb-2">
             <DrawerTitle className="text-base">
               {MEAL_TYPE_LABELS[drawer.mealType]}を登録
             </DrawerTitle>
             <DrawerDescription className="sr-only">
               食事アイテムを追加してまとめて登録します
             </DrawerDescription>
+            <Button
+              variant="ghost"
+              size="icon"
+              className="absolute top-1 right-2 size-11"
+              aria-label="閉じる"
+              data-vaul-no-drag
+              onClick={() => drawer.handleOpenChange(false)}
+            >
+              <X className="size-5" />
+            </Button>
           </DrawerHeader>
 
           <div className="flex min-h-0 flex-1 flex-col" data-vaul-no-drag>

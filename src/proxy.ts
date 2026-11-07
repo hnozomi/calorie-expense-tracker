@@ -21,7 +21,7 @@ export const proxy = async (request: NextRequest) => {
   }
 
   // Authenticated users accessing auth pages → redirect to /home
-  if (isSignedIn && (pathname === "/login" || pathname === "/signup")) {
+  if (isSignedIn && pathname === "/login") {
     return NextResponse.redirect(new URL("/home", request.url));
   }
 
@@ -37,6 +37,6 @@ export const proxy = async (request: NextRequest) => {
 
 export const config = {
   matcher: [
-    "/((?!_next/static|_next/image|favicon.ico|icons/|sw.js|manifest.webmanifest|auth/callback|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)",
+    "/((?!_next/static|_next/image|favicon.ico|icons/|sw.js|manifest.webmanifest|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)",
   ],
 };
