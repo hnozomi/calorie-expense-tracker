@@ -1,8 +1,8 @@
 "use client";
 
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useEffect } from "react";
 import { useForm, useWatch } from "react-hook-form";
+import { usePendingMealItem } from "@/components/features/meals/hooks/use-pending-meal-item";
 import {
   type MealItemFormInput,
   type MealItemFormValues,
@@ -36,17 +36,7 @@ const ManualInputForm = ({ onAdd, pendingItemRef }: ManualInputFormProps) => {
   const nameValue = useWatch({ control, name: "name" });
   const canAdd = typeof nameValue === "string" && nameValue.trim().length > 0;
 
-  useEffect(() => {
-    if (!pendingItemRef) return;
-    pendingItemRef.current = () => {
-      const parsed = mealItemFormSchema.safeParse(getValues());
-      if (!parsed.success || !parsed.data.name.trim()) return null;
-      return parsed.data;
-    };
-    return () => {
-      pendingItemRef.current = null;
-    };
-  }, [pendingItemRef, getValues]);
+  usePendingMealItem(pendingItemRef, getValues);
 
   const handleAdd = (values: MealItemFormValues) => {
     onAdd(values);
