@@ -9,11 +9,11 @@ import {
   mealItemFormSchema,
   type PendingMealItemCollector,
 } from "@/components/features/meals/types/meal";
-import type { OcrNutritionResult } from "@/components/features/ocr/types/ocr";
 import {
+  type OcrNutritionResult,
   ocrNutrition,
   scaleNutrition,
-} from "@/components/features/ocr/utils/scale-nutrition";
+} from "@/components/features/ocr";
 
 type Params = {
   ocrResult: OcrNutritionResult;

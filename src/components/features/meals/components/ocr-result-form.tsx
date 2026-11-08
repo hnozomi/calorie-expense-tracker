@@ -2,13 +2,13 @@
 // Client because it holds the editable form and the eaten-count stepper
 
 import { NutritionFormFields } from "@/components/features/meals/components/nutrition-form-fields";
+import { OcrPieceCountStepper } from "@/components/features/meals/components/ocr-piece-count-stepper";
+import { useOcrResultForm } from "@/components/features/meals/hooks/use-ocr-result-form";
 import type {
   MealItemFormValues,
   PendingMealItemCollector,
 } from "@/components/features/meals/types/meal";
-import { OcrPieceCountStepper } from "@/components/features/ocr/components/ocr-piece-count-stepper";
-import { useOcrResultForm } from "@/components/features/ocr/hooks/use-ocr-result-form";
-import type { OcrNutritionResult } from "@/components/features/ocr/types/ocr";
+import type { OcrNutritionResult } from "@/components/features/ocr";
 import { Button } from "@/components/ui/button";
 
 type OcrResultFormProps = {
