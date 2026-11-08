@@ -26,6 +26,7 @@ src/
 ```
 
 - 中身のないフォルダは作らない
+- 機能どうしの import は一方向にする。ocr は写真から栄養を読むところまでを持ち、読んだ結果を食事の1品にするフォーム(`OcrResultForm`)は meals に置く(ocr が meals のフォームと型を import して、meals ⇄ ocr と food-masters → ocr → meals → food-masters の輪ができていたため。2026-11-08)
 - shadcn/ui の部品は `pnpm dlx shadcn@latest add <component>` で足し、`ui/<component>/` に置く
 
 ## 共通規約と違う点
