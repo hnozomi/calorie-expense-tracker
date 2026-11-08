@@ -9,8 +9,8 @@ import {
   ListChecks,
   PenLine,
 } from "lucide-react";
+import type { RegisterTab } from "@/components/features/meals/types/drawer-candidates";
 import { cn } from "@/utils";
-import type { RegisterTab } from "../types/drawer-candidates";
 
 const TABS = [
   { value: "manual", icon: PenLine, label: "手動" },

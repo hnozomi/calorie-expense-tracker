@@ -1,6 +1,6 @@
 import { atom } from "jotai";
+import type { MealItemDraft } from "@/components/features/meals/types/meal";
 import type { MealType } from "@/types";
-import type { MealItemDraft } from "../types/meal";
 
 /** Whether the meal register drawer is open */
 export const isDrawerOpenAtom = atom(false);

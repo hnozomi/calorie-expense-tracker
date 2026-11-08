@@ -1,9 +1,9 @@
 import { Flame, Wallet } from "lucide-react";
 import Link from "next/link";
+import type { DailySummaryRow } from "@/components/features/meals/types/meal";
+import { sumNutrition } from "@/components/features/meals/utils/nutrition-calc";
 import { Card, CardContent } from "@/components/ui/card";
 import type { NutritionTarget } from "@/types";
-import type { DailySummaryRow } from "../types/meal";
-import { sumNutrition } from "../utils/nutrition-calc";
 import { CalorieRing } from "./calorie-ring";
 import { PfcBars } from "./pfc-bars";
 

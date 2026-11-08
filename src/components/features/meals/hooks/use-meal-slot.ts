@@ -3,15 +3,21 @@
 import { useSetAtom } from "jotai";
 import { useState, useTransition } from "react";
 import { toast } from "sonner";
-import { useIsShown } from "@/hooks";
-import { callAction } from "@/lib/action-result";
-import { MEAL_TYPE_LABELS, type MealType } from "@/types";
-import { copyPreviousDayMeal, transferMealToPlan } from "../api/actions";
+import {
+  copyPreviousDayMeal,
+  transferMealToPlan,
+} from "@/components/features/meals/api/actions";
 import {
   drawerMealTypeAtom,
   isDrawerOpenAtom,
-} from "../stores/meal-register-atom";
-import type { DisplayedMealItem, MealItem } from "../types/meal";
+} from "@/components/features/meals/stores/meal-register-atom";
+import type {
+  DisplayedMealItem,
+  MealItem,
+} from "@/components/features/meals/types/meal";
+import { useIsShown } from "@/hooks";
+import { callAction } from "@/lib/action-result";
+import { MEAL_TYPE_LABELS, type MealType } from "@/types";
 import { useDailyMealsContext } from "./use-daily-meals-context";
 
 /** One meal slot: open the drawer for it, copy the previous day, add it to the plan, edit an item */

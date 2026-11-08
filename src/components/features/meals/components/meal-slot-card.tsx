@@ -2,9 +2,9 @@
 // Client because it opens the register and edit drawers and runs the slot actions
 
 import { Plus } from "lucide-react";
+import { useMealSlot } from "@/components/features/meals/hooks/use-meal-slot";
+import type { DisplayedMealItem } from "@/components/features/meals/types/meal";
 import { MEAL_TYPE_LABELS, type MealType } from "@/types";
-import { useMealSlot } from "../hooks/use-meal-slot";
-import type { DisplayedMealItem } from "../types/meal";
 import { EmptySlotActions } from "./empty-slot-actions";
 import { MealItemEditModal } from "./meal-item-edit-modal";
 import { MealItemRow } from "./meal-item-row";

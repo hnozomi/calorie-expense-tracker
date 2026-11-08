@@ -1,5 +1,8 @@
+import type {
+  SetMenu,
+  SetMenuItem,
+} from "@/components/features/set-menus/types/set-menu";
 import type { Tables } from "@/lib/supabase/database.types";
-import type { SetMenu, SetMenuItem } from "../types/set-menu";
 
 type SetMenuWithItemsRow = Tables<"set_menus"> & {
   set_menu_items: Tables<"set_menu_items">[];

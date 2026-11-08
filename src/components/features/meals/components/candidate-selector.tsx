@@ -5,9 +5,9 @@ import { use } from "react";
 import type {
   CandidateTab,
   DrawerCandidates,
-} from "../types/drawer-candidates";
-import type { MealItemFormValues } from "../types/meal";
-import type { RecentMealItem } from "../utils/recent-meal-items";
+} from "@/components/features/meals/types/drawer-candidates";
+import type { MealItemFormValues } from "@/components/features/meals/types/meal";
+import type { RecentMealItem } from "@/components/features/meals/utils/recent-meal-items";
 import { FoodMasterSelector } from "./food-master-selector";
 import { RecentItemsSelector } from "./recent-items-selector";
 import { RecipeSelector } from "./recipe-selector";

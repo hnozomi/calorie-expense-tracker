@@ -3,10 +3,10 @@
 
 import { Search } from "lucide-react";
 import type { FoodMaster } from "@/components/features/food-masters/types/food-master";
+import { useFoodMasterSelector } from "@/components/features/meals/hooks/use-food-master-selector";
+import type { MealItemFormValues } from "@/components/features/meals/types/meal";
 import { Input } from "@/components/ui/input";
 import { PfcDisplay } from "@/components/ui/pfc-display";
-import { useFoodMasterSelector } from "../hooks/use-food-master-selector";
-import type { MealItemFormValues } from "../types/meal";
 
 type Props = {
   foodMasters: FoodMaster[];

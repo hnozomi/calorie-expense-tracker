@@ -1,6 +1,9 @@
 import { ChevronRight } from "lucide-react";
+import type {
+  DisplayedMealItem,
+  MealItem,
+} from "@/components/features/meals/types/meal";
 import { PfcDisplay } from "@/components/ui/pfc-display";
-import type { DisplayedMealItem, MealItem } from "../types/meal";
 
 type Props = {
   item: DisplayedMealItem;

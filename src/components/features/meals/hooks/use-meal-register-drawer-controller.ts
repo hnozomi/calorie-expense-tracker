@@ -4,6 +4,19 @@ import { useAtom, useStore } from "jotai";
 import { useRouter } from "next/navigation";
 import { useCallback, useRef, useState, useTransition } from "react";
 import { toast } from "sonner";
+import { registerMealItems } from "@/components/features/meals/api/actions";
+import {
+  draftItemsAtom,
+  drawerMealTypeAtom,
+  isDrawerOpenAtom,
+} from "@/components/features/meals/stores/meal-register-atom";
+import type { RegisterTab } from "@/components/features/meals/types/drawer-candidates";
+import type {
+  MealItemDraft,
+  MealItemFormValues,
+  PendingMealItemCollector,
+} from "@/components/features/meals/types/meal";
+import type { RecentMealItem } from "@/components/features/meals/utils/recent-meal-items";
 import {
   hasOcrValues,
   type OcrNutritionResult,
@@ -12,19 +25,6 @@ import {
 import { useIsShown } from "@/hooks";
 import { callAction } from "@/lib/action-result";
 import type { SourceType } from "@/types";
-import { registerMealItems } from "../api/actions";
-import {
-  draftItemsAtom,
-  drawerMealTypeAtom,
-  isDrawerOpenAtom,
-} from "../stores/meal-register-atom";
-import type { RegisterTab } from "../types/drawer-candidates";
-import type {
-  MealItemDraft,
-  MealItemFormValues,
-  PendingMealItemCollector,
-} from "../types/meal";
-import type { RecentMealItem } from "../utils/recent-meal-items";
 import { useDailyMealsContext } from "./use-daily-meals-context";
 
 /** A valid form entry that was typed but never added to the card */

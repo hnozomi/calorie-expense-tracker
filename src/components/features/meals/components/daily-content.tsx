@@ -1,13 +1,13 @@
 import { getFoodMasters } from "@/components/features/food-masters/api/queries";
-import { getRecipes } from "@/components/features/recipes/api/queries";
-import { getSetMenus } from "@/components/features/set-menus/api/queries";
-import { getNutritionTarget } from "@/components/features/settings/api/queries";
 import {
   getDailyMeals,
   getDailySummary,
   getRecentMealItems,
-} from "../api/queries";
-import type { DrawerCandidates } from "../types/drawer-candidates";
+} from "@/components/features/meals/api/queries";
+import type { DrawerCandidates } from "@/components/features/meals/types/drawer-candidates";
+import { getRecipes } from "@/components/features/recipes/api/queries";
+import { getSetMenus } from "@/components/features/set-menus/api/queries";
+import { getNutritionTarget } from "@/components/features/settings/api/queries";
 import { DailyMealsProvider } from "./daily-meals-provider";
 import { DailySummary } from "./daily-summary";
 import { DateNavigator } from "./date-navigator";

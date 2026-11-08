@@ -1,5 +1,8 @@
+import type {
+  DailySummaryRow,
+  DisplayedDailyMeals,
+} from "@/components/features/meals/types/meal";
 import { MEAL_TYPES } from "@/types";
-import type { DailySummaryRow, DisplayedDailyMeals } from "../types/meal";
 import { sumCost, sumNutrition } from "./nutrition-calc";
 
 // The server's summary stays the source of truth; only the difference between the items being saved and the

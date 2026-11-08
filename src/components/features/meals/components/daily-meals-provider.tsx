@@ -4,8 +4,8 @@
 import {
   DailyMealsContext,
   useDailyMealsProviderValue,
-} from "../hooks/use-daily-meals-context";
-import type { DailyMealGroup } from "../types/meal";
+} from "@/components/features/meals/hooks/use-daily-meals-context";
+import type { DailyMealGroup } from "@/components/features/meals/types/meal";
 
 type Props = {
   date: string;

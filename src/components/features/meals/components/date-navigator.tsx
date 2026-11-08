@@ -3,9 +3,9 @@
 
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import Link from "next/link";
+import { useDateNavigator } from "@/components/features/meals/hooks/use-date-navigator";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/utils";
-import { useDateNavigator } from "../hooks/use-date-navigator";
 
 type Props = {
   date: string;

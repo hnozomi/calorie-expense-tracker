@@ -6,12 +6,12 @@ import type {
   DailySummaryRow,
   DisplayedDailyMeals,
   MealChange,
-} from "../types/meal";
-import { adjustSummaryRows } from "../utils/adjust-summary-rows";
+} from "@/components/features/meals/types/meal";
+import { adjustSummaryRows } from "@/components/features/meals/utils/adjust-summary-rows";
 import {
   applyMealChange,
   toDisplayedDailyMeals,
-} from "../utils/apply-meal-change";
+} from "@/components/features/meals/utils/apply-meal-change";
 
 type DailyMealsContextValue = {
   /** The day the home screen shows (YYYY-MM-DD) */

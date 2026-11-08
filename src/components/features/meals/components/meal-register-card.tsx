@@ -1,9 +1,9 @@
 "use client";
 
 import { ShoppingCart, X } from "lucide-react";
+import type { MealItemDraft } from "@/components/features/meals/types/meal";
 import { Button } from "@/components/ui/button";
 import { PfcDisplay } from "@/components/ui/pfc-display";
-import type { MealItemDraft } from "../types/meal";
 
 type MealRegisterCardProps = {
   items: MealItemDraft[];
