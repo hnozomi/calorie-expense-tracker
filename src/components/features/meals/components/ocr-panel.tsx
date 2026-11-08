@@ -2,14 +2,12 @@
 // Client because it picks an image and shows the OCR result form
 
 import { Camera, ImageIcon } from "lucide-react";
+import { OcrResultForm } from "@/components/features/meals/components/ocr-result-form";
 import type {
   MealItemFormValues,
   PendingMealItemCollector,
 } from "@/components/features/meals/types/meal";
-import {
-  type OcrNutritionResult,
-  OcrResultForm,
-} from "@/components/features/ocr";
+import type { OcrNutritionResult } from "@/components/features/ocr";
 import { Button } from "@/components/ui/button";
 
 type Props = {
