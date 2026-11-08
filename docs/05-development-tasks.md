@@ -1,5 +1,7 @@
 # 開発タスク
 
+> 作り始めたときのタスクの一覧で、今は更新していない。OCR は Tesseract.js をやめ、Server Action から Claude Haiku 5.5 に読ませている。今の作りは `docs/ui-tech.md` を見る。
+
 ## Phase 1: MVP
 
 ### 環境構築

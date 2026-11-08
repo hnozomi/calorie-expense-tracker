@@ -7,7 +7,7 @@
 | 項目 | 内容 |
 | --- | --- |
 | プラットフォーム | Webアプリ（PWA）→ スマートフォン利用想定 |
-| 技術スタック | Next.js 16 / TypeScript / Tailwind CSS v4 / shadcn/ui / Supabase / Tesseract.js |
+| 技術スタック | Next.js 16 / TypeScript / Tailwind CSS v4 / shadcn/ui / Supabase / Claude Haiku 5.5(OCR) |
 | 想定ユーザー | 個人利用（シングルユーザー） |
 | UIテイスト | シンプル・ミニマル（白基調） |
 
@@ -45,6 +45,8 @@
 ---
 
 ## 開発フェーズ
+
+> 作り始めたときの計画。OCR は Tesseract.js をやめ、Server Action から Claude Haiku 5.5 に読ませている(`ocr/api/actions.ts`)。
 
 | フェーズ | 期間目安 | 内容 |
 | --- | --- | --- |
