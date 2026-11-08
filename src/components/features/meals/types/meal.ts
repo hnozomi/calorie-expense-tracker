@@ -66,3 +66,9 @@ export type MealItemDraft = MealItemFormValues & {
 
 /** Collector returning a valid but not-yet-added form entry, or null */
 export type PendingMealItemCollector = () => MealItemFormValues | null;
+
+/** A valid form entry that was typed but never added to the card */
+export type PendingFormItem = {
+  values: MealItemFormValues;
+  sourceType: SourceType;
+};
