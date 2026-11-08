@@ -2,12 +2,12 @@
 // Client because the search box filters the list as you type
 
 import { Search } from "lucide-react";
+import { useRecipeSelector } from "@/components/features/meals/hooks/use-recipe-selector";
+import type { MealItemFormValues } from "@/components/features/meals/types/meal";
 import type { Recipe } from "@/components/features/recipes/types/recipe";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { PfcDisplay } from "@/components/ui/pfc-display";
-import { useRecipeSelector } from "../hooks/use-recipe-selector";
-import type { MealItemFormValues } from "../types/meal";
 
 type Props = {
   recipes: Recipe[];

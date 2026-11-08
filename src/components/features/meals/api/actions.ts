@@ -2,6 +2,7 @@
 
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { z } from "zod/v4";
+import { mealItemFormSchema } from "@/components/features/meals/types/meal";
 import type { ActionResult } from "@/lib/action-result";
 import { revalidateAllScreens } from "@/lib/revalidate-screens";
 import { createClient } from "@/lib/supabase/server";
@@ -9,7 +10,6 @@ import { getSignedInUserId } from "@/lib/supabase/user";
 import type { AppDatabase } from "@/types";
 import { MEAL_TYPES, SOURCE_TYPES } from "@/types";
 import { isValidDateString, shiftDate } from "@/utils";
-import { mealItemFormSchema } from "../types/meal";
 
 // Action arguments come from the client and can be anything, so every input is parsed here
 const dateSchema = z.string().refine(isValidDateString);

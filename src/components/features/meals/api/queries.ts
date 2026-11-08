@@ -1,15 +1,21 @@
 import "server-only";
 import { cacheLife } from "next/cache";
+import type {
+  DailyMealGroup,
+  DailySummaryRow,
+} from "@/components/features/meals/types/meal";
+import {
+  collectMasterIds,
+  groupDailyMeals,
+} from "@/components/features/meals/utils/meal-item-rows";
+import {
+  dedupeRecentItemsByName,
+  type RecentMealItem,
+} from "@/components/features/meals/utils/recent-meal-items";
 import { fetchMasters } from "@/lib/fetch-masters";
 import { SCREEN_CACHE } from "@/lib/screen-cache";
 import { createClient } from "@/lib/supabase/server";
 import type { MealType, SourceType } from "@/types";
-import type { DailyMealGroup, DailySummaryRow } from "../types/meal";
-import { collectMasterIds, groupDailyMeals } from "../utils/meal-item-rows";
-import {
-  dedupeRecentItemsByName,
-  type RecentMealItem,
-} from "../utils/recent-meal-items";
 
 const RECENT_FETCH_LIMIT = 100;
 const RECENT_DISPLAY_LIMIT = 20;

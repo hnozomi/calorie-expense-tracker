@@ -2,9 +2,9 @@
 
 import { useState } from "react";
 import { toast } from "sonner";
+import type { MealItemFormValues } from "@/components/features/meals/types/meal";
 import type { SetMenu } from "@/components/features/set-menus/types/set-menu";
 import { matchesSearch } from "@/utils/matches-search";
-import type { MealItemFormValues } from "../types/meal";
 
 export type SetMenuItemWithIds = MealItemFormValues & {
   setMenuId?: string;

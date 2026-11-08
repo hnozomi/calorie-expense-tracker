@@ -2,8 +2,8 @@
 // Client because tapping an item adds it to the drafts
 
 import { History } from "lucide-react";
+import type { RecentMealItem } from "@/components/features/meals/utils/recent-meal-items";
 import { PfcDisplay } from "@/components/ui/pfc-display";
-import type { RecentMealItem } from "../utils/recent-meal-items";
 
 type Props = {
   recentItems: RecentMealItem[];

@@ -1,9 +1,9 @@
 "use client";
 
 import type { FieldErrors, UseFormRegister } from "react-hook-form";
+import type { MealItemFormInput } from "@/components/features/meals/types/meal";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import type { MealItemFormInput } from "../types/meal";
 
 type NutritionFormFieldsProps = {
   register: UseFormRegister<MealItemFormInput>;

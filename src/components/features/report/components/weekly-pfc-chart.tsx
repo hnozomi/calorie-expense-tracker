@@ -2,10 +2,10 @@
 
 import { ChevronDown, ChevronUp } from "lucide-react";
 import { useState } from "react";
+import type { DailyReportEntry } from "@/components/features/report/types/weekly-report";
 import { Button } from "@/components/ui/button";
 import { PfcDot } from "@/components/ui/pfc-display";
 import { cn } from "@/utils";
-import type { DailyReportEntry } from "../types/weekly-report";
 
 type WeeklyPfcChartProps = {
   entries: DailyReportEntry[];

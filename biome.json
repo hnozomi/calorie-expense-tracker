@@ -16,9 +16,46 @@
     "enabled": true,
     "rules": {
       "recommended": true,
+      "suspicious": {
+        "noExplicitAny": "error"
+      },
       "style": {
-        "noNonNullAssertion": "off"
+        "noNonNullAssertion": "off",
+        "useImportType": "error",
+        "useConsistentTypeDefinitions": {
+          "level": "error",
+          "options": {
+            "style": "type"
+          }
+        },
+        "noEnum": "error",
+        "noDefaultExport": "error",
+        "useFilenamingConvention": {
+          "level": "error",
+          "options": {
+            "filenameCases": ["kebab-case"]
+          }
+        },
+        "noRestrictedImports": {
+          "level": "error",
+          "options": {
+            "patterns": [
+              {
+                "group": ["../**"],
+                "message": "src の中は @/ で import する"
+              }
+            ]
+          }
+        }
+      },
+      "a11y": {
+        "noStaticElementInteractions": "error",
+        "useKeyWithClickEvents": "error"
       }
+    },
+    "domains": {
+      "next": "recommended",
+      "react": "recommended"
     }
   },
   "formatter": {
@@ -35,5 +72,17 @@
       "**/*.json",
       "!src/lib/supabase/database.types.ts"
     ]
-  }
+  },
+  "overrides": [
+    {
+      "includes": ["src/app/**", "*.config.*", "e2e/global.setup.ts"],
+      "linter": {
+        "rules": {
+          "style": {
+            "noDefaultExport": "off"
+          }
+        }
+      }
+    }
+  ]
 }

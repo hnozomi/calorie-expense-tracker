@@ -1,10 +1,10 @@
 "use client";
 
 import { useState } from "react";
+import type { MealItemFormValues } from "@/components/features/meals/types/meal";
 import type { Recipe } from "@/components/features/recipes/types/recipe";
 import { totalIngredientCost } from "@/components/features/recipes/utils/recipe-cost";
 import { matchesSearch } from "@/utils/matches-search";
-import type { MealItemFormValues } from "../types/meal";
 
 /** Search narrows the recipes as you type and a tap adds one person's share */
 export const useRecipeSelector = (

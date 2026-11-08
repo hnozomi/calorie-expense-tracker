@@ -4,14 +4,17 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { startTransition, useState } from "react";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
-import { callAction } from "@/lib/action-result";
-import { deleteMealItem, updateMealItem } from "../api/actions";
+import {
+  deleteMealItem,
+  updateMealItem,
+} from "@/components/features/meals/api/actions";
 import {
   type MealItem,
   type MealItemFormInput,
   type MealItemFormValues,
   mealItemFormSchema,
-} from "../types/meal";
+} from "@/components/features/meals/types/meal";
+import { callAction } from "@/lib/action-result";
 import { useDailyMealsContext } from "./use-daily-meals-context";
 
 /** Edit or delete one meal item. The drawer closes at once and the slot shows the change while it is saved;

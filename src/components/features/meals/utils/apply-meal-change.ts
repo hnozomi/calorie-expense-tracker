@@ -1,10 +1,10 @@
-import { MEAL_TYPES } from "@/types";
 import type {
   DailyMealGroup,
   DisplayedDailyMeals,
   DisplayedMealItem,
   MealChange,
-} from "../types/meal";
+} from "@/components/features/meals/types/meal";
+import { MEAL_TYPES } from "@/types";
 
 /** Items per slot, without the meal row ids the screen does not need */
 export const toDisplayedDailyMeals = (

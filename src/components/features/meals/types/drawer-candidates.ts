@@ -1,7 +1,7 @@
 import type { FoodMaster } from "@/components/features/food-masters/types/food-master";
+import type { RecentMealItem } from "@/components/features/meals/utils/recent-meal-items";
 import type { Recipe } from "@/components/features/recipes/types/recipe";
 import type { SetMenu } from "@/components/features/set-menus/types/set-menu";
-import type { RecentMealItem } from "../utils/recent-meal-items";
 
 /** What the register drawer's list tabs choose from */
 export type DrawerCandidates = {

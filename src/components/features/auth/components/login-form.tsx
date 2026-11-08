@@ -6,12 +6,12 @@ import { AlertCircle, Utensils } from "lucide-react";
 import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { z } from "zod/v4";
+import { useAuth } from "@/components/features/auth/hooks/use-auth";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input, PasswordInput } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { cn } from "@/utils";
-import { useAuth } from "../hooks/use-auth";
 
 const loginSchema = z.object({
   email: z.email("有効なメールアドレスを入力してください"),

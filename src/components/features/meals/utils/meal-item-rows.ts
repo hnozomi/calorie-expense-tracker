@@ -1,3 +1,7 @@
+import type {
+  DailyMealGroup,
+  MealItem,
+} from "@/components/features/meals/types/meal";
 import type { Tables } from "@/lib/supabase/database.types";
 import type {
   FoodMasterNutritionRow,
@@ -5,7 +9,6 @@ import type {
   RecipeNutritionRow,
   SourceType,
 } from "@/types";
-import type { DailyMealGroup, MealItem } from "../types/meal";
 
 type MealItemRow = Tables<"meal_items">;
 

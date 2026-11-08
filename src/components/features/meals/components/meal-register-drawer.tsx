@@ -3,6 +3,8 @@
 
 import { X } from "lucide-react";
 import { Suspense } from "react";
+import { useMealRegisterDrawerController } from "@/components/features/meals/hooks/use-meal-register-drawer-controller";
+import type { DrawerCandidates } from "@/components/features/meals/types/drawer-candidates";
 import { OcrCameraOverlay } from "@/components/features/ocr";
 import { Button } from "@/components/ui/button";
 import {
@@ -14,8 +16,6 @@ import {
 } from "@/components/ui/drawer";
 import { MEAL_TYPE_LABELS } from "@/types";
 import { cn } from "@/utils";
-import { useMealRegisterDrawerController } from "../hooks/use-meal-register-drawer-controller";
-import type { DrawerCandidates } from "../types/drawer-candidates";
 import { CandidateListSkeleton } from "./candidate-list-skeleton";
 import { CandidateSelector } from "./candidate-selector";
 import { DiscardDraftsDialog } from "./discard-drafts-dialog";

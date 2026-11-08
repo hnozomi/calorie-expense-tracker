@@ -1,7 +1,7 @@
 "use client";
 
+import type { DailyReportEntry } from "@/components/features/report/types/weekly-report";
 import { cn } from "@/utils";
-import type { DailyReportEntry } from "../types/weekly-report";
 
 type WeeklyCostChartProps = {
   entries: DailyReportEntry[];

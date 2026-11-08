@@ -1,13 +1,14 @@
 "use client";
+
 // Client because the search box filters the list as you type
 
-import type { SetMenu } from "@/components/features/set-menus/types/set-menu";
-import { Input } from "@/components/ui/input";
-import { PfcDisplay } from "@/components/ui/pfc-display";
 import {
   type SetMenuItemWithIds,
   useSetMenuSelector,
-} from "../hooks/use-set-menu-selector";
+} from "@/components/features/meals/hooks/use-set-menu-selector";
+import type { SetMenu } from "@/components/features/set-menus/types/set-menu";
+import { Input } from "@/components/ui/input";
+import { PfcDisplay } from "@/components/ui/pfc-display";
 
 type Props = {
   setMenus: SetMenu[];

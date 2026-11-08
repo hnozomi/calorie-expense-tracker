@@ -1,6 +1,9 @@
 "use client";
+
 // Client because it is a form in a drawer
 
+import { useMealItemEdit } from "@/components/features/meals/hooks/use-meal-item-edit";
+import type { MealItem } from "@/components/features/meals/types/meal";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -11,8 +14,6 @@ import {
   DrawerTitle,
 } from "@/components/ui/drawer";
 import { SOURCE_TYPE_LABELS } from "@/types";
-import { useMealItemEdit } from "../hooks/use-meal-item-edit";
-import type { MealItem } from "../types/meal";
 import { DeleteItemSection } from "./delete-item-section";
 import { NutritionFormFields } from "./nutrition-form-fields";
 

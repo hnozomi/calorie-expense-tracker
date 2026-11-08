@@ -1,8 +1,9 @@
 "use client";
+
 // Client because it shows the day's items including the ones still being saved (useOptimistic)
 
+import { useDailyMealsContext } from "@/components/features/meals/hooks/use-daily-meals-context";
 import { MEAL_TYPES } from "@/types";
-import { useDailyMealsContext } from "../hooks/use-daily-meals-context";
 import { MealSlotCard } from "./meal-slot-card";
 
 export const MealSlotList = () => {

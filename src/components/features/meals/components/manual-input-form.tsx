@@ -3,13 +3,13 @@
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useEffect } from "react";
 import { useForm, useWatch } from "react-hook-form";
-import { Button } from "@/components/ui/button";
 import {
   type MealItemFormInput,
   type MealItemFormValues,
   mealItemFormSchema,
   type PendingMealItemCollector,
-} from "../types/meal";
+} from "@/components/features/meals/types/meal";
+import { Button } from "@/components/ui/button";
 import { NutritionFormFields } from "./nutrition-form-fields";
 
 type ManualInputFormProps = {

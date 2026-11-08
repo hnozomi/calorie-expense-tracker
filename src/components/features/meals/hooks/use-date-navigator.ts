@@ -1,8 +1,8 @@
 "use client";
 
 import { useRouter } from "next/navigation";
+import { homeHref } from "@/components/features/meals/utils/home-href";
 import { formatDisplayDate, isValidDateString, shiftDate } from "@/utils";
-import { homeHref } from "../utils/home-href";
 
 /** Links to the previous and next day, and moving to a day picked in the OS date picker */
 export const useDateNavigator = (date: string, today: string) => {
