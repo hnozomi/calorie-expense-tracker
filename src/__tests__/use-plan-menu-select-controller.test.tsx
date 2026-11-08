@@ -110,12 +110,12 @@ describe("usePlanMenuSelectController", () => {
   it("P-3: 既存プランがあると手動タブの全フィールド(PFC含む)がプリフィルされる", async () => {
     const { result } = await renderController(existing());
 
-    expect(result.current.manualName).toBe("既存メニュー");
-    expect(result.current.manualCalories).toBe("800");
-    expect(result.current.manualProtein).toBe("20");
-    expect(result.current.manualFat).toBe("25");
-    expect(result.current.manualCarbs).toBe("100");
-    expect(result.current.manualCost).toBe("500");
+    expect(result.current.manual.name).toBe("既存メニュー");
+    expect(result.current.manual.calories).toBe("800");
+    expect(result.current.manual.protein).toBe("20");
+    expect(result.current.manual.fat).toBe("25");
+    expect(result.current.manual.carbs).toBe("100");
+    expect(result.current.manual.cost).toBe("500");
   });
 
   it("メニュー名が空のまま手動保存すると保存は呼ばれない", async () => {
@@ -133,9 +133,9 @@ describe("usePlanMenuSelectController", () => {
     saveMealPlan.mockResolvedValue({ ok: true });
     const { result } = await renderController();
     act(() => {
-      result.current.setManualName("新メニュー");
-      result.current.setManualCalories("600");
-      result.current.setManualProtein("15");
+      result.current.setManualField("name", "新メニュー");
+      result.current.setManualField("calories", "600");
+      result.current.setManualField("protein", "15");
     });
 
     act(() => result.current.handleSaveManual());
@@ -162,7 +162,7 @@ describe("usePlanMenuSelectController", () => {
     const { result } = await renderController(
       existing({ recipeId: "recipe-curry", protein: 33 }),
     );
-    act(() => result.current.setManualName("名前だけ変更"));
+    act(() => result.current.setManualField("name", "名前だけ変更"));
 
     act(() => result.current.handleSaveManual());
 
@@ -218,7 +218,7 @@ describe("usePlanMenuSelectController", () => {
   it("AC-R-5: 保存が失敗したときは、閉じたモーダルを打った値のまま開き直し、品名入りのエラーを出す", async () => {
     saveMealPlan.mockResolvedValue({ ok: false });
     const { result } = await renderController();
-    act(() => result.current.setManualName("失敗するメニュー"));
+    act(() => result.current.setManualField("name", "失敗するメニュー"));
 
     act(() => result.current.handleSaveManual());
 
@@ -227,14 +227,14 @@ describe("usePlanMenuSelectController", () => {
     expect(toastError).toHaveBeenCalledWith(
       "「失敗するメニュー」の保存に失敗しました",
     );
-    expect(result.current.manualName).toBe("失敗するメニュー");
+    expect(result.current.manual.name).toBe("失敗するメニュー");
     expect(toastSuccess).not.toHaveBeenCalled();
   });
 
   it("AC-R-5: 保存の送信そのものが失敗しても(通信が切れたなど)、エラーページにせず開き直す", async () => {
     saveMealPlan.mockRejectedValue(new TypeError("Failed to fetch"));
     const { result } = await renderController();
-    act(() => result.current.setManualName("通信失敗メニュー"));
+    act(() => result.current.setManualField("name", "通信失敗メニュー"));
 
     act(() => result.current.handleSaveManual());
 
@@ -351,7 +351,7 @@ describe("usePlanMenuSelectController", () => {
     expect(result.current.hasCandidateError).toBe(true);
     expect(result.current.recipes).toEqual([]);
 
-    act(() => result.current.setManualName("手動メニュー"));
+    act(() => result.current.setManualField("name", "手動メニュー"));
     act(() => result.current.handleSaveManual());
     await waitFor(() => expect(saveMealPlan).toHaveBeenCalledTimes(1));
   });
