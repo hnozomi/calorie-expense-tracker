@@ -10,6 +10,7 @@ import {
 import type {
   MealPlan,
   MealPlanFormValues,
+  PlanManualValues,
 } from "@/components/features/plan/types/meal-plan";
 import type { Recipe } from "@/components/features/recipes/types/recipe";
 import { totalIngredientCost } from "@/components/features/recipes/utils/recipe-cost";
@@ -35,7 +36,7 @@ type UsePlanMenuSelectControllerParams = {
 };
 
 /** The manual form's text values for a plan (empty for a new one) */
-const manualValuesOf = (plan?: MealPlan) => ({
+const manualValuesOf = (plan?: MealPlan): PlanManualValues => ({
   name: plan?.plannedName ?? "",
   calories: plan ? String(plan.calories) : "",
   protein: plan ? String(plan.protein) : "",
@@ -55,24 +56,7 @@ export const usePlanMenuSelectController = ({
   const { recipes, foodMasters, setMenus, hasError } = use(candidates);
   const [recipeSearch, setRecipeSearch] = useState("");
   const [fmSearch, setFmSearch] = useState("");
-  const [manualName, setManualName] = useState(
-    () => manualValuesOf(existingPlan).name,
-  );
-  const [manualCalories, setManualCalories] = useState(
-    () => manualValuesOf(existingPlan).calories,
-  );
-  const [manualProtein, setManualProtein] = useState(
-    () => manualValuesOf(existingPlan).protein,
-  );
-  const [manualFat, setManualFat] = useState(
-    () => manualValuesOf(existingPlan).fat,
-  );
-  const [manualCarbs, setManualCarbs] = useState(
-    () => manualValuesOf(existingPlan).carbs,
-  );
-  const [manualCost, setManualCost] = useState(
-    () => manualValuesOf(existingPlan).cost,
-  );
+  const [manual, setManual] = useState(() => manualValuesOf(existingPlan));
   // The dialog closes on the first tap, but a fast double tap reaches the handler twice before it re-renders
   const isSubmittingRef = useRef(false);
 
@@ -81,14 +65,11 @@ export const usePlanMenuSelectController = ({
   const [filledPlan, setFilledPlan] = useState(existingPlan);
   if (existingPlan !== filledPlan) {
     setFilledPlan(existingPlan);
-    const values = manualValuesOf(existingPlan);
-    setManualName(values.name);
-    setManualCalories(values.calories);
-    setManualProtein(values.protein);
-    setManualFat(values.fat);
-    setManualCarbs(values.carbs);
-    setManualCost(values.cost);
+    setManual(manualValuesOf(existingPlan));
   }
+
+  const setManualField = (key: keyof PlanManualValues, value: string) =>
+    setManual((prev) => ({ ...prev, [key]: value }));
 
   /** Close at once and show the plan in the cell while it is saved */
   const handleSave = (values: MealPlanFormValues, refs?: SaveRefs) => {
@@ -143,7 +124,7 @@ export const usePlanMenuSelectController = ({
   };
 
   const handleSaveManual = () => {
-    if (!manualName.trim()) {
+    if (!manual.name.trim()) {
       toast.error("メニュー名を入力してください");
       return;
     }
@@ -157,12 +138,12 @@ export const usePlanMenuSelectController = ({
       : undefined;
     handleSave(
       {
-        plannedName: manualName.trim(),
-        calories: Number(manualCalories) || 0,
-        protein: Number(manualProtein) || 0,
-        fat: Number(manualFat) || 0,
-        carbs: Number(manualCarbs) || 0,
-        estimatedCost: Number(manualCost) || 0,
+        plannedName: manual.name.trim(),
+        calories: Number(manual.calories) || 0,
+        protein: Number(manual.protein) || 0,
+        fat: Number(manual.fat) || 0,
+        carbs: Number(manual.carbs) || 0,
+        estimatedCost: Number(manual.cost) || 0,
       },
       existingRefs,
     );
@@ -237,23 +218,13 @@ export const usePlanMenuSelectController = ({
       matchesSearch([fm.name, fm.brand], fmSearch),
     ),
     fmSearch,
-    manualCalories,
-    manualCarbs,
-    manualCost,
-    manualFat,
-    manualName,
-    manualProtein,
+    manual,
     recipes: recipes.filter((recipe) =>
       matchesSearch([recipe.name], recipeSearch),
     ),
     recipeSearch,
     setFmSearch,
-    setManualCalories,
-    setManualCarbs,
-    setManualCost,
-    setManualFat,
-    setManualName,
-    setManualProtein,
+    setManualField,
     setRecipeSearch,
     setMenus,
     handleDelete,

@@ -48,18 +48,8 @@ export const PlanMenuSelectModal = ({
 
           <TabsContent value="manual" className="mt-4">
             <PlanManualForm
-              name={{ value: menu.manualName, onChange: menu.setManualName }}
-              calories={{
-                value: menu.manualCalories,
-                onChange: menu.setManualCalories,
-              }}
-              cost={{ value: menu.manualCost, onChange: menu.setManualCost }}
-              protein={{
-                value: menu.manualProtein,
-                onChange: menu.setManualProtein,
-              }}
-              fat={{ value: menu.manualFat, onChange: menu.setManualFat }}
-              carbs={{ value: menu.manualCarbs, onChange: menu.setManualCarbs }}
+              values={menu.manual}
+              onChange={menu.setManualField}
               onSave={menu.handleSaveManual}
             />
           </TabsContent>

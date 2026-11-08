@@ -35,3 +35,13 @@ export type DisplayedMealPlan = MealPlan & { isOptimistic?: boolean };
 export type PlanChange =
   | { type: "save"; plan: DisplayedMealPlan }
   | { type: "remove"; planId: string };
+
+/** What is typed in the manual tab, kept as text until it is saved */
+export type PlanManualValues = {
+  name: string;
+  calories: string;
+  protein: string;
+  fat: string;
+  carbs: string;
+  cost: string;
+};
