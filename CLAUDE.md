@@ -1,4 +1,4 @@
-# Project: Next.js PWA Template
+# めしログ (calorie-expense-tracker)
 
 ## Tech Stack
 - **Framework**: Next.js (App Router) + TypeScript
@@ -6,26 +6,14 @@
 - **State**: server data is read in Server Components (`'use cache: private'`) and written with Server Actions; Jotai holds browser-only state (the meal drawer)
 - **Forms**: React Hook Form + Zod
 - **Backend**: Supabase (DB + Auth) via `@supabase/ssr`
+- **OCR**: Claude Haiku 5.5 from a Server Action (`ocr/api/actions.ts`)
 - **PWA**: Custom implementation (no external library)
 - **Lint/Format**: Biome
 - **Test**: Vitest + Testing Library
 - **Package Manager**: pnpm
 
 ## Directory Structure
-```
-src/
-├── app/              # Next.js App Router pages and layouts
-├── components/
-│   ├── features/     # Feature-specific components (e.g., features/tasks/)
-│   └── ui/           # Base UI components (e.g., ui/button/, ui/card/)
-├── hooks/            # Custom React hooks
-├── lib/
-│   └── supabase/     # Supabase client utilities
-├── utils/            # Shared utility functions
-├── stores/           # Jotai atoms
-├── types/            # TypeScript type definitions
-└── __tests__/        # Test files
-```
+See `.claude/rules/general.md` (ファイル配置).
 
 ## Commands
 - `pnpm dev` — Start dev server (Turbopack)

@@ -15,7 +15,6 @@ src/
       types/                  その機能の型
       stores/                 その機能の Jotai の atom
       utils/                  その機能の純粋な関数
-      <feature>-page.tsx      ページ部品
       index.ts                公開するものの再 export
     ui/<component>/           汎用部品(shadcn/ui とその派生)
   hooks/                      複数の機能で使う hooks
