@@ -16,6 +16,7 @@ meals ──┬─ meal_items ───── meal_item_costs
                ├── → food_masters
                └── → set_menus
 user_settings (standalone, per user)
+health_daily_values (standalone, per user)
 ```
 
 ---
@@ -206,6 +207,36 @@ user_settings (standalone, per user)
 
 ---
 
+## health_daily_values（日次の健康データ）
+
+体重・体脂肪率・歩数・活動量を「日付 × 項目 × 出所」で1行に持つ（縦持ち）。行が無い組は欠測。同じ日・同じ項目に複数の出所の行があるとき、どれを表示するかはアプリで決める（DB には持たない）。
+
+| カラム名 | 型 | 説明 |
+| --- | --- | --- |
+| id | UUID (PK) | 主キー |
+| user_id | UUID (FK) | auth.users.id への参照（RLS用、既定 `auth.uid()`、`ON DELETE CASCADE`） |
+| date | DATE | 日本時間の日付 |
+| metric | TEXT | 項目（weight_kg / body_fat_pct / steps / active_energy_kcal） |
+| source | TEXT | 出所（withings / apple_health / manual） |
+| value | NUMERIC | 値。項目ごとの範囲を CHECK（下の表） |
+| measured_at | TIMESTAMPTZ (nullable) | 測った時刻（出所が持っていれば） |
+| imported_at | TIMESTAMPTZ | 最後に書き込まれた時刻（既定 `now()`。再取り込みでも更新する） |
+| created_at | TIMESTAMPTZ | 作成日時 |
+| updated_at | TIMESTAMPTZ | 更新日時（`update_updated_at()` トリガー） |
+
+- 一意制約：`(user_id, date, metric, source)`。取り込みはこのキーで upsert するので、同じ日を送り直しても1行のまま
+- 索引：`(user_id, date)`
+- 書き込み：アプリ（authenticated）から書けるのは `source = 'manual'` の行だけ。`withings` / `apple_health` の行は取り込み関数（後のタスク）だけが書く。権限は `security-model.md` の §2・§3
+
+| metric | 単位 | 範囲（両端を含む） |
+| --- | --- | --- |
+| weight_kg | kg | 20〜300 |
+| body_fat_pct | % | 1〜75 |
+| steps | 歩 | 0〜200000 |
+| active_energy_kcal | kcal | 0〜10000 |
+
+---
+
 ## 列挙値定義
 
 アプリ内で使用する TEXT 型カラムの取りうる値を以下に定義する。
@@ -230,6 +261,23 @@ DB上は TEXT 型のまま保持し、TypeScript 側で union type として型�
 | food_master | 食品マスタから登録 |
 | set_menu | セットメニューから登録 |
 
+### metric（健康データの項目）
+
+| 値 | 表示名 |
+|---|---|
+| weight_kg | 体重（kg） |
+| body_fat_pct | 体脂肪率（%） |
+| steps | 歩数 |
+| active_energy_kcal | 活動量（アクティブエネルギー、kcal） |
+
+### source（健康データの出所）
+
+| 値 | 説明 |
+|---|---|
+| withings | Withings から取り込み |
+| apple_health | Apple Health から取り込み |
+| manual | 手入力 |
+
 ### category（食品マスタのカテゴリ）
 
 | 値 | 表示名 |
@@ -246,7 +294,7 @@ DB上は TEXT 型のまま保持し、TypeScript 側で union type として型�
 
 ## タイムゾーン方針
 
-- **DATE型カラム**（meals.date, meal_plans.date）: クライアント側でユーザーのローカルタイムゾーン（想定: JST / Asia/Tokyo）の日付を `YYYY-MM-DD` 形式で送信し、そのまま保存する
+- **DATE型カラム**（meals.date, meal_plans.date, health_daily_values.date）: クライアント側でユーザーのローカルタイムゾーン（想定: JST / Asia/Tokyo）の日付を `YYYY-MM-DD` 形式で送信し、そのまま保存する
 - **TIMESTAMPTZ型カラム**（created_at, updated_at, deleted_at）: PostgreSQL の TIMESTAMPTZ は内部的にUTCで保存される。表示時にクライアント側でローカルタイムゾーンに変換する
 - **「当日」の判定**: クライアント側でユーザーのローカル日付を算出し、APIリクエストのパラメータとして送信する（サーバー側で `now()` を使わない）
 - **RPC関数の日付パラメータ**: すべて DATE 型で受け取り、クライアントから送信されたローカル日付をそのまま使用する
@@ -272,6 +320,7 @@ Supabase RLSを使用し、各ユーザーが自分のデータのみアクセ�
 - **対象テーブル:** meals, recipes, food_masters, set_menus, meal_plans
 - **ポリシー条件:** `auth.uid() = user_id`
 - **適用範囲:** SELECT / INSERT / UPDATE / DELETE のすべて
+- **health_daily_values:** SELECT / DELETE は持ち主。INSERT / UPDATE は持ち主かつ `source = 'manual'` のときだけ（アプリから自動の出所を偽れないように）
 - **子テーブルの保護:** meal_items, meal_item_costs, recipe_ingredients, set_menu_items にも個別のRLSポリシーを設定する。Supabase REST APIは子テーブルへの直接アクセスを許可するため、親テーブルのRLSだけでは不十分
   - `meal_items`: `meal_id` → `meals.user_id` を経由してチェック
   - `meal_item_costs`: `meal_item_id` → `meal_items.meal_id` → `meals.user_id` を経由してチェック
