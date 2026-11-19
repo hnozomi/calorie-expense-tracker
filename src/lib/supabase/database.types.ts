@@ -65,6 +65,45 @@ export type Database = {
         }
         Relationships: []
       }
+      health_daily_values: {
+        Row: {
+          created_at: string
+          date: string
+          id: string
+          imported_at: string
+          measured_at: string | null
+          metric: string
+          source: string
+          updated_at: string
+          user_id: string
+          value: number
+        }
+        Insert: {
+          created_at?: string
+          date: string
+          id?: string
+          imported_at?: string
+          measured_at?: string | null
+          metric: string
+          source: string
+          updated_at?: string
+          user_id?: string
+          value: number
+        }
+        Update: {
+          created_at?: string
+          date?: string
+          id?: string
+          imported_at?: string
+          measured_at?: string | null
+          metric?: string
+          source?: string
+          updated_at?: string
+          user_id?: string
+          value?: number
+        }
+        Relationships: []
+      }
       meal_item_costs: {
         Row: {
           id: string
