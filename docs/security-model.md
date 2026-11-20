@@ -22,7 +22,7 @@ USING ((select auth.uid()) = user_id)
 WITH CHECK ((select auth.uid()) = user_id)
 ```
 
-`health_daily_values` の INSERT / UPDATE は、持ち主の条件に出所の条件を足す。画面からは手入力しか書けず、`withings` などの自動の出所を偽れない（自動の出所の行は、後のタスクで足す取り込み関数だけが書く）。UPDATE は USING と WITH CHECK の両方に付けるので、自動の行を書き換えることも、手入力の行を自動の出所に変えることもできない。
+`health_daily_values` の INSERT / UPDATE は、持ち主の条件に出所の条件を足す。画面からは手入力しか書けず、`withings` などの自動の出所を偽れない（自動の出所の行は、取り込み関数 `import_health_daily` だけが書く。§3 の例外）。UPDATE は USING と WITH CHECK の両方に付けるので、自動の行を書き換えることも、手入力の行を自動の出所に変えることもできない。
 
 ```sql
 -- INSERT
@@ -69,6 +69,7 @@ USING (EXISTS (
 | `save_set_menu_with_items(...)` | INVOKER | 不許可 | 許可 | 同上 |
 | `sync_meals_to_plans(DATE, DATE)` | INVOKER | 不許可 | 許可 | 同上 |
 | `claim_ocr_scan(INTEGER)` | INVOKER | 不許可 | 許可 | OCR の回数を1件記録する。日本時間の今日の回数が上限以上なら記録せず false |
+| `import_health_daily(TEXT, JSONB)` | **DEFINER**（例外。下の「例外：理由と守り方」） | **許可** | 許可 | 健康データの取り込み。Cookie を持たない取り込み口（Route Handler）が publishable キーで anon として呼ぶ。PUBLIC からは REVOKE。`SET search_path = ''` |
 | `update_updated_at()` | INVOKER（トリガー用） | — | — | `updated_at` 自動更新トリガー。直接呼び出し対象ではない |
 | `check_import_token_limit()` | INVOKER（トリガー用） | 不許可 | 不許可 | `import_tokens` の INSERT の前に、有効なトークンが5件あれば断る。DB で数えるのは、ログイン中の利用者は Server Action を通さず API から直接 INSERT もできるため。同時に送られても両方通らないよう、利用者ごとの advisory lock を取る。`SET search_path = ''` |
 
@@ -85,7 +86,20 @@ USING (EXISTS (
 **原則**:
 - 書き込み・更新を行うRPCは認証必須（`anon` から REVOKE）。
 - 読み取り専用RPCで、かつVercelのSSGプリレンダーから呼ばれるものだけ、例外的に `anon` にEXECUTEを許可する。
-- 全RPCは `SECURITY INVOKER` + `SET search_path = public` を必須にする（`SECURITY DEFINER` は権限昇格のリスクがあるため使わない。RLSを回避する必要がある特別な理由がない限り避ける）。
+- 全RPCは `SECURITY INVOKER` + `SET search_path = public` を必須にする（`SECURITY DEFINER` は権限昇格のリスクがあるため使わない。RLSを回避する必要がある特別な理由がない限り避ける）。例外は `import_health_daily` の1つだけ（下）。
+
+### 例外：`import_health_daily` が SECURITY DEFINER である理由と守り方
+
+**理由**: 取り込みの送り手（もち）は Supabase のセッションを持たない（ログイン情報を持たせない方針）。共通規約でサービスロールのキーもアプリで使えない。そのため「RLS の下で、ログイン中の利用者として書く」形が作れず、RLS を迂回する場所を1つだけ作り、その中に閉じた。他の案（サービスロールのキー、利用者の JWT を作る、Edge Function）を採らなかった理由はフェーズ1の設計案 ⑤ O-1。
+
+**守り方**:
+- 書けるのは「トークンの持ち主の、`health_daily_values` の、自動の出所（`withings` / `apple_health`）の行」だけ。`user_id` はトークンから決まり、引数で渡せない（レコードに知らないキーがあれば断る）。他のテーブルで触るのは、そのトークンの `import_tokens.last_used_at` だけ。手入力（`manual`）の行は一意キーが別なので触れない
+- 最初にトークンを照合する。`token_hash`（SHA-256）が一致し、`revoked_at IS NULL` かつ `'health:write' = ANY(scopes)` の行が無ければ、何も書かず `{ ok: false, error: 'unauthorized' }` だけを返す（不明・失効・スコープ不足を分けない。トークンの有無を探られないように）。トークン（256ビットの乱数）が無ければ、publishable キーで誰でも呼べても何も書けない
+- レコードは取り込み口の Zod と同じ決まりで関数の中でもう一度確かめる（PostgREST から直接呼ばれても同じ守りになるように）：1〜100件、日付は `YYYY-MM-DD` の実在する日で日本時間の今日まで、出所は自動の2つだけ、項目は4つだけで範囲と桁（体重は小数第2位まで、体脂肪率は第1位まで、歩数は整数、活動量は整数に丸める）、`measured_at` はタイムゾーン付きの ISO 8601、同じ日・出所・項目の重複は不可。1件でも違えば何も書かず `{ ok: false, error: 'invalid_records' }`
+- 書き込みは1回の呼び出しで全部か無し（1トランザクション）。同じ利用者の取り込みは advisory lock で1つずつ通す
+- `SET search_path = ''` にし、中の名前はすべて `public.` 付きにする（呼び出し側が置いた同名の関数・テーブルに差し替えられないように）
+- 返すのは `ok`・`received`・`changed`（または `error`）だけで、トークンの表の中身や他の行は返さない
+- 確かめているもの：`supabase/tests/import_health_daily.test.sql`（不明・失効・スコープ不足・空のトークンで1行も書かれない、手入力の行と他人の行が変わらない、ログイン中の別の利用者が呼んでもトークンの持ち主の行になる、不正な1件で全件書かれない、など）
 
 ## 4. なぜ一部のRPCだけ anon に EXECUTE を許可しているか
 
@@ -99,7 +113,7 @@ USING (EXISTS (
 
 - [ ] テーブルに `user_id` があるか。なければRLSで守れないので設計を見直す
 - [ ] 子テーブルの場合、親を経由したRLSポリシーをSELECT/INSERT/UPDATE/DELETEの4種とも設定したか（DELETE漏れに注意）
-- [ ] RPCは `SECURITY INVOKER` + `SET search_path = public` にしたか
+- [ ] RPCは `SECURITY INVOKER` + `SET search_path = public` にしたか（DEFINER にするなら、§3 の例外と同じく理由と守り方を書き、`SET search_path = ''` と `public.` 付きの名前にしたか）
 - [ ] RPCが書き込み系なら、`REVOKE EXECUTE ... FROM PUBLIC, anon` しているか
 - [ ] RPCが読み取り専用で、かつ `/home` や `/other/report` などプリレンダーされるページから呼ばれるなら、anon EXECUTEを許可し、その理由をこの表に追記したか
 - [ ] 新しいテーブルは、既定の権限で付く ALL を `REVOKE ALL ... FROM anon, authenticated` してから、使う操作だけを authenticated に GRANT したか（§3 のテーブルの権限の表に足したか）

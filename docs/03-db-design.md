@@ -227,7 +227,7 @@ import_tokens (standalone, per user)
 
 - 一意制約：`(user_id, date, metric, source)`。取り込みはこのキーで upsert するので、同じ日を送り直しても1行のまま
 - 索引：`(user_id, date)`
-- 書き込み：アプリ（authenticated）から書けるのは `source = 'manual'` の行だけ。`withings` / `apple_health` の行は取り込み関数（後のタスク）だけが書く。権限は `security-model.md` の §2・§3
+- 書き込み：アプリ（authenticated）から書けるのは `source = 'manual'` の行だけ。`withings` / `apple_health` の行は取り込み関数 `import_health_daily` だけが書く。権限は `security-model.md` の §2・§3
 
 | metric | 単位 | 範囲（両端を含む） |
 | --- | --- | --- |
