@@ -43,8 +43,7 @@ export const e2eSwitchUsers = {
 };
 
 /** The import token supabase/seed.sql registers for e2eUser (the seed holds only its SHA-256). It works only
- *  against the local Supabase the seed is applied to
- *  @public for the health import E2E */
+ *  against the local Supabase the seed is applied to */
 export const e2eImportToken = "mlg_NOHLCYvecpx2UIK8JierM9_Ar7aDXuUqowQeuoYAYEg";
 
 /** Call the local REST API as the service role, for test data that bypasses RLS */
