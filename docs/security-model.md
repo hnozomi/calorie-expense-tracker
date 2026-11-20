@@ -15,7 +15,7 @@ Supabaseの行レベルセキュリティ（RLS）とRPC関数の権限方針を
 テーブルは「直接 `user_id` を持つ親テーブル」と「親を経由してオーナーシップを判定する子テーブル」の2種類に分かれる。
 
 ### 親テーブル（`user_id` を直接持つ）
-対象: `meals`, `recipes`, `food_masters`, `set_menus`, `meal_plans`, `user_settings`, `ocr_scans`（`ocr_scans` は SELECT と INSERT だけ。数えるための記録なので更新・削除はさせない）, `health_daily_values`（SELECT と DELETE は持ち主。INSERT と UPDATE は持ち主かつ `source = 'manual'` のときだけ。下の例）
+対象: `meals`, `recipes`, `food_masters`, `set_menus`, `meal_plans`, `user_settings`, `ocr_scans`（`ocr_scans` は SELECT と INSERT だけ。数えるための記録なので更新・削除はさせない）, `health_daily_values`（SELECT と DELETE は持ち主。INSERT と UPDATE は持ち主かつ `source = 'manual'` のときだけ。下の例）, `import_tokens`（SELECT と INSERT は持ち主。UPDATE は失効だけ。DELETE は無い。下の例）
 
 ```sql
 USING ((select auth.uid()) = user_id)
@@ -30,6 +30,14 @@ WITH CHECK ((select auth.uid()) = user_id AND source = 'manual')
 -- UPDATE
 USING ((select auth.uid()) = user_id AND source = 'manual')
 WITH CHECK ((select auth.uid()) = user_id AND source = 'manual')
+```
+
+`import_tokens` の UPDATE は失効のためだけにある。USING でまだ失効していない行に絞り、WITH CHECK で `revoked_at` が入ることを求めるので、失効したトークンを有効に戻すこと（5件の上限の回り道にもなる）も、失効の時刻を書き換えることもできない。更新できる列は列の権限で `revoked_at` だけにしてある（§3）。DELETE のポリシーは付けない（失効は `revoked_at` で表し、履歴を残す）。
+
+```sql
+-- UPDATE
+USING ((select auth.uid()) = user_id AND revoked_at IS NULL)
+WITH CHECK ((select auth.uid()) = user_id AND revoked_at IS NOT NULL)
 ```
 
 `auth.uid()` を `(select auth.uid())` で包むのは、行ごとではなくクエリごとに1回評価させるための最適化（initplan化）。新しいポリシーを書くときもこの形を踏襲する。
@@ -62,6 +70,7 @@ USING (EXISTS (
 | `sync_meals_to_plans(DATE, DATE)` | INVOKER | 不許可 | 許可 | 同上 |
 | `claim_ocr_scan(INTEGER)` | INVOKER | 不許可 | 許可 | OCR の回数を1件記録する。日本時間の今日の回数が上限以上なら記録せず false |
 | `update_updated_at()` | INVOKER（トリガー用） | — | — | `updated_at` 自動更新トリガー。直接呼び出し対象ではない |
+| `check_import_token_limit()` | INVOKER（トリガー用） | 不許可 | 不許可 | `import_tokens` の INSERT の前に、有効なトークンが5件あれば断る。DB で数えるのは、ログイン中の利用者は Server Action を通さず API から直接 INSERT もできるため。同時に送られても両方通らないよう、利用者ごとの advisory lock を取る。`SET search_path = ''` |
 
 ### テーブルの権限（GRANT）
 
@@ -71,6 +80,7 @@ USING (EXISTS (
 |---|---|---|---|
 | `ocr_scans` | なし（REVOKE ALL） | SELECT, INSERT | 数えるための記録。更新・削除はポリシーも無い |
 | `health_daily_values` | なし（REVOKE ALL） | SELECT, INSERT, UPDATE, DELETE | 書けるのは `source = 'manual'` の行だけ（§2 のポリシー）。TRUNCATE などは付けない |
+| `import_tokens` | なし（REVOKE ALL） | SELECT（`token_hash` 以外の列）, INSERT, UPDATE（`revoked_at` 列だけ） | ハッシュはアプリからも読めない（`select *` も 42501 になるので、列を名指しで読む）。DELETE は付けない |
 
 **原則**:
 - 書き込み・更新を行うRPCは認証必須（`anon` から REVOKE）。
@@ -94,6 +104,8 @@ USING (EXISTS (
 - [ ] RPCが読み取り専用で、かつ `/home` や `/other/report` などプリレンダーされるページから呼ばれるなら、anon EXECUTEを許可し、その理由をこの表に追記したか
 - [ ] 新しいテーブルは、既定の権限で付く ALL を `REVOKE ALL ... FROM anon, authenticated` してから、使う操作だけを authenticated に GRANT したか（§3 のテーブルの権限の表に足したか）
 - [ ] アプリから書かせない値（`health_daily_values.source` の自動の出所など）を、INSERT の WITH CHECK と UPDATE の USING / WITH CHECK で絞ったか
+- [ ] アプリに読ませない・変えさせない列（`import_tokens.token_hash` など）を、列の権限（`GRANT SELECT (...)`・`GRANT UPDATE (...)`）で外したか
+- [ ] 秘密の値（取り込みトークンなど）は平文を DB・ログ・URL・Cookie・localStorage に残さず、ハッシュだけを保存しているか
 - [ ] pgTAP で「他人の行が0件」「他人の行を更新・削除できない」「anon は読めない」と、絞った値を書けないことを確かめたか
 - [ ] マイグレーション適用後、Vercelのデプロイ状況を `mcp__vercel__list_deployments` で確認したか
 
