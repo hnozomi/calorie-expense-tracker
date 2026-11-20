@@ -17,6 +17,7 @@ meals ──┬─ meal_items ───── meal_item_costs
                └── → set_menus
 user_settings (standalone, per user)
 health_daily_values (standalone, per user)
+import_tokens (standalone, per user)
 ```
 
 ---
@@ -237,6 +238,30 @@ health_daily_values (standalone, per user)
 
 ---
 
+## import_tokens（取り込みトークン）
+
+アプリの外（健康データの取り込み）から、Supabase のセッションを持たずにその利用者として書くためのトークン。平文は持たず、SHA-256 だけを持つ。平文は発行したときに Server Action（`health/api/actions.ts` の `issueImportToken`）の戻り値で1回だけ画面に返す。
+
+| カラム名 | 型 | 説明 |
+| --- | --- | --- |
+| id | UUID (PK) | 主キー |
+| user_id | UUID (FK) | auth.users.id への参照（RLS用、既定 `auth.uid()`、`ON DELETE CASCADE`） |
+| label | TEXT | 用途の名前（1〜40文字） |
+| token_hash | TEXT (UNIQUE) | トークンの SHA-256（小文字の16進64文字を CHECK）。authenticated からは読めない |
+| token_prefix | TEXT | 画面で見分けるための先頭8文字（`mlg_` と4文字を CHECK）。認証には使わない |
+| scopes | TEXT[] | 許す操作（既定 `{health:write}`） |
+| created_at | TIMESTAMPTZ | 発行日時 |
+| last_used_at | TIMESTAMPTZ (nullable) | 最後に認証が通った時刻（取り込み関数が書く） |
+| revoked_at | TIMESTAMPTZ (nullable) | 失効した時刻。NULL なら有効 |
+
+- トークンの形：`mlg_` + 32バイトの乱数の base64url（全体で47文字、256ビット）。乱数なので遅いハッシュは要らない。取り込み関数は `encode(sha256(convert_to(token, 'UTF8')), 'hex')` で照合する
+- 有効な（`revoked_at` が NULL の）トークンは1利用者5件まで。`check_import_token_limit()` トリガーが6件目の INSERT を断る（`P0001`、`import token limit reached`）。失効すると、また発行できる
+- 失効は `revoked_at` を入れるだけで、行は消さない（履歴を残す）。失効したトークンは有効に戻せない
+- 期限は持たない
+- 権限は `security-model.md` の §2・§3
+
+---
+
 ## 列挙値定義
 
 アプリ内で使用する TEXT 型カラムの取りうる値を以下に定義する。
@@ -321,6 +346,7 @@ Supabase RLSを使用し、各ユーザーが自分のデータのみアクセ�
 - **ポリシー条件:** `auth.uid() = user_id`
 - **適用範囲:** SELECT / INSERT / UPDATE / DELETE のすべて
 - **health_daily_values:** SELECT / DELETE は持ち主。INSERT / UPDATE は持ち主かつ `source = 'manual'` のときだけ（アプリから自動の出所を偽れないように）
+- **import_tokens:** SELECT / INSERT は持ち主。UPDATE は持ち主のまだ失効していない行を失効させる（`revoked_at` を入れる）ときだけ。DELETE のポリシーは無い
 - **子テーブルの保護:** meal_items, meal_item_costs, recipe_ingredients, set_menu_items にも個別のRLSポリシーを設定する。Supabase REST APIは子テーブルへの直接アクセスを許可するため、親テーブルのRLSだけでは不十分
   - `meal_items`: `meal_id` → `meals.user_id` を経由してチェック
   - `meal_item_costs`: `meal_item_id` → `meal_items.meal_id` → `meals.user_id` を経由してチェック
