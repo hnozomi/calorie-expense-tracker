@@ -42,6 +42,11 @@ export const e2eSwitchUsers = {
   next: { email: "e2e-next@example.com", password: "e2e-password" },
 };
 
+/** The import token supabase/seed.sql registers for e2eUser (the seed holds only its SHA-256). It works only
+ *  against the local Supabase the seed is applied to
+ *  @public for the health import E2E */
+export const e2eImportToken = "mlg_NOHLCYvecpx2UIK8JierM9_Ar7aDXuUqowQeuoYAYEg";
+
 /** Call the local REST API as the service role, for test data that bypasses RLS */
 export const serviceRoleRest = async (
   path: string,
