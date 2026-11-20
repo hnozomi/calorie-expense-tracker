@@ -96,4 +96,20 @@ describe("InlineDeleteConfirm", () => {
 
     expect(onSubmit).not.toHaveBeenCalled();
   });
+
+  it("T-6: 削除以外の取り消せない操作（失効）は、問いと押す文言を差し替えられる", () => {
+    renderConfirm({
+      itemName: "もち",
+      question: "「もち」を失効しますか？",
+      confirmLabel: "失効する",
+      pendingLabel: "失効中...",
+      isOpen: true,
+    });
+
+    expect(screen.getByText("「もち」を失効しますか？")).toBeInTheDocument();
+    expect(
+      screen.queryByText("「もち」を削除しますか？"),
+    ).not.toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "失効する" })).toBeEnabled();
+  });
 });

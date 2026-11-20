@@ -13,6 +13,19 @@ vi.mock("@/components/features/settings/api/queries", () => ({
   getAccountEmail: () => getAccountEmail(),
 }));
 
+// T-6 added the health import status and the import tokens to the same Promise.all; they are DB reads too
+const getHealthImportStatus = vi.fn();
+const getImportTokens = vi.fn();
+vi.mock("@/components/features/health/api/queries", () => ({
+  getHealthImportStatus: () => getHealthImportStatus(),
+  getImportTokens: () => getImportTokens(),
+}));
+
+vi.mock("@/components/features/health/api/actions", () => ({
+  issueImportToken: vi.fn(),
+  revokeImportToken: vi.fn(),
+}));
+
 vi.mock("@/components/features/settings/api/actions", () => ({
   saveNutritionTarget: vi.fn(),
   deleteAllData: vi.fn(),
@@ -33,6 +46,11 @@ beforeEach(() => {
     targetCarbs: 230,
   });
   getAccountEmail.mockResolvedValue("e2e@example.com");
+  getHealthImportStatus.mockResolvedValue([
+    { source: "withings", lastImportedAt: null, latestDate: null },
+    { source: "apple_health", lastImportedAt: null, latestDate: null },
+  ]);
+  getImportTokens.mockResolvedValue([]);
 });
 
 afterEach(() => {
@@ -86,5 +104,20 @@ describe("SettingsContent (S-10 設定)", () => {
     expect(
       screen.getByRole("button", { name: "全データを削除" }),
     ).toBeInTheDocument();
+  });
+
+  it("T-6: 1日の目標の下に「健康データの取り込み」を出し、状態とトークンを読む", async () => {
+    await renderContent();
+
+    const section = screen.getByRole("region", {
+      name: "健康データの取り込み",
+    });
+    expect(section).toBeInTheDocument();
+    // The target field comes before the section, and is not inside it
+    expect(
+      section.compareDocumentPosition(screen.getByLabelText("カロリー (kcal)")),
+    ).toBe(Node.DOCUMENT_POSITION_PRECEDING);
+    expect(getHealthImportStatus).toHaveBeenCalledTimes(1);
+    expect(getImportTokens).toHaveBeenCalledTimes(1);
   });
 });
