@@ -15,11 +15,21 @@ Supabaseの行レベルセキュリティ（RLS）とRPC関数の権限方針を
 テーブルは「直接 `user_id` を持つ親テーブル」と「親を経由してオーナーシップを判定する子テーブル」の2種類に分かれる。
 
 ### 親テーブル（`user_id` を直接持つ）
-対象: `meals`, `recipes`, `food_masters`, `set_menus`, `meal_plans`, `user_settings`, `ocr_scans`（`ocr_scans` は SELECT と INSERT だけ。数えるための記録なので更新・削除はさせない）
+対象: `meals`, `recipes`, `food_masters`, `set_menus`, `meal_plans`, `user_settings`, `ocr_scans`（`ocr_scans` は SELECT と INSERT だけ。数えるための記録なので更新・削除はさせない）, `health_daily_values`（SELECT と DELETE は持ち主。INSERT と UPDATE は持ち主かつ `source = 'manual'` のときだけ。下の例）
 
 ```sql
 USING ((select auth.uid()) = user_id)
 WITH CHECK ((select auth.uid()) = user_id)
+```
+
+`health_daily_values` の INSERT / UPDATE は、持ち主の条件に出所の条件を足す。画面からは手入力しか書けず、`withings` などの自動の出所を偽れない（自動の出所の行は、後のタスクで足す取り込み関数だけが書く）。UPDATE は USING と WITH CHECK の両方に付けるので、自動の行を書き換えることも、手入力の行を自動の出所に変えることもできない。
+
+```sql
+-- INSERT
+WITH CHECK ((select auth.uid()) = user_id AND source = 'manual')
+-- UPDATE
+USING ((select auth.uid()) = user_id AND source = 'manual')
+WITH CHECK ((select auth.uid()) = user_id AND source = 'manual')
 ```
 
 `auth.uid()` を `(select auth.uid())` で包むのは、行ごとではなくクエリごとに1回評価させるための最適化（initplan化）。新しいポリシーを書くときもこの形を踏襲する。
@@ -53,6 +63,15 @@ USING (EXISTS (
 | `claim_ocr_scan(INTEGER)` | INVOKER | 不許可 | 許可 | OCR の回数を1件記録する。日本時間の今日の回数が上限以上なら記録せず false |
 | `update_updated_at()` | INVOKER（トリガー用） | — | — | `updated_at` 自動更新トリガー。直接呼び出し対象ではない |
 
+### テーブルの権限（GRANT）
+
+`public` スキーマの既定の権限（`ALTER DEFAULT PRIVILEGES`）は、新しいテーブルに anon と authenticated の ALL を付ける。そのため新しいテーブルでは、先に REVOKE ALL してから使う分だけ GRANT する。
+
+| テーブル | anon | authenticated | 備考 |
+|---|---|---|---|
+| `ocr_scans` | なし（REVOKE ALL） | SELECT, INSERT | 数えるための記録。更新・削除はポリシーも無い |
+| `health_daily_values` | なし（REVOKE ALL） | SELECT, INSERT, UPDATE, DELETE | 書けるのは `source = 'manual'` の行だけ（§2 のポリシー）。TRUNCATE などは付けない |
+
 **原則**:
 - 書き込み・更新を行うRPCは認証必須（`anon` から REVOKE）。
 - 読み取り専用RPCで、かつVercelのSSGプリレンダーから呼ばれるものだけ、例外的に `anon` にEXECUTEを許可する。
@@ -73,6 +92,9 @@ USING (EXISTS (
 - [ ] RPCは `SECURITY INVOKER` + `SET search_path = public` にしたか
 - [ ] RPCが書き込み系なら、`REVOKE EXECUTE ... FROM PUBLIC, anon` しているか
 - [ ] RPCが読み取り専用で、かつ `/home` や `/other/report` などプリレンダーされるページから呼ばれるなら、anon EXECUTEを許可し、その理由をこの表に追記したか
+- [ ] 新しいテーブルは、既定の権限で付く ALL を `REVOKE ALL ... FROM anon, authenticated` してから、使う操作だけを authenticated に GRANT したか（§3 のテーブルの権限の表に足したか）
+- [ ] アプリから書かせない値（`health_daily_values.source` の自動の出所など）を、INSERT の WITH CHECK と UPDATE の USING / WITH CHECK で絞ったか
+- [ ] pgTAP で「他人の行が0件」「他人の行を更新・削除できない」「anon は読めない」と、絞った値を書けないことを確かめたか
 - [ ] マイグレーション適用後、Vercelのデプロイ状況を `mcp__vercel__list_deployments` で確認したか
 
 ## 6. 既知のドキュメントの乖離
