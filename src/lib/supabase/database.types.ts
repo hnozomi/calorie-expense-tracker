@@ -619,6 +619,10 @@ export type Database = {
           total_protein: number
         }[]
       }
+      import_health_daily: {
+        Args: { p_records: Json; p_token: string }
+        Returns: Json
+      }
       register_meal_items: {
         Args: { p_items: Json; p_meal_id: string }
         Returns: {

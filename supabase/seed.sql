@@ -24,3 +24,11 @@ select id, id, id::text, 'email',
   now(), now(), now()
 from auth.users
 where email in ('e2e@example.com', 'e2e-previous@example.com', 'e2e-next@example.com');
+
+-- The import token the health import E2E sends for e2e@example.com. Only its SHA-256 is here; the plain token is
+-- e2eImportToken in e2e/local-supabase.ts. It counts toward that user's limit of 5 tokens that are not revoked
+insert into public.import_tokens (user_id, label, token_hash, token_prefix)
+values (
+  'e2e00000-0000-4000-8000-000000000001', 'E2E',
+  '7179c382a4969fa28b1d675c9ab45322fd7fcdaef25289159dcace597c3f6b0e', 'mlg_NOHL'
+);
