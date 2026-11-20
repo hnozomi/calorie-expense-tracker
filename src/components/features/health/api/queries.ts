@@ -2,6 +2,12 @@ import "server-only";
 import { cacheLife } from "next/cache";
 import type { DailyHealth } from "@/components/features/health/types/daily-health";
 import {
+  type HealthImportSourceStatus,
+  IMPORTED_HEALTH_SOURCES,
+  type ImportedHealthSource,
+  type ImportTokenSummary,
+} from "@/components/features/health/types/health-import";
+import {
   buildDailyHealth,
   toHealthValueRows,
   WEIGHT_CHANGE_LOOKBACK_DAYS,
@@ -36,4 +42,74 @@ export const readDailyHealth = async (
   } catch {
     return null;
   }
+};
+
+/** When the source last sent values (imported_at of its newest import), or null when it never sent any */
+const readLastImportedAt = async (
+  source: ImportedHealthSource,
+): Promise<string | null> => {
+  const supabase = await createClient();
+  const { data, error } = await supabase
+    .from("health_daily_values")
+    .select("imported_at")
+    .eq("source", source)
+    .order("imported_at", { ascending: false })
+    .limit(1)
+    .maybeSingle();
+  if (error) throw error;
+  return data?.imported_at ?? null;
+};
+
+// A refill of earlier days is imported after newer days, so the newest import is not always the latest day
+/** The latest day the source sent values for, or null when it never sent any */
+const readLatestDate = async (
+  source: ImportedHealthSource,
+): Promise<string | null> => {
+  const supabase = await createClient();
+  const { data, error } = await supabase
+    .from("health_daily_values")
+    .select("date")
+    .eq("source", source)
+    .order("date", { ascending: false })
+    .limit(1)
+    .maybeSingle();
+  if (error) throw error;
+  return data?.date ?? null;
+};
+
+/** For each imported source, when it last sent values (imported_at) and the latest day it sent (date) */
+export const getHealthImportStatus = async (): Promise<
+  HealthImportSourceStatus[]
+> => {
+  "use cache: private";
+  cacheLife(SCREEN_CACHE);
+  return Promise.all(
+    IMPORTED_HEALTH_SOURCES.map(async (source) => {
+      const [lastImportedAt, latestDate] = await Promise.all([
+        readLastImportedAt(source),
+        readLatestDate(source),
+      ]);
+      return { source, lastImportedAt, latestDate };
+    }),
+  );
+};
+
+/** The signed-in user's import tokens, newest first. token_hash is not selected (nor can authenticated read it) */
+export const getImportTokens = async (): Promise<ImportTokenSummary[]> => {
+  "use cache: private";
+  cacheLife(SCREEN_CACHE);
+  const supabase = await createClient();
+  const { data, error } = await supabase
+    .from("import_tokens")
+    .select("id, label, token_prefix, created_at, last_used_at, revoked_at")
+    .order("created_at", { ascending: false });
+  if (error) throw error;
+  return (data ?? []).map((row) => ({
+    id: row.id,
+    label: row.label,
+    tokenPrefix: row.token_prefix,
+    createdAt: row.created_at,
+    lastUsedAt: row.last_used_at,
+    revokedAt: row.revoked_at,
+  }));
 };
