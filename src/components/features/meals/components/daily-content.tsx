@@ -1,4 +1,8 @@
+import { Suspense } from "react";
 import { getFoodMasters } from "@/components/features/food-masters/api/queries";
+import { readDailyHealth } from "@/components/features/health/api/queries";
+import { DailyHealthStrip } from "@/components/features/health/components/daily-health-strip";
+import { DailyHealthStripSkeleton } from "@/components/features/health/components/daily-health-strip-skeleton";
 import {
   getDailyMeals,
   getDailySummary,
@@ -44,6 +48,8 @@ const readDrawerCandidates = async (): Promise<DrawerCandidates> => {
 export const DailyContent = async ({ date, today }: Props) => {
   // Not awaited: the drawer only needs the lists once it is opened
   const candidates = readDrawerCandidates();
+  // Started with the meals but awaited only inside its own Suspense, so a slow or failed read never holds the day
+  const health = readDailyHealth(date);
   const [meals, summaryRows, target] = await Promise.all([
     getDailyMeals(date),
     getDailySummary(date),
@@ -54,6 +60,11 @@ export const DailyContent = async ({ date, today }: Props) => {
     <DailyMealsProvider date={date} today={today} meals={meals}>
       <DateNavigator date={date} today={today} />
       <DailySummary summaryRows={summaryRows} target={target} />
+      <div className="mt-3">
+        <Suspense fallback={<DailyHealthStripSkeleton />}>
+          <DailyHealthStrip health={health} />
+        </Suspense>
+      </div>
       <MealSlotList />
       <MealRegisterDrawer candidates={candidates} />
     </DailyMealsProvider>
